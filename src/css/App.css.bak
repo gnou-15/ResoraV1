@@ -1,0 +1,399 @@
+.app {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  background: var(--bg);
+}
+
+/* Header */
+.app-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 1rem 1.5rem;
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+  flex-wrap: wrap;
+}
+
+.header-brand h1 {
+  font-size: 1.35rem;
+  font-weight: 700;
+  color: var(--primary);
+}
+
+.header-brand p {
+  font-size: 0.85rem;
+  color: var(--text-muted);
+}
+
+.header-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+
+.user-type-toggle {
+  display: inline-flex;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  overflow: hidden;
+}
+
+.user-type-toggle button {
+  padding: 0.3rem 0.6rem;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  font-size: 0.85rem;
+}
+
+.user-type-toggle button.active {
+  background: var(--primary);
+  color: white;
+}
+
+.format-badge {
+  font-size: 0.75rem;
+  font-weight: 600;
+  padding: 0.3rem 0.65rem;
+  border-radius: 999px;
+  background: #eff6ff;
+  color: var(--primary);
+  border: 1px solid #bfdbfe;
+}
+
+.save-status {
+  font-size: 0.8rem;
+  padding: 0.25rem 0.6rem;
+  border-radius: 999px;
+  background: #f1f5f9;
+  color: var(--text-muted);
+}
+
+.save-status.saved {
+  color: #16a34a;
+  background: #f0fdf4;
+}
+
+.save-status.saving {
+  color: #d97706;
+  background: #fffbeb;
+}
+
+/* Buttons */
+.btn {
+  padding: 0.45rem 1rem;
+  border-radius: var(--radius);
+  font-size: 0.875rem;
+  font-weight: 500;
+  transition: background 0.15s, color 0.15s;
+}
+
+.btn-secondary {
+  background: var(--primary);
+  color: white;
+}
+.btn-secondary:hover {
+  transform: translateY(-1px);
+  box-shadow: 8px 10px 26px rgba(0,0,0,0.12), -8px -8px 26px rgba(255,255,255,0.85);
+}
+
+.btn-ghost {
+  color: var(--text-muted);
+}
+
+.btn-ghost:hover {
+  color: var(--text);
+  background: linear-gradient(180deg, #fff, #f7f4f1);
+}
+
+.btn-sm {
+  padding: 0.3rem 0.65rem;
+  font-size: 0.8rem;
+}
+
+.btn-danger {
+  color: var(--danger);
+}
+
+.btn-danger:hover {
+  background: #fef2f2;
+  color: var(--danger);
+}
+
+/* Mobile tabs */
+.mobile-tabs {
+  display: none;
+  border-bottom: 1px solid var(--border);
+  background: var(--surface);
+}
+
+.mobile-tabs button {
+  flex: 1;
+  padding: 0.75rem;
+  font-weight: 500;
+  color: var(--text-muted);
+  border-bottom: 2px solid transparent;
+}
+
+.mobile-tabs button.active {
+  color: var(--primary);
+  border-bottom-color: var(--primary);
+}
+
+/* Main layout */
+.app-main {
+  flex: 1;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0;
+  overflow: hidden;
+}
+
+.panel {
+  overflow-y: auto;
+  height: calc(100vh - 73px);
+}
+
+.panel-editor {
+  padding: 1.5rem;
+  border-right: 1px solid var(--border);
+}
+
+.panel-preview {
+  padding: 1rem 1.5rem 1.5rem;
+  background: #e8ecf1;
+}
+
+.preview-toolbar {
+  max-width: 8.5in;
+  margin: 0 auto 0.75rem;
+  font-size: 0.78rem;
+  color: var(--text-muted);
+  text-align: center;
+}
+
+.preview-wrapper {
+  background: white;
+  box-shadow: var(--shadow-lg);
+  max-width: 8.5in;
+  min-height: 11in;
+  margin: 0 auto;
+}
+
+/* Editor */
+.resume-editor {
+  max-width: 640px;
+}
+
+.ats-tip {
+  background: #eff6ff;
+  border: 1px solid #bfdbfe;
+  border-radius: var(--radius);
+  padding: 0.75rem 1rem;
+  font-size: 0.85rem;
+  color: #1e40af;
+  margin-bottom: 1.5rem;
+  line-height: 1.5;
+}
+
+.editor-section {
+  margin-bottom: 1.5rem;
+  padding: 0.9rem 1rem 1.6rem;
+  border: 1px solid var(--border);
+  border-radius: calc(var(--radius) - 2px);
+  background: var(--surface);
+  box-shadow: 0 1px 0 rgba(0, 0, 0, 0.02);
+  position: relative;
+}
+
+.section-add {
+  position: absolute;
+  right: 1rem;
+  bottom: 0.5rem;
+}
+
+
+/* compact checklist layout for technical skills (auto-size chips) */
+.skill-checklist {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem 0.6rem;
+  align-items: center;
+  margin-top: 0.5rem;
+}
+
+.checkbox-field.small {
+  font-size: 0.85rem;
+  padding: 0.15rem 0.25rem;
+}
+
+/* skill chips */
+.skill-chip {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.4rem;
+  padding: 0.25rem 0.45rem;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  background: transparent;
+  color: #0f172a;
+  /* slightly darker text */
+  cursor: pointer;
+  transition: background 0.12s, color 0.12s, transform 0.06s;
+  font-size: 0.82rem;
+  line-height: 1;
+}
+
+.skill-chip:active {
+  transform: scale(0.98);
+}
+
+.skill-chip .chip-icon {
+  margin-left: 0.35rem;
+  opacity: 0;
+  transition: opacity 0.12s, transform 0.12s;
+  font-weight: 700;
+}
+
+/* hover becomes green with checkmark */
+.skill-chip:hover {
+  background: #ecfdf5;
+  /* light green */
+  border-color: #34d399;
+  /* green */
+  color: #065f46;
+}
+
+.skill-chip:hover .chip-icon {
+  opacity: 1;
+  transform: translateX(0);
+}
+
+/* selected becomes red with X */
+.skill-chip.selected {
+  background: #fee2e2;
+  /* light red */
+  border-color: #fca5a5;
+  color: #7f1d1d;
+}
+
+.skill-chip.selected .chip-icon {
+  opacity: 1;
+}
+
+/* (layout uses flex-wrap to size chips to content) */
+
+.section-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 1rem;
+  padding-bottom: 0.5rem;
+  border-bottom: 2px solid var(--primary);
+}
+
+.section-header h2 {
+  font-size: 1.1rem;
+  font-weight: 600;
+}
+
+.section-hint {
+  font-size: 0.78rem;
+  color: var(--text-muted);
+  margin-top: 0.2rem;
+}
+
+.field-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.75rem;
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+  margin-bottom: 0.75rem;
+}
+
+.field span,
+.bullets-label {
+  font-size: 0.8rem;
+  font-weight: 500;
+  color: var(--text-muted);
+}
+
+.field-hint {
+  font-size: 0.72rem;
+  color: #94a3b8;
+}
+
+.checkbox-field {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin: 0.5rem 0 1rem;
+  font-size: 0.875rem;
+  cursor: pointer;
+}
+
+.checkbox-field input {
+  width: auto;
+}
+
+.card {
+  background: #f8fafc;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 1rem;
+  margin-bottom: 1rem;
+}
+
+.card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 0.75rem;
+}
+
+.card-label {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+.bullets-group {
+  margin-top: 0.5rem;
+}
+
+.bullet-row {
+  display: flex;
+  gap: 0.5rem;
+  margin-bottom: 0.5rem;
+}
+
+.bullet-row input {
+  flex: 1;
+}
+
+.field-full {
+  grid-column: 1 / -1;
+}
+
+.field-full-span {
+  grid-column: 1 / -1;
+}
+
+.phone-row {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}

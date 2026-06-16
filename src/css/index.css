@@ -1,0 +1,193 @@
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+:root {
+  --bg: #f0f2f5;
+  --surface: #ffffff;
+  --border: #e2e8f0;
+  --text: #1e293b;
+  --text-muted: #64748b;
+  --primary: #2563eb;
+  --primary-hover: #1d4ed8;
+  --primary-rgb: 37,99,235;
+  --danger: #dc2626;
+  --radius: 8px;
+  --shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+  --shadow-lg: 0 4px 20px rgba(0, 0, 0, 0.1);
+  --header-height: 68px;
+  --header-height-mobile: 125px;
+  font-family: 'Inter', 'Segoe UI', system-ui, -apple-system, sans-serif;
+  font-size: 16px;
+  line-height: 1.5;
+  color: var(--text);
+  background: var(--bg);
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Theme overrides: subtle visual cue between student and professional */
+.app.theme-student {
+  /* softer muted red palette for students */
+  --primary: #9b1d20; /* muted burgundy */
+  --primary-hover: #7a1517;
+  --bg: #fff5f5;
+  --border: #f3d6d6;
+  --primary-rgb: 155,29,32;
+}
+
+.app.theme-professional {
+  --primary: #ea580c; /* vibrant orange */
+  --primary-hover: #c2410c;
+  --bg: #fff7ed;
+  --border: #ffedd5;
+  --primary-rgb: 234,88,12;
+}
+
+/* faint theme overlays for subtle visual cue */
+.app.theme-student {
+  background-image: linear-gradient(180deg, rgba(var(--primary-rgb),0.03), transparent);
+}
+
+.app.theme-professional {
+  background-image: linear-gradient(180deg, rgba(var(--primary-rgb),0.03), transparent);
+}
+
+/* Skeuomorphic theme: tactile surfaces that respect --primary from student/professional */
+.app.theme-skeuo {
+  /* Do NOT override --primary so student/professional still wins */
+  --skeuo-bg: #fffdf9;
+  --skeuo-surface: #ffffff;
+  --skeuo-border: #f4e7db;
+  --skeuo-text-muted: #6b7280;
+  --skeuo-radius: 14px;
+  --skeuo-shadow: 0 14px 30px rgba(0,0,0,0.18);
+  --skeuo-inset: inset 0 6px 18px rgba(255,255,255,0.7), inset 0 -6px 16px rgba(0,0,0,0.06);
+}
+
+/* Big, tactile header and surfaces */
+.app.theme-skeuo {
+  background: radial-gradient(1200px 400px at 10% 10%, rgba(var(--primary-rgb,37,99,235),0.03), transparent), var(--skeuo-bg);
+}
+
+.app.theme-skeuo .app-header{
+  background: linear-gradient(180deg, rgba(255,255,255,0.95), rgba(250,246,240,0.98));
+  border-bottom: 1px solid var(--skeuo-border);
+  box-shadow: var(--skeuo-inset), 0 8px 18px rgba(0,0,0,0.06);
+}
+
+.app.theme-skeuo .card{
+  background: linear-gradient(180deg,#ffffff,#fff9f1);
+  border-radius: var(--skeuo-radius);
+  border: 1px solid var(--skeuo-border);
+  box-shadow: var(--skeuo-shadow), var(--skeuo-inset);
+}
+
+/* 3D buttons: raised and pressable */
+.app.theme-skeuo .btn{
+  border-radius: 999px;
+  box-shadow: 0 8px 18px rgba(0,0,0,0.14), inset 0 2px 6px rgba(255,255,255,0.6);
+  transition: transform 0.14s cubic-bezier(.2,.8,.2,1), box-shadow 0.14s;
+}
+.app.theme-skeuo .btn:active{
+  transform: translateY(2px) scale(.998);
+  box-shadow: 0 4px 10px rgba(0,0,0,0.12), inset 0 -6px 14px rgba(0,0,0,0.08);
+}
+
+/* Accent buttons should use the current --primary (student/professional) */
+.app.theme-skeuo .btn-secondary{
+  background: linear-gradient(180deg, color-mix(in srgb, var(--primary) 85%, white 15%), var(--primary));
+  color: white;
+  box-shadow: 0 10px 22px rgba(0,0,0,0.16), inset 0 -6px 14px rgba(0,0,0,0.08);
+}
+
+/* Large preview card feels like a real paper tray */
+.app.theme-skeuo .preview-wrapper{
+  border-radius: 18px;
+  box-shadow: 24px 32px 60px rgba(0,0,0,0.20), inset 0 8px 18px rgba(255,255,255,0.6);
+  background: linear-gradient(180deg,#fffefc,#fff9f3);
+}
+
+/* subtle bevel on inputs */
+.app.theme-skeuo input,
+.app.theme-skeuo textarea,
+.app.theme-skeuo select{
+  border-radius: 10px;
+  background: linear-gradient(180deg,#fff,#fffdf6);
+  box-shadow: inset 0 2px 6px rgba(0,0,0,0.04), 0 2px 6px rgba(0,0,0,0.04);
+  border: 1px solid var(--skeuo-border);
+}
+
+/* Trademark badge: embossed */
+.app.theme-skeuo .trademark-badge{
+  filter: drop-shadow(0 6px 8px rgba(0,0,0,0.12));
+  border-radius: 10px;
+  background: linear-gradient(180deg,#fff,#fffef8);
+  padding: 6px;
+}
+
+body {
+  min-height: 100vh;
+}
+
+/* Make the app full-height and prevent global page scrolling
+   so only panels scroll internally */
+html, body, #root {
+  height: 100%;
+  overflow: hidden;
+}
+
+:root {
+  --space-xs: 6px;
+  --space-sm: 10px;
+  --space-md: 16px;
+  --space-lg: 24px;
+  --space-xl: 32px;
+}
+
+input,
+textarea,
+select,
+button {
+  font: inherit;
+}
+
+input,
+textarea,
+select {
+  width: 100%;
+  padding: 0.5rem 0.75rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--surface);
+  color: var(--text);
+  transition: border-color 0.15s;
+}
+
+input:focus,
+textarea:focus,
+select:focus {
+  outline: none;
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px rgba(var(--primary-rgb), 0.15);
+}
+
+textarea {
+  resize: vertical;
+  min-height: 80px;
+}
+
+button {
+  cursor: pointer;
+  border: none;
+  background: none;
+}
+
+@media print {
+  body {
+    background: white;
+  }
+}

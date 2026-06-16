@@ -1,0 +1,263 @@
+import { useState, useEffect } from "react";
+import "../css/App.css";
+import ResumeEditor from "../components/ResumeEditor";
+import ResumePreview from "../components/ResumePreview";
+import { useResume } from "../hooks/useResume";
+import { getTemplateForProfession } from "../data/professionTemplates";
+import { migrateResume, defaultResume } from "../data/defaultResume";
+import { loadResume, loadResumeFromSupabase } from "../services/api";
+import AIScoreWidget from "../components/AIScoreWidget";
+import { analyzeResume } from "../services/aiScorer";
+
+const PROFESSION_TITLES = {
+  it: "IT Resume Builder",
+  healthcare: "Healthcare Resume Builder",
+  education: "Education Resume Builder",
+  management: "Management Resume Builder",
+};
+
+function Home({ profession, user, onBack }) {
+  const {
+    resume,
+    setResume,
+    saved,
+    updatePersonal,
+    updateLocation,
+    updateHeadline,
+    updateSummary,
+    updateTechnicalSkill,
+    updateUserType,
+    resetResume,
+  } = useResume(profession, user);
+
+  useEffect(() => {
+    if (!profession) return;
+
+    const applyTemplate = async () => {
+      // First, check if we already have saved data for this profession
+      if (user) {
+        const supabaseData = await loadResumeFromSupabase(profession, user.id);
+        if (supabaseData) {
+          return;
+        }
+      } else {
+        const savedData = loadResume(profession);
+        if (savedData) {
+          return;
+        }
+      }
+
+      // Try API if configured
+      const api = localStorage.getItem("templateApi");
+      if (api) {
+        try {
+          const url = `${api.replace(/\/?$/, "")}?profession=${encodeURIComponent(profession)}`;
+          const res = await fetch(url);
+          if (res.ok) {
+            const data = await res.json();
+            const payload = data.resume || data;
+            setResume((prev) => ({ ...migrateResume(payload) }));
+            return;
+          }
+        } catch (e) {
+          // fall back to local template
+        }
+      }
+
+      // local template fallback
+      const tpl = getTemplateForProfession(profession);
+      setResume((prev) => ({ ...migrateResume({ ...defaultResume, ...tpl }) }));
+    };
+
+    applyTemplate();
+  }, [profession, user]);
+
+  const [mobileTab, setMobileTab] = useState("edit");
+  const [analysisResult, setAnalysisResult] = useState(() => analyzeResume(defaultResume, profession));
+  const [syncing, setSyncing] = useState(false);
+  const [mascotMoodOverride, setMascotMoodOverride] = useState(null);
+
+  // Debounced real-time analysis sync whenever resume changes
+  useEffect(() => {
+    setSyncing(true);
+    const timer = setTimeout(() => {
+      const res = analyzeResume(resume, profession);
+      setAnalysisResult(res);
+      setSyncing(false);
+    }, 600); // 600ms debounce to simulate benchmarking check and avoid lag
+
+    return () => clearTimeout(timer);
+  }, [resume, profession]);
+
+  const handleExport = () => {
+    // ensure preview is visible
+    setMobileTab("preview");
+
+    setTimeout(() => {
+      const originalTitle = document.title;
+      const name = (
+        resume?.personal?.fullName ||
+        resume?.headline ||
+        "Resume"
+      ).toUpperCase();
+      document.title = name;
+
+      const restoreTitle = () => {
+        document.title = originalTitle;
+        window.removeEventListener("afterprint", restoreTitle);
+      };
+
+      window.addEventListener("afterprint", restoreTitle);
+      window.print();
+
+      // Fallback in case afterprint doesn't fire immediately/properly
+      setTimeout(restoreTitle, 500);
+    }, 250);
+  };
+
+  const handleReset = () => {
+    if (window.confirm("Clear all resume data? This cannot be undone.")) {
+      resetResume();
+    }
+  };
+
+  const themeClass =
+    resume.userType === "student" ? "theme-student" : "theme-professional";
+
+  return (
+    <div className={`app ${themeClass} theme-skeuo`}>
+      <header className="app-header">
+        <div className="header-brand" style={{ display: "flex", flexDirection: "row", alignItems: "center", gap: "8px" }}>
+          <svg className="logo-svg" width="28" height="28" viewBox="0 0 34 34" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <defs>
+              <linearGradient id="editorBodyGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                <stop offset="0%" stopColor="#475569" />
+                <stop offset="100%" stopColor="#1e293b" />
+              </linearGradient>
+            </defs>
+            {/* Body */}
+            <circle cx="17" cy="21" r="9.5" fill="url(#editorBodyGrad)" />
+            {/* Hat Brim */}
+            <rect x="6" y="9.5" width="22" height="2.5" rx="0.8" fill="#1e293b" />
+            {/* Hat Ribbon */}
+            <rect x="10" y="8" width="14" height="1.5" fill="#ea580c" />
+            {/* Hat Crown */}
+            <rect x="10" y="1" width="14" height="7" rx="1" fill="#1e293b" />
+            {/* Eyes */}
+            <circle cx="13.5" cy="19" r="2.2" fill="#ffffff" />
+            <circle cx="13.5" cy="19" r="1.1" fill="#0f172a" />
+            <circle cx="20.5" cy="19" r="2.2" fill="#ffffff" />
+            <circle cx="20.5" cy="19" r="1.1" fill="#0f172a" />
+            {/* Monocle */}
+            <circle cx="20.5" cy="19" r="3.6" stroke="#f59e0b" strokeWidth="0.9" fill="none" />
+            <path d="M23.5 21.5 C25 24 24 26 22 28.5" stroke="#f59e0b" stroke-width="0.5" stroke-dasharray="1.2 0.8" fill="none" />
+            {/* Mustache */}
+            <path d="M 17 23.5 C 13.5 21, 7.5 23.5, 5.5 27 C 7.5 27, 13 25.5, 17 24.5 C 21 25.5, 26.5 27, 28.5 27 C 26.5 23.5, 20.5 21, 17 23.5 Z" fill="#ffffff" />
+          </svg>
+          <h1 style={{ margin: 0 }}>{PROFESSION_TITLES[profession] || "Resora"}</h1>
+        </div>
+        {onBack && (
+          <div style={{ marginLeft: "1rem" }}>
+            <button type="button" className="btn btn-ghost" onClick={onBack}>
+              ← Back
+            </button>
+          </div>
+        )}
+        <div className="header-actions">
+          <div className="user-type-toggle">
+            <button
+              type="button"
+              className={resume.userType === "professional" ? "active" : ""}
+              onClick={() => updateUserType("professional")}
+            >
+              Professional
+            </button>
+            <button
+              type="button"
+              className={resume.userType === "student" ? "active" : ""}
+              onClick={() => updateUserType("student")}
+            >
+              Student
+            </button>
+          </div>
+          <span className="format-badge">ATS Standard Format</span>
+          <span className={`save-status ${saved ? "saved" : "saving"}`}>
+            {saved ? "Saved" : "Saving…"}
+          </span>
+          <button
+            type="button"
+            className="btn btn-secondary"
+            onClick={handleExport}
+            onMouseEnter={() => setMascotMoodOverride("excited")}
+            onMouseLeave={() => setMascotMoodOverride(null)}
+          >
+            Export
+          </button>
+          <button 
+            type="button" 
+            className="btn btn-ghost" 
+            onClick={handleReset}
+            onMouseEnter={() => setMascotMoodOverride("frantic")}
+            onMouseLeave={() => setMascotMoodOverride(null)}
+          >
+            Clear All
+          </button>
+        </div>
+      </header>
+
+      <div className="mobile-tabs">
+        <button
+          type="button"
+          className={mobileTab === "edit" ? "active" : ""}
+          onClick={() => setMobileTab("edit")}
+        >
+          Edit
+        </button>
+        <button
+          type="button"
+          className={mobileTab === "preview" ? "active" : ""}
+          onClick={() => setMobileTab("preview")}
+        >
+          Preview
+        </button>
+      </div>
+
+      <main className="app-main">
+        <div
+          className={`panel panel-editor ${mobileTab === "edit" ? "active" : ""}`}
+        >
+          <ResumeEditor
+            resume={resume}
+            setResume={setResume}
+            profession={profession}
+            updatePersonal={updatePersonal}
+            updateLocation={updateLocation}
+            updateHeadline={updateHeadline}
+            updateSummary={updateSummary}
+            updateTechnicalSkill={updateTechnicalSkill}
+          />
+        </div>
+        <div
+          className={`panel panel-preview ${mobileTab === "preview" ? "active" : ""}`}
+        >
+          <AIScoreWidget
+            resume={resume}
+            profession={profession}
+            analysisResult={analysisResult}
+            loading={syncing}
+            onUpdateResume={setResume}
+            moodOverride={mascotMoodOverride}
+          />
+          <div className="preview-toolbar">
+            <span>Live preview — optimized for one page when printed</span>
+          </div>
+          <div className="preview-wrapper">
+            <ResumePreview resume={resume} />
+          </div>
+        </div>
+      </main>
+    </div>
+  );
+}
+
+export default Home;

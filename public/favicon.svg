@@ -1,0 +1,26 @@
+<svg width="34" height="34" viewBox="0 0 34 34" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="miniBodyGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#475569" />
+      <stop offset="100%" stop-color="#1e293b" />
+    </linearGradient>
+  </defs>
+  <!-- Body -->
+  <circle cx="17" cy="21" r="9.5" fill="url(#miniBodyGrad)" />
+  <!-- Hat Brim -->
+  <rect x="6" y="9.5" width="22" height="2.5" rx="0.8" fill="#1e293b" />
+  <!-- Hat Ribbon -->
+  <rect x="10" y="8" width="14" height="1.5" fill="#ea580c" />
+  <!-- Hat Crown -->
+  <rect x="10" y="1" width="14" height="7" rx="1" fill="#1e293b" />
+  <!-- Eyes -->
+  <circle cx="13.5" cy="19" r="2.2" fill="#ffffff" />
+  <circle cx="13.5" cy="19" r="1.1" fill="#0f172a" />
+  <circle cx="20.5" cy="19" r="2.2" fill="#ffffff" />
+  <circle cx="20.5" cy="19" r="1.1" fill="#0f172a" />
+  <!-- Monocle -->
+  <circle cx="20.5" cy="19" r="3.6" stroke="#f59e0b" stroke-width="0.9" fill="none" />
+  <path d="M23.5 21.5 C25 24 24 26 22 28.5" stroke="#f59e0b" stroke-width="0.5" stroke-dasharray="1.2 0.8" fill="none" />
+  <!-- Mustache -->
+  <path d="M 17 23.5 C 13.5 21, 7.5 23.5, 5.5 27 C 7.5 27, 13 25.5, 17 24.5 C 21 25.5, 26.5 27, 28.5 27 C 26.5 23.5, 20.5 21, 17 23.5 Z" fill="#ffffff" />
+</svg>
