@@ -513,13 +513,23 @@
 /* Mobile responsive landing styling */
 @media (max-width: 768px) {
   .landing-header {
-    padding: 1.5rem 2rem;
-    flex-direction: column;
-    gap: 1rem;
+    padding: 1rem 1.5rem !important;
+    flex-direction: column !important;
+    align-items: center !important;
+    gap: 0.75rem !important;
   }
 
   .nav-menu {
-    gap: 1.5rem;
+    gap: 0.8rem 1.2rem !important;
+    flex-direction: row !important;
+    flex-wrap: wrap !important;
+    justify-content: center !important;
+    align-items: center !important;
+    width: auto !important;
+  }
+
+  .landing-hero {
+    padding-top: 180px !important;
   }
 
   .nav-link::before {
@@ -617,10 +627,14 @@
 .preview-wrapper {
   background: white;
   box-shadow: var(--shadow-lg);
-  max-width: 8.5in;
+  width: 816px !important;
+  min-width: 816px !important;
+  max-width: none !important;
+  flex-shrink: 0 !important;
   min-height: 11in;
   margin: 0 auto;
 }
+
 
 /* Editor */
 .resume-editor {
@@ -1100,6 +1114,12 @@
 
   .mobile-tabs {
     display: flex;
+    position: sticky !important;
+    top: 0 !important;
+    z-index: 200 !important;
+    background: var(--surface) !important;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06) !important;
+    border-bottom: 1px solid var(--border) !important;
   }
 
   .panel {
@@ -1464,12 +1484,13 @@ select.input-error {
 }
 
 .about-container {
-  height: 100vh;
+  min-height: 100vh;
+  height: auto;
   background-color: transparent;
   display: flex;
   flex-direction: column;
   position: relative;
-  overflow: hidden;
+  overflow: visible;
 }
 
 .about-main {
@@ -1555,7 +1576,7 @@ select.input-error {
 /* Responsive adjustments */
 @media (max-width: 900px) {
   .about-main {
-    padding: 2rem 1.5rem 0;
+    padding: 180px 1.5rem 0 !important;
   }
 
   .about-split-container {
@@ -1632,7 +1653,7 @@ select.input-error {
 }
 
 .about-slide-item {
-  overflow: hidden !important;
+  overflow-y: auto !important;
 }
 
 /* Slider state-based transitions */
@@ -3331,11 +3352,12 @@ select.input-error {
 /* --- Services Page Layout & Cards --- */
 .services-container {
   min-height: 100vh;
+  height: auto;
   background-color: transparent;
   display: flex;
   flex-direction: column;
   position: relative;
-  overflow: hidden;
+  overflow: visible;
 }
 
 .services-main {
@@ -3444,11 +3466,12 @@ select.input-error {
 /* --- Contact Page Layout & Form Card --- */
 .contact-container {
   min-height: 100vh;
+  height: auto;
   background-color: transparent;
   display: flex;
   flex-direction: column;
   position: relative;
-  overflow: hidden;
+  overflow: visible;
 }
 
 .contact-main {
@@ -3569,7 +3592,7 @@ select.input-error {
 /* Responsive Overrides */
 @media (max-width: 900px) {
   .services-main {
-    padding: 120px 1.5rem 2rem;
+    padding: 180px 1.5rem 2rem !important;
   }
 
   .services-title {
@@ -3582,7 +3605,7 @@ select.input-error {
   }
 
   .contact-main {
-    padding: 120px 1.5rem 2rem;
+    padding: 180px 1.5rem 2rem !important;
   }
 
   .contact-split-container {
@@ -4290,6 +4313,8 @@ select.input-error {
   overflow: hidden;
   position: relative;
   transition: height 0.2s ease;
+  display: flex;
+  justify-content: center;
 }
 
 @media print {
@@ -4300,9 +4325,11 @@ select.input-error {
 }
 
 @media (max-width: 768px) {
+
   /* Dynamic header collapse logic */
   .app.header-collapsed .app-header {
-    margin-top: -190px !important; /* shift the header out of viewport cleanly */
+    margin-top: -190px !important;
+    /* shift the header out of viewport cleanly */
     opacity: 0 !important;
     pointer-events: none !important;
   }
@@ -4318,11 +4345,11 @@ select.input-error {
     row-gap: 12px !important;
     column-gap: 8px !important;
   }
-  
+
   .header-brand {
     flex: 1 !important;
   }
-  
+
   /* header actions always wrap to the next line */
   .header-actions {
     width: 100% !important;
@@ -4336,19 +4363,46 @@ select.input-error {
     justify-content: flex-start !important;
     padding-top: 2px !important;
   }
-  
+
   /* Prevent any panel height calculation issues */
   .panel {
     height: 100% !important;
   }
+
+  .preview-wrapper {
+    width: 816px !important;
+    min-width: 816px !important;
+    max-width: none !important;
+    transform-origin: top center !important;
+  }
+}
+
+@media (max-width: 480px) {
+  .phone-row {
+    flex-wrap: wrap !important;
+  }
+
+  .phone-country {
+    flex: 1 0 100% !important;
+    width: 100% !important;
+  }
+
+  .phone-dial-code {
+    padding: 0 0.5rem 0 0.25rem !important;
+  }
+
+  .phone-number {
+    flex: 1 !important;
+  }
 }
 
 @media (max-width: 500px) {
+
   /* Logo and brand adjustments */
   .logo-brand {
     font-size: 1.5rem !important;
   }
-  
+
   /* Navigation links menu wrap gap */
   .nav-menu {
     gap: 0.8rem !important;
@@ -4356,7 +4410,7 @@ select.input-error {
     flex-wrap: wrap !important;
     justify-content: center !important;
   }
-  
+
   .nav-link {
     font-size: 0.9rem !important;
   }
@@ -4366,12 +4420,12 @@ select.input-error {
     font-size: 2.6rem !important;
     line-height: 1.2 !important;
   }
-  
+
   .about-subtitle {
     font-size: 1.3rem !important;
     line-height: 1.3 !important;
   }
-  
+
   .about-description {
     font-size: 1rem !important;
     line-height: 1.6 !important;
@@ -4383,24 +4437,25 @@ select.input-error {
     font-size: 2.6rem !important;
     line-height: 1.2 !important;
   }
-  
+
   .services-subtitle,
   .contact-subtitle {
     font-size: 1.1rem !important;
     line-height: 1.4 !important;
   }
-  
+
   /* Search input bar on Landing Page */
   .search-bar-pill {
     padding: 5px 5px 5px 16px !important;
   }
-  
+
   .search-input-field {
     font-size: 1rem !important;
   }
-  
+
   /* Save status and badges on Workspace Header */
   .format-badge {
-    display: none !important; /* Hide badge on tiny screens to save space */
+    display: none !important;
+    /* Hide badge on tiny screens to save space */
   }
 }
