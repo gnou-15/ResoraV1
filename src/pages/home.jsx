@@ -7,7 +7,7 @@ import { getTemplateForProfession } from "../data/professionTemplates";
 import { migrateResume, defaultResume } from "../data/defaultResume";
 import { loadResume, loadResumeFromSupabase } from "../services/api";
 import AIScoreWidget from "../components/AIScoreWidget";
-import { analyzeResume } from "../services/aiScorer";
+import { analyzeResume, fetchAPIAnalysis } from "../services/aiScorer";
 
 const PROFESSION_TITLES = {
   it: "IT Resume Builder",
@@ -80,14 +80,21 @@ function Home({ profession, user, onBack }) {
   // Debounced real-time analysis sync whenever resume changes
   useEffect(() => {
     setSyncing(true);
-    const timer = setTimeout(() => {
-      const res = analyzeResume(resume, profession);
-      setAnalysisResult(res);
-      setSyncing(false);
-    }, 600); // 600ms debounce to simulate benchmarking check and avoid lag
+    const timer = setTimeout(async () => {
+      try {
+        const res = await fetchAPIAnalysis(resume, profession);
+        setAnalysisResult(res);
+      } catch (e) {
+        // Fallback already handled inside fetchAPIAnalysis, but logged here
+        console.error("Failed syncing analysis with backend:", e);
+      } finally {
+        setSyncing(false);
+      }
+    }, 600); // 600ms debounce to simulate scan and avoid network lag
 
     return () => clearTimeout(timer);
   }, [resume, profession]);
+
 
   const handleExport = () => {
     // ensure preview is visible
@@ -193,9 +200,9 @@ function Home({ profession, user, onBack }) {
           >
             Export
           </button>
-          <button 
-            type="button" 
-            className="btn btn-ghost" 
+          <button
+            type="button"
+            className="btn btn-ghost"
             onClick={handleReset}
             onMouseEnter={() => setMascotMoodOverride("frantic")}
             onMouseLeave={() => setMascotMoodOverride(null)}

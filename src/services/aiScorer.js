@@ -115,7 +115,6 @@ const MOCK_JOBS = {
  * simulating calculations from LinkedIn / ATS APIs
  */
 export function analyzeResume(resume, profession = 'it') {
-  let score = 0;
   const tips = [];
   const scoreBreakdown = {
     contact: 0,
@@ -138,6 +137,8 @@ export function analyzeResume(resume, profession = 'it') {
     achievements = []
   } = resume;
 
+  const isStudent = resume.userType === 'student';
+
   // 1. CONTACT INFO COMPLETENESS (Max 15 points)
   let contactPoints = 0;
   if (personal.email?.trim()) contactPoints += 3;
@@ -156,10 +157,9 @@ export function analyzeResume(resume, profession = 'it') {
   if (hasPortfolioOrGithub) contactPoints += 3;
   else {
     const label = profession === 'it' ? 'GitHub or portfolio' : 'portfolio or website';
-    tips.push({ id: 'portfolio', text: `Add a links to your ${label} to showcase work`, impact: 3, category: 'contact', type: 'add' });
+    tips.push({ id: 'portfolio', text: `Add a link to your ${label} to showcase work`, impact: 3, category: 'contact', type: 'add' });
   }
   scoreBreakdown.contact = contactPoints;
-  score += contactPoints;
 
   // 2. HEADLINE & TARGET ROLE (Max 10 points)
   let headlinePoints = 0;
@@ -174,7 +174,6 @@ export function analyzeResume(resume, profession = 'it') {
     tips.push({ id: 'headline', text: 'Add a target role headline to capture ATS search filters', impact: 10, category: 'headline', type: 'add' });
   }
   scoreBreakdown.headline = headlinePoints;
-  score += headlinePoints;
 
   // 3. PROFESSIONAL SUMMARY (Max 15 points)
   let summaryPoints = 0;
@@ -199,7 +198,6 @@ export function analyzeResume(resume, profession = 'it') {
     tips.push({ id: 'summary', text: 'Write a professional summary to quickly brief recruiters on your background', impact: 15, category: 'summary', type: 'add' });
   }
   scoreBreakdown.summary = summaryPoints;
-  score += summaryPoints;
 
   // 4. KEY SKILLS ALIGNMENT (Max 20 points)
   let skillsPoints = 0;
@@ -213,7 +211,6 @@ export function analyzeResume(resume, profession = 'it') {
       }
     });
   } else {
-    // Other professions use a comma-separated key skills text or array
     const rawSkills = resume.skills || '';
     if (typeof rawSkills === 'string') {
       skillsCount = rawSkills.split(',').map(s => s.trim()).filter(Boolean).length;
@@ -221,7 +218,6 @@ export function analyzeResume(resume, profession = 'it') {
       skillsCount = rawSkills.length;
     }
 
-    // Include sub-lists if healthcare/management/edu
     if (profession === 'healthcare' && Array.isArray(resume.clinicalSkills)) {
       skillsCount += resume.clinicalSkills.filter(Boolean).length;
     }
@@ -245,109 +241,242 @@ export function analyzeResume(resume, profession = 'it') {
     tips.push({ id: 'skills', text: 'Populate your skills list to enable industry match ranking calculations', impact: 20, category: 'skills', type: 'add' });
   }
   scoreBreakdown.skills = skillsPoints;
-  score += skillsPoints;
 
   // 5. WORK EXPERIENCE BULLETS & QUALITY (Max 25 points)
   let expPoints = 0;
   const filledExp = experience.filter(e => e.company || e.title);
+  
+  // Collect metrics statistics and list of bullets that need metrics
+  let totalBullets = 0;
+  let bulletsWithMetrics = 0;
+  const bulletsNoMetricsList = [];
 
-  if (filledExp.length > 0) {
-    expPoints += 10; // has experience
-
-    // Check bullets
-    let totalBullets = 0;
-    let bulletsWithMetrics = 0;
-    const bulletsNoMetricsList = [];
-
-    filledExp.forEach(job => {
-      const jobBullets = (job.bullets || []).filter(b => b && b.trim());
-      totalBullets += jobBullets.length;
-
-      jobBullets.forEach((bullet, idx) => {
-        if (hasMetrics(bullet)) {
-          bulletsWithMetrics++;
-        } else {
-          bulletsNoMetricsList.push({
-            jobId: job.id,
-            company: job.company || 'Current Role',
-            bulletIndex: idx,
-            text: bullet
-          });
-        }
-      });
+  filledExp.forEach(job => {
+    const jobBullets = (job.bullets || []).filter(b => b && b.trim());
+    totalBullets += jobBullets.length;
+    
+    jobBullets.forEach((bullet, idx) => {
+      if (hasMetrics(bullet)) {
+        bulletsWithMetrics++;
+      } else {
+        bulletsNoMetricsList.push({
+          jobId: job.id,
+          company: job.company || 'Current Role',
+          bulletIndex: idx,
+          text: bullet
+        });
+      }
     });
+  });
 
-    // Score bullets count
-    if (totalBullets >= 3) {
-      expPoints += 5;
-    } else {
-      tips.push({ id: 'exp_bullets_count', text: 'Add more descriptive bullet points under your work experiences (minimum 3 total)', impact: 5, category: 'experience', type: 'improve' });
-    }
+  const metricPercentage = totalBullets > 0 ? (bulletsWithMetrics / totalBullets) : 0;
 
-    // Score metrics presence (10 points max)
-    if (totalBullets > 0) {
-      const metricPercentage = bulletsWithMetrics / totalBullets;
+  if (isStudent) {
+    // --- Student Experience Rubric (Max 25 points) ---
+    if (filledExp.length > 0) {
+      expPoints += 10; // has experience base
+
+      // Bullets count check (min 2 bullets)
+      if (totalBullets >= 2) {
+        expPoints += 5;
+      } else {
+        tips.push({ id: 'exp_bullets_count', text: 'Add more descriptive bullet points under your experiences (minimum 2 total)', impact: 5, category: 'experience', type: 'improve' });
+      }
+
+      // Metrics check
       if (metricPercentage >= 0.5) {
         expPoints += 10;
       } else if (metricPercentage >= 0.2) {
         expPoints += 6;
-        tips.push({
-          id: 'exp_metrics_low',
-          text: 'Fewer than 50% of your experience bullets contain quantifiable results (%, numbers). Add metrics to prove impact!',
-          impact: 4,
-          category: 'experience',
+        tips.push({ 
+          id: 'exp_metrics_low', 
+          text: 'Add quantifiable metrics to your work or student Org bullets to prove impact!', 
+          impact: 4, 
+          category: 'experience', 
           type: 'improve',
           fixable: true,
           bulletsToFix: bulletsNoMetricsList
         });
       } else {
         expPoints += 2;
-        tips.push({
-          id: 'exp_metrics_missing',
-          text: 'No quantifiable results (percentages, savings, scales) found in work bullets. Recruiter ATS tools score these highly',
-          impact: 8,
-          category: 'experience',
+        tips.push({ 
+          id: 'exp_metrics_missing', 
+          text: 'Incorporate quantifiable results (percentages, sizes, frequencies) in experience bullets.', 
+          impact: 8, 
+          category: 'experience', 
           type: 'improve',
           fixable: true,
           bulletsToFix: bulletsNoMetricsList
         });
       }
+    } else {
+      // Students get a default 12 points floor so lack of formal work history doesn't tank their score
+      expPoints = 12;
+      tips.push({ 
+        id: 'experience', 
+        text: 'Add internships, part-time jobs, or school Org leadership roles to demonstrate initial experience.', 
+        impact: 13, 
+        category: 'experience', 
+        type: 'add' 
+      });
     }
   } else {
-    tips.push({ id: 'experience', text: 'Add at least one relevant work experience role (use internships or project roles if student)', impact: 25, category: 'experience', type: 'add' });
+    // --- Professional Experience Rubric (Max 25 points) ---
+    if (filledExp.length > 0) {
+      expPoints += 10; // has experience base
+
+      // Career depth: Multiple roles preferred
+      if (filledExp.length >= 2) {
+        expPoints += 5;
+      } else {
+        tips.push({ id: 'exp_roles_count', text: 'Add previous professional roles to demonstrate career progression.', impact: 5, category: 'experience', type: 'improve' });
+      }
+
+      // Bullets depth (min 3 per role or 5 total)
+      if (totalBullets >= 5) {
+        expPoints += 5;
+      } else {
+        tips.push({ id: 'exp_bullets_count', text: 'Add more accomplishments and bullet points under your professional experiences.', impact: 5, category: 'experience', type: 'improve' });
+      }
+
+      // Metrics checks
+      if (metricPercentage >= 0.5) {
+        expPoints += 5;
+      } else if (metricPercentage >= 0.2) {
+        expPoints += 3;
+        tips.push({ 
+          id: 'exp_metrics_low', 
+          text: 'Fewer than 50% of your experience bullets contain quantifiable results (%, numbers). Add metrics to prove impact!', 
+          impact: 2, 
+          category: 'experience', 
+          type: 'improve',
+          fixable: true,
+          bulletsToFix: bulletsNoMetricsList
+        });
+      } else {
+        expPoints += 1;
+        tips.push({ 
+          id: 'exp_metrics_missing', 
+          text: 'Incorporate quantifiable results (percentages, revenue, savings, team scale) into your work experience bullets.', 
+          impact: 4, 
+          category: 'experience', 
+          type: 'improve',
+          fixable: true,
+          bulletsToFix: bulletsNoMetricsList
+        });
+      }
+    } else {
+      // Professionals get no floor points if experience is empty
+      expPoints = 0;
+      tips.push({ 
+        id: 'experience', 
+        text: 'Add your work experience history to demonstrate your career track record.', 
+        impact: 25, 
+        category: 'experience', 
+        type: 'add' 
+      });
+    }
   }
   scoreBreakdown.experience = expPoints;
-  score += expPoints;
 
-  // 6. PROJECTS & CERTIFICATIONS & EXTRA (Max 15 points)
-  let projectPoints = 0;
+  // 6. PROJECTS & CERTIFICATIONS & EXTRA (Max 15 points in breakdown)
+  let projectsBreakdownPoints = 0;
   const filledProjects = projects.filter(p => p.name);
-  if (filledProjects.length > 0) {
-    projectPoints += 5;
-    const hasStack = filledProjects.some(p => p.stack?.trim());
-    if (hasStack) projectPoints += 3;
-    else tips.push({ id: 'proj_stack', text: 'Specify a tech stack for each of your technical projects', impact: 3, category: 'projects', type: 'improve' });
+  const filledEducation = education.filter(e => e.school || e.degree);
+
+  if (isStudent) {
+    // Student Rubric: Education (15) + Projects (10) + Achievements (5) + Certs (5) = 35 total raw points
+    let studentRawExtra = 0;
+
+    // Education
+    if (filledEducation.length > 0) {
+      studentRawExtra += 5;
+      const hasGPA = filledEducation.some(e => e.gpa?.trim());
+      if (hasGPA) studentRawExtra += 5;
+      else tips.push({ id: 'edu_gpa', text: 'Include your GPA if it is 3.0 or higher.', impact: 5, category: 'education', type: 'improve' });
+
+      const hasCoursework = filledEducation.some(e => e.coursework?.trim());
+      if (hasCoursework) studentRawExtra += 5;
+      else tips.push({ id: 'edu_coursework', text: 'Add relevant coursework to showcase your academic focus.', impact: 5, category: 'education', type: 'improve' });
+    } else {
+      tips.push({ id: 'education', text: 'Add your university or college education details.', impact: 15, category: 'education', type: 'add' });
+    }
+
+    // Projects
+    if (filledProjects.length > 0) {
+      studentRawExtra += 5;
+      const hasStack = filledProjects.some(p => p.stack?.trim());
+      if (hasStack) studentRawExtra += 2;
+      else tips.push({ id: 'proj_stack', text: 'Specify a tech stack for each of your projects', impact: 2, category: 'projects', type: 'improve' });
+
+      const hasBullets = filledProjects.some(p => p.bullets?.some(b => b && b.trim()));
+      if (hasBullets) studentRawExtra += 3;
+    } else {
+      tips.push({ id: 'projects', text: 'Add relevant projects to showcase practical application of your skills.', impact: 10, category: 'projects', type: 'add' });
+    }
+
+    // Achievements
+    if (achievements.filter(a => a.title).length > 0) {
+      studentRawExtra += 5;
+    } else {
+      tips.push({ id: 'achievements', text: 'Include honors, scholarship recognition, or coding competition achievements.', impact: 5, category: 'projects', type: 'add' });
+    }
+
+    // Certifications
+    if (certifications.filter(c => c.name).length > 0) {
+      studentRawExtra += 5;
+    }
+
+    // Scale 35 max raw points to 15 max breakdown points
+    projectsBreakdownPoints = Math.round((studentRawExtra / 35) * 15);
+
   } else {
-    tips.push({ id: 'projects', text: 'Add relevant projects to showcase practical application of your skills', impact: 8, category: 'projects', type: 'add' });
+    // Professional Rubric: Education (5) + Projects (10) + Certs (10) = 25 total raw points
+    // Achievements/GPA/Coursework are hidden/ignored entirely
+    let profRawExtra = 0;
+
+    // Education
+    if (filledEducation.length > 0) {
+      profRawExtra += 5;
+    } else {
+      tips.push({ id: 'education', text: 'Add your university or college education details.', impact: 5, category: 'education', type: 'add' });
+    }
+
+    // Projects
+    if (filledProjects.length > 0) {
+      profRawExtra += 5;
+      const hasStack = filledProjects.some(p => p.stack?.trim());
+      if (hasStack) profRawExtra += 2;
+      else tips.push({ id: 'proj_stack', text: 'Specify a tech stack for each of your projects', impact: 2, category: 'projects', type: 'improve' });
+
+      const hasBullets = filledProjects.some(p => p.bullets?.some(b => b && b.trim()));
+      if (hasBullets) profRawExtra += 3;
+    } else {
+      tips.push({ id: 'projects', text: 'Add relevant projects to showcase practical application of your skills.', impact: 10, category: 'projects', type: 'add' });
+    }
+
+    // Certifications
+    if (certifications.filter(c => c.name).length > 0) {
+      profRawExtra += 10;
+    } else {
+      tips.push({ id: 'certifications', text: 'Add industry-standard certifications to prove expertise.', impact: 10, category: 'projects', type: 'add' });
+    }
+
+    // Scale 25 max raw points to 15 max breakdown points
+    projectsBreakdownPoints = Math.round((profRawExtra / 25) * 15);
   }
+  scoreBreakdown.projects = projectsBreakdownPoints;
 
-  if (certifications.filter(c => c.name).length > 0) {
-    projectPoints += 4;
-  } else {
-    tips.push({ id: 'certifications', text: 'Add standard industry certifications (proves dedication to professional growth)', impact: 4, category: 'projects', type: 'add' });
-  }
+  // Calculate final score as the sum of all scaled scoreBreakdown values
+  const scoreSum = 
+    scoreBreakdown.contact +
+    scoreBreakdown.headline +
+    scoreBreakdown.summary +
+    scoreBreakdown.skills +
+    scoreBreakdown.experience +
+    scoreBreakdown.projects;
 
-  if (achievements.filter(a => a.title).length > 0) {
-    projectPoints += 3;
-  } else if (resume.userType === 'student') {
-    tips.push({ id: 'achievements', text: 'Include honors, scholarship recognition, or coding competition achievements', impact: 3, category: 'projects', type: 'add' });
-  }
-
-  scoreBreakdown.projects = projectPoints;
-  score += projectPoints;
-
-  // Cap final score at 100% just in case of rounding errors
-  const finalScore = Math.max(15, Math.min(100, Math.round(score)));
+  const finalScore = Math.max(15, Math.min(100, Math.round(scoreSum)));
 
   // Generate percentiles and placement prompts
   let placement = "Needs Optimization";
