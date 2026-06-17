@@ -76,6 +76,59 @@ function Home({ profession, user, onBack }) {
   const [analysisResult, setAnalysisResult] = useState(() => analyzeResume(defaultResume, profession));
   const [syncing, setSyncing] = useState(false);
   const [mascotMoodOverride, setMascotMoodOverride] = useState(null);
+  const [previewScale, setPreviewScale] = useState(1);
+  const [headerCollapsed, setHeaderCollapsed] = useState(false);
+
+  useEffect(() => {
+    const handleResize = () => {
+      const panel = document.querySelector(".panel-preview");
+      if (panel) {
+        const padding = 48; // padding and spacing tolerance
+        const availableWidth = panel.clientWidth - padding;
+        const targetWidth = 816; // 8.5in in pixels
+        if (availableWidth < targetWidth && availableWidth > 0) {
+          setPreviewScale(availableWidth / targetWidth);
+        } else {
+          setPreviewScale(1);
+        }
+      }
+    };
+
+    window.addEventListener("resize", handleResize);
+    const timer = setTimeout(handleResize, 150);
+
+    return () => {
+      window.removeEventListener("resize", handleResize);
+      clearTimeout(timer);
+    };
+  }, [mobileTab]);
+
+  useEffect(() => {
+    setHeaderCollapsed(false); // reset header on tab switch
+
+    const panels = document.querySelectorAll(".panel");
+    const handleScroll = (e) => {
+      const scrollTop = e.target.scrollTop;
+      // If user scrolls down more than 40px, collapse the header on mobile
+      if (scrollTop > 40) {
+        setHeaderCollapsed(true);
+      } else {
+        setHeaderCollapsed(false);
+      }
+    };
+
+    panels.forEach((panel) => {
+      panel.addEventListener("scroll", handleScroll);
+    });
+
+    return () => {
+      panels.forEach((panel) => {
+        panel.removeEventListener("scroll", handleScroll);
+      });
+    };
+  }, [mobileTab]);
+
+
 
   // Debounced real-time analysis sync whenever resume changes
   useEffect(() => {
@@ -132,7 +185,8 @@ function Home({ profession, user, onBack }) {
     resume.userType === "student" ? "theme-student" : "theme-professional";
 
   return (
-    <div className={`app ${themeClass} theme-skeuo`}>
+    <div className={`app ${themeClass} theme-skeuo ${headerCollapsed ? "header-collapsed" : ""}`}>
+
       <header className="app-header">
         <div className="header-brand" style={{ display: "flex", flexDirection: "row", alignItems: "center", gap: "8px" }}>
           <svg className="logo-svg" width="28" height="28" viewBox="0 0 34 34" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -258,9 +312,12 @@ function Home({ profession, user, onBack }) {
           <div className="preview-toolbar">
             <span>Live preview — optimized for one page when printed</span>
           </div>
-          <div className="preview-wrapper">
-            <ResumePreview resume={resume} profession={profession} />
+          <div className="preview-container" style={{ height: `${1056 * previewScale}px`, overflow: "hidden", width: "100%", position: "relative" }}>
+            <div className="preview-wrapper" style={{ transform: `scale(${previewScale})`, transformOrigin: "top center" }}>
+              <ResumePreview resume={resume} profession={profession} />
+            </div>
           </div>
+
         </div>
       </main>
     </div>
