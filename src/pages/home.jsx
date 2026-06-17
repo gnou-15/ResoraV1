@@ -252,7 +252,7 @@ function Home({ profession, user, onBack }) {
             <span>Live preview — optimized for one page when printed</span>
           </div>
           <div className="preview-wrapper">
-            <ResumePreview resume={resume} />
+            <ResumePreview resume={resume} profession={profession} />
           </div>
         </div>
       </main>

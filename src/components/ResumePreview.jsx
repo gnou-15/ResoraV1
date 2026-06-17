@@ -44,7 +44,7 @@ function SkillBlock({ label, value }) {
   );
 }
 
-function ResumePreview({ resume }) {
+function ResumePreview({ resume, profession }) {
   const {
     personal,
     headline,
@@ -143,6 +143,165 @@ function ResumePreview({ resume }) {
     return 0;
   });
 
+  // Define resume section fragments
+  const summarySection = hasContent(summary) && (
+    <section className="preview-section">
+      <h2>Professional Summary</h2>
+      <p className="summary-text">{summary}</p>
+    </section>
+  );
+
+  const skillsSection = hasSkills && (
+    <section className="preview-section">
+      <h2>Technical Skills</h2>
+      <SkillBlock label="Languages" value={technicalSkills.languages} />
+      <SkillBlock label="Frameworks" value={technicalSkills.frameworks} />
+      <SkillBlock label="Tools" value={technicalSkills.tools} />
+      <SkillBlock label="Databases" value={technicalSkills.databases} />
+      <SkillBlock label="Cloud" value={technicalSkills.cloud} />
+    </section>
+  );
+
+  const educationSection = filledEducation.length > 0 && (
+    <section className="preview-section">
+      <h2>Education</h2>
+      {filledEducation.map((edu) => (
+        <div key={edu.id} className="preview-entry">
+          <div className="entry-header">
+            <div>
+              <h3>
+                {[edu.degree, edu.field].filter(hasContent).join(" in ") ||
+                  "Degree"}
+                {hasContent(edu.gpa) && ` | GPA: ${edu.gpa}`}
+              </h3>
+              <p className="entry-sub">{edu.school}</p>
+              {hasContent(edu.coursework) && (
+                <p className="entry-detail">
+                  <strong>Relevant Coursework:</strong> {edu.coursework}
+                </p>
+              )}
+            </div>
+            {hasContent(edu.endDate) && (
+              <span className="entry-date">{edu.endDate}</span>
+            )}
+          </div>
+        </div>
+      ))}
+    </section>
+  );
+
+  const projectSectionTitle =
+    profession === "it"
+      ? "Technical Projects"
+      : profession === "healthcare"
+        ? "Clinical Experience"
+        : profession === "education"
+          ? "Teaching Projects"
+          : "Project Experience";
+
+  const projectsSection = filledProjects.length > 0 && (
+    <section className="preview-section">
+      <h2>{projectSectionTitle}</h2>
+      {filledProjects.map((proj) => (
+        <div key={proj.id} className="preview-entry">
+          <div className="entry-header">
+            <div>
+              <h3>
+                {proj.name || "Project"}
+                {hasContent(proj.link) && ` | ${proj.link}`}
+              </h3>
+              {hasContent(proj.stack) && (
+                <p className="entry-sub">
+                  <strong>Tech Stack:</strong> {proj.stack}
+                </p>
+              )}
+            </div>
+          </div>
+          {proj.bullets.filter(hasContent).length > 0 && (
+            <ul>
+              {proj.bullets.filter(hasContent).map((bullet, i) => (
+                <li key={i}>{bullet}</li>
+              ))}
+            </ul>
+          )}
+        </div>
+      ))}
+    </section>
+  );
+
+  const achievementsSection = userType === "student" && sortedAchievements.length > 0 && (
+    <section className="preview-section">
+      <h2>Achievements</h2>
+      {sortedAchievements.map((ach) => (
+        <div key={ach.id} className="preview-entry">
+          <div className="entry-header">
+            <div>
+              <h3>
+                {ach.title || "Achievement"}
+                {hasContent(ach.distinction) && ` — ${ach.distinction}`}
+              </h3>
+              {hasContent(ach.organization) && (
+                <p className="entry-sub">{ach.organization}</p>
+              )}
+            </div>
+            {hasContent(ach.date) && (
+              <span className="entry-date">{ach.date}</span>
+            )}
+          </div>
+          {ach.bullets?.filter(hasContent).length > 0 && (
+            <ul>
+              {ach.bullets.filter(hasContent).map((b, i) => (
+                <li key={i}>{b}</li>
+              ))}
+            </ul>
+          )}
+        </div>
+      ))}
+    </section>
+  );
+
+  const experienceSection = sortedExperience.length > 0 && (
+    <section className="preview-section">
+      <h2>Experience</h2>
+      {sortedExperience.map((exp) => (
+        <div key={exp.id} className="preview-entry">
+          <div className="entry-header">
+            <div>
+              <h3>{exp.title || "Job Title"}</h3>
+              <p className="entry-sub">
+                {exp.company}
+                {hasContent(exp.location) && ` | ${exp.location}`}
+              </p>
+            </div>
+            <span className="entry-date">
+              {formatDateRange(exp.startDate, exp.endDate, exp.current)}
+            </span>
+          </div>
+          {exp.bullets.filter(hasContent).length > 0 && (
+            <ul>
+              {exp.bullets.filter(hasContent).map((bullet, i) => (
+                <li key={i}>{bullet}</li>
+              ))}
+            </ul>
+          )}
+        </div>
+      ))}
+    </section>
+  );
+
+  const certificationsSection = filledCerts.length > 0 && (
+    <section className="preview-section">
+      <h2>Certifications</h2>
+      {filledCerts.map((cert) => (
+        <p key={cert.id} className="cert-line">
+          <strong>{cert.name || "Certification"}</strong>
+          {hasContent(cert.issuer) && ` — ${cert.issuer}`}
+          {hasContent(cert.date) && ` (${cert.date})`}
+        </p>
+      ))}
+    </section>
+  );
+
   return (
     <article className="resume-preview resume-ats">
       <header className="preview-header">
@@ -151,153 +310,24 @@ function ResumePreview({ resume }) {
         <ContactLine personal={personal} />
       </header>
 
-      {hasContent(summary) && (
-        <section className="preview-section">
-          <h2>Professional Summary</h2>
-          <p className="summary-text">{summary}</p>
-        </section>
-      )}
+      {summarySection}
+      {skillsSection}
 
-      {hasSkills && (
-        <section className="preview-section">
-          <h2>Technical Skills</h2>
-          <SkillBlock label="Languages" value={technicalSkills.languages} />
-          <SkillBlock label="Frameworks" value={technicalSkills.frameworks} />
-          <SkillBlock label="Tools" value={technicalSkills.tools} />
-          <SkillBlock label="Databases" value={technicalSkills.databases} />
-          <SkillBlock label="Cloud" value={technicalSkills.cloud} />
-        </section>
-      )}
-
-      {filledEducation.length > 0 && (
-        <section className="preview-section">
-          <h2>Education</h2>
-          {filledEducation.map((edu) => (
-            <div key={edu.id} className="preview-entry">
-              <div className="entry-header">
-                <div>
-                  <h3>
-                    {[edu.degree, edu.field].filter(hasContent).join(" in ") ||
-                      "Degree"}
-                    {hasContent(edu.gpa) && ` | GPA: ${edu.gpa}`}
-                  </h3>
-                  <p className="entry-sub">{edu.school}</p>
-                  {hasContent(edu.coursework) && (
-                    <p className="entry-detail">
-                      <strong>Relevant Coursework:</strong> {edu.coursework}
-                    </p>
-                  )}
-                </div>
-                {hasContent(edu.endDate) && (
-                  <span className="entry-date">{edu.endDate}</span>
-                )}
-              </div>
-            </div>
-          ))}
-        </section>
-      )}
-
-      {filledProjects.length > 0 && (
-        <section className="preview-section">
-          <h2>Technical Projects</h2>
-          {filledProjects.map((proj) => (
-            <div key={proj.id} className="preview-entry">
-              <div className="entry-header">
-                <div>
-                  <h3>
-                    {proj.name || "Project"}
-                    {hasContent(proj.link) && ` | ${proj.link}`}
-                  </h3>
-                  {hasContent(proj.stack) && (
-                    <p className="entry-sub">
-                      <strong>Tech Stack:</strong> {proj.stack}
-                    </p>
-                  )}
-                </div>
-              </div>
-              {proj.bullets.filter(hasContent).length > 0 && (
-                <ul>
-                  {proj.bullets.filter(hasContent).map((bullet, i) => (
-                    <li key={i}>{bullet}</li>
-                  ))}
-                </ul>
-              )}
-            </div>
-          ))}
-        </section>
-      )}
-
-      {userType === "student" && sortedAchievements.length > 0 && (
-        <section className="preview-section">
-          <h2>Achievements</h2>
-          {sortedAchievements.map((ach) => (
-            <div key={ach.id} className="preview-entry">
-              <div className="entry-header">
-                <div>
-                  <h3>
-                    {ach.title || "Achievement"}
-                    {hasContent(ach.distinction) && ` — ${ach.distinction}`}
-                  </h3>
-                  {hasContent(ach.organization) && (
-                    <p className="entry-sub">{ach.organization}</p>
-                  )}
-                </div>
-                {hasContent(ach.date) && (
-                  <span className="entry-date">{ach.date}</span>
-                )}
-              </div>
-              {ach.bullets?.filter(hasContent).length > 0 && (
-                <ul>
-                  {ach.bullets.filter(hasContent).map((b, i) => (
-                    <li key={i}>{b}</li>
-                  ))}
-                </ul>
-              )}
-            </div>
-          ))}
-        </section>
-      )}
-
-      {sortedExperience.length > 0 && (
-        <section className="preview-section">
-          <h2>Experience</h2>
-          {sortedExperience.map((exp) => (
-            <div key={exp.id} className="preview-entry">
-              <div className="entry-header">
-                <div>
-                  <h3>{exp.title || "Job Title"}</h3>
-                  <p className="entry-sub">
-                    {exp.company}
-                    {hasContent(exp.location) && ` | ${exp.location}`}
-                  </p>
-                </div>
-                <span className="entry-date">
-                  {formatDateRange(exp.startDate, exp.endDate, exp.current)}
-                </span>
-              </div>
-              {exp.bullets.filter(hasContent).length > 0 && (
-                <ul>
-                  {exp.bullets.filter(hasContent).map((bullet, i) => (
-                    <li key={i}>{bullet}</li>
-                  ))}
-                </ul>
-              )}
-            </div>
-          ))}
-        </section>
-      )}
-
-      {filledCerts.length > 0 && (
-        <section className="preview-section">
-          <h2>Certifications</h2>
-          {filledCerts.map((cert) => (
-            <p key={cert.id} className="cert-line">
-              <strong>{cert.name || "Certification"}</strong>
-              {hasContent(cert.issuer) && ` — ${cert.issuer}`}
-              {hasContent(cert.date) && ` (${cert.date})`}
-            </p>
-          ))}
-        </section>
+      {userType === "student" ? (
+        <>
+          {educationSection}
+          {projectsSection}
+          {achievementsSection}
+          {experienceSection}
+          {certificationsSection}
+        </>
+      ) : (
+        <>
+          {experienceSection}
+          {projectsSection}
+          {educationSection}
+          {certificationsSection}
+        </>
       )}
     </article>
   );

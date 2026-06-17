@@ -6,8 +6,8 @@
  */
 
 const ACTION_VERBS = [
-  'developed', 'led', 'designed', 'managed', 'optimized', 'built', 'created', 
-  'implemented', 'improved', 'increased', 'decreased', 'delivered', 'automated', 
+  'developed', 'led', 'designed', 'managed', 'optimized', 'built', 'created',
+  'implemented', 'improved', 'increased', 'decreased', 'delivered', 'automated',
   'spearheaded', 'coordinated', 'engineered', 'launched', 'formulated', 'facilitated',
   'administered', 'structured', 'executed', 'designed', 'directed', 'reduced'
 ];
@@ -26,7 +26,7 @@ function hasMetrics(text) {
   const hasNumber = /\d+/.test(text);
   const hasMetricSymbol = /[%$]/.test(text);
   const hasMetricKeywords = /\b(percent|dollars|million|thousand|users|hours|weeks|months|years|increase|decrease|growth|reduction|revenue|speed|latency)\b/i.test(text);
-  
+
   return hasNumber || hasMetricSymbol || (hasNumber && hasMetricKeywords);
 }
 
@@ -65,16 +65,16 @@ const METRIC_TEMPLATES = {
 // Generate smart suggestions to add metrics to a bullet point
 export function getMetricSuggestions(bulletText, profession = 'it') {
   const templates = METRIC_TEMPLATES[profession] || METRIC_TEMPLATES.it;
-  
+
   // Pick random values to populate templates realistically
   const metrics = [15, 25, 40, 80, 5, 10];
   const scales = [100, 500, 10, 3, 20, 50];
-  
+
   return templates.map((template, idx) => {
     const m = metrics[idx % metrics.length];
     const s = scales[idx % scales.length];
     const textSnippet = template.replace('{metric}', m).replace('{scale}', s);
-    
+
     // Smooth transition: remove trailing period if it exists in original text
     const cleanBullet = bulletText.trim().replace(/\.$/, '');
     return {
@@ -250,7 +250,7 @@ export function analyzeResume(resume, profession = 'it') {
   // 5. WORK EXPERIENCE BULLETS & QUALITY (Max 25 points)
   let expPoints = 0;
   const filledExp = experience.filter(e => e.company || e.title);
-  
+
   if (filledExp.length > 0) {
     expPoints += 10; // has experience
 
@@ -262,7 +262,7 @@ export function analyzeResume(resume, profession = 'it') {
     filledExp.forEach(job => {
       const jobBullets = (job.bullets || []).filter(b => b && b.trim());
       totalBullets += jobBullets.length;
-      
+
       jobBullets.forEach((bullet, idx) => {
         if (hasMetrics(bullet)) {
           bulletsWithMetrics++;
@@ -291,22 +291,22 @@ export function analyzeResume(resume, profession = 'it') {
         expPoints += 10;
       } else if (metricPercentage >= 0.2) {
         expPoints += 6;
-        tips.push({ 
-          id: 'exp_metrics_low', 
-          text: 'Fewer than 50% of your experience bullets contain quantifiable results (%, numbers). Add metrics to prove impact!', 
-          impact: 4, 
-          category: 'experience', 
+        tips.push({
+          id: 'exp_metrics_low',
+          text: 'Fewer than 50% of your experience bullets contain quantifiable results (%, numbers). Add metrics to prove impact!',
+          impact: 4,
+          category: 'experience',
           type: 'improve',
           fixable: true,
           bulletsToFix: bulletsNoMetricsList
         });
       } else {
         expPoints += 2;
-        tips.push({ 
-          id: 'exp_metrics_missing', 
-          text: 'No quantifiable results (percentages, savings, scales) found in work bullets. Recruiter ATS tools score these highly', 
-          impact: 8, 
-          category: 'experience', 
+        tips.push({
+          id: 'exp_metrics_missing',
+          text: 'No quantifiable results (percentages, savings, scales) found in work bullets. Recruiter ATS tools score these highly',
+          impact: 8,
+          category: 'experience',
           type: 'improve',
           fixable: true,
           bulletsToFix: bulletsNoMetricsList
@@ -342,7 +342,7 @@ export function analyzeResume(resume, profession = 'it') {
   } else if (resume.userType === 'student') {
     tips.push({ id: 'achievements', text: 'Include honors, scholarship recognition, or coding competition achievements', impact: 3, category: 'projects', type: 'add' });
   }
-  
+
   scoreBreakdown.projects = projectPoints;
   score += projectPoints;
 
@@ -387,7 +387,7 @@ export function analyzeResume(resume, profession = 'it') {
   // Calculate relative match scores dynamically based on user score
   const calibratedJobs = jobs.map(job => {
     // Map job match score relative to user's overall resume score
-    const userOffset = Math.round((finalScore - 50) * 0.4); 
+    const userOffset = Math.round((finalScore - 50) * 0.4);
     const dynamicMatch = Math.min(99, Math.max(35, job.matchScore + userOffset));
     return {
       ...job,
