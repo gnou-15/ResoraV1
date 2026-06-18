@@ -364,7 +364,7 @@ export default function Auth({ user, onNavigate, onSuccessNavigate }) {
             {success ? (
               <div className="auth-success-screen animate-fade-in">
                 {user && (!user.user_metadata?.first_name || !user.user_metadata?.last_name) ? (
-                  <form onSubmit={handleNameSubmit} style={{ width: "100%" }}>
+                  <form onSubmit={handleNameSubmit} style={{ width: "100%", display: "flex", flexDirection: "column", alignItems: "center" }}>
                     <div className="success-icon-badge">
                       <svg viewBox="0 0 24 24" width="48" height="48">
                         <circle cx="12" cy="12" r="10" fill="#ffedd5" />
@@ -387,18 +387,19 @@ export default function Auth({ user, onNavigate, onSuccessNavigate }) {
                       borderRadius: "8px",
                       marginBottom: "1.2rem",
                       lineHeight: "1.45",
-                      textAlign: "left"
+                      textAlign: "left",
+                      width: "100%"
                     }}>
                       <strong>Notice:</strong> Your name will be automatically placed in the resume builder and <strong>cannot be edited later</strong>. Please make sure it is correct.
                     </div>
 
                     {nameErrors.form && (
-                      <div className="auth-error-alert" style={{ padding: "0.8rem", backgroundColor: "#fef2f2", border: "1px solid #fca5a5", color: "#b91c1c", fontSize: "0.88rem", borderRadius: "6px", marginBottom: "1.2rem", textAlign: "left" }}>
+                      <div className="auth-error-alert" style={{ padding: "0.8rem", backgroundColor: "#fef2f2", border: "1px solid #fca5a5", color: "#b91c1c", fontSize: "0.88rem", borderRadius: "6px", marginBottom: "1.2rem", textAlign: "left", width: "100%" }}>
                         {nameErrors.form}
                       </div>
                     )}
 
-                    <div style={{ display: "flex", gap: "1rem", marginBottom: "1rem" }}>
+                    <div style={{ display: "flex", gap: "1rem", marginBottom: "1rem", width: "100%" }}>
                       <div className="auth-input-group" style={{ flex: 1, marginBottom: 0, textAlign: "left" }}>
                         <label className="auth-label">First Name <span className="req">*</span></label>
                         <input
@@ -431,7 +432,7 @@ export default function Auth({ user, onNavigate, onSuccessNavigate }) {
                       </div>
                     </div>
 
-                    <button type="submit" className="auth-btn-primary" disabled={updatingName} style={{ marginTop: "0.5rem" }}>
+                    <button type="submit" className="auth-btn-primary" disabled={updatingName} style={{ marginTop: "0.5rem", width: "100%" }}>
                       {updatingName ? (
                         <span className="auth-spinner"></span>
                       ) : (
