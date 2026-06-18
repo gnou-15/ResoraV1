@@ -10,10 +10,26 @@ import {
 } from '../services/api'
 
 export function useResume(profession, user) {
-  const [resume, setResume] = useState(() => {
+  const [resume, setResumeRaw] = useState(() => {
     if (user) return defaultResume;
     return migrateResume(loadResume(profession));
   })
+
+  const setResume = useCallback((value) => {
+    setResumeRaw((prev) => {
+      let next = typeof value === "function" ? value(prev) : value;
+      if (user) {
+        next = {
+          ...next,
+          personal: {
+            ...(next.personal || {}),
+            fullName: user.user_metadata?.full_name || (next.personal && next.personal.fullName) || "",
+          },
+        };
+      }
+      return next;
+    });
+  }, [user]);
   const [loadedProfession, setLoadedProfession] = useState(profession)
   const [saved, setSaved] = useState(true)
   const [isInitialized, setIsInitialized] = useState(false)
@@ -52,7 +68,7 @@ export function useResume(profession, user) {
     return () => {
       active = false;
     };
-  }, [profession, user]);
+  }, [profession, user, setResume]);
 
   useEffect(() => {
     // Only save if the loaded resume state matches the active profession and is initialized
@@ -94,7 +110,7 @@ export function useResume(profession, user) {
       ...prev,
       personal: { ...prev.personal, [field]: value },
     }))
-  }, [])
+  }, [setResume])
 
   const updateLocation = useCallback((field, value) => {
     setResume((prev) => ({
@@ -104,26 +120,26 @@ export function useResume(profession, user) {
         location: { ...prev.personal.location, [field]: value },
       },
     }))
-  }, [])
+  }, [setResume])
 
   const updateHeadline = useCallback((value) => {
     setResume((prev) => ({ ...prev, headline: value }))
-  }, [])
+  }, [setResume])
 
   const updateSummary = useCallback((value) => {
     setResume((prev) => ({ ...prev, summary: value }))
-  }, [])
+  }, [setResume])
 
   const updateTechnicalSkill = useCallback((key, value) => {
     setResume((prev) => ({
       ...prev,
       technicalSkills: { ...prev.technicalSkills, [key]: value },
     }))
-  }, [])
+  }, [setResume])
 
   const updateUserType = useCallback((value) => {
     setResume((prev) => ({ ...prev, userType: value }))
-  }, [])
+  }, [setResume])
 
   const resetResume = useCallback(async () => {
     if (user) {
@@ -139,7 +155,7 @@ export function useResume(profession, user) {
       };
     }
     setResume(resetData);
-  }, [profession, user])
+  }, [profession, user, setResume])
 
   return {
     resume,
