@@ -24,7 +24,7 @@ export function useResume(profession, user) {
     setIsInitialized(false);
 
     const fetchResume = async () => {
-      let data = null;
+      let data;
       if (user) {
         data = await loadResumeFromSupabase(profession, user.id);
         if (!data) {
@@ -34,7 +34,14 @@ export function useResume(profession, user) {
         data = loadResume(profession);
       }
       if (active) {
-        setResume(migrateResume(data));
+        const migrated = migrateResume(data);
+        if (user) {
+          migrated.personal = {
+            ...migrated.personal,
+            fullName: user.user_metadata?.full_name || migrated.personal.fullName || "",
+          };
+        }
+        setResume(migrated);
         setLoadedProfession(profession);
         setIsInitialized(true);
       }
@@ -124,7 +131,14 @@ export function useResume(profession, user) {
     } else {
       clearStoredResume(profession);
     }
-    setResume(defaultResume);
+    const resetData = { ...defaultResume };
+    if (user) {
+      resetData.personal = {
+        ...resetData.personal,
+        fullName: user.user_metadata?.full_name || "",
+      };
+    }
+    setResume(resetData);
   }, [profession, user])
 
   return {

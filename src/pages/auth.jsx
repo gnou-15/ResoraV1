@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import { useState, useEffect } from "react";
 import InteractiveAuthPattern from "../components/InteractiveAuthPattern";
 import "../css/App.css";
 import { supabase } from "../services/supabase";
@@ -21,6 +21,31 @@ export default function Auth({ user, onNavigate, onSuccessNavigate }) {
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(false);
   const [showTermsModal, setShowTermsModal] = useState(false);
+  const [firstName, setFirstName] = useState("");
+  const [lastName, setLastName] = useState("");
+  const [nameErrors, setNameErrors] = useState({});
+  const [updatingName, setUpdatingName] = useState(false);
+
+  useEffect(() => {
+    if (user) {
+      let fName = user.user_metadata?.first_name || user.user_metadata?.given_name || "";
+      let lName = user.user_metadata?.last_name || user.user_metadata?.family_name || "";
+      
+      if (!fName && !lName && user.user_metadata?.full_name) {
+        const parts = user.user_metadata.full_name.trim().split(/\s+/);
+        if (parts.length > 1) {
+          fName = parts.slice(0, -1).join(" ");
+          lName = parts[parts.length - 1];
+        } else {
+          fName = parts[0] || "";
+        }
+      }
+      
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      setFirstName(fName);
+      setLastName(lName);
+    }
+  }, [user]);
   // Pre-fill email and check for OAuth redirect errors
   useEffect(() => {
     const savedEmail = localStorage.getItem("rememberedEmail");
@@ -215,6 +240,54 @@ export default function Auth({ user, onNavigate, onSuccessNavigate }) {
     }
   };
 
+  const handleNameSubmit = async (e) => {
+    e.preventDefault();
+    const newErrors = {};
+    if (!firstName.trim()) newErrors.firstName = "First name is required";
+    if (!lastName.trim()) newErrors.lastName = "Last name is required";
+    
+    const nameRegex = /^[a-zA-Z\s.-]{2,}$/;
+    if (firstName.trim() && !nameRegex.test(firstName.trim())) {
+      newErrors.firstName = "First name format is invalid";
+    }
+    if (lastName.trim() && !nameRegex.test(lastName.trim())) {
+      newErrors.lastName = "Last name format is invalid";
+    }
+
+    if (Object.keys(newErrors).length > 0) {
+      setNameErrors(newErrors);
+      return;
+    }
+
+    setUpdatingName(true);
+    setNameErrors({});
+
+    try {
+      const { error } = await supabase.auth.updateUser({
+        data: {
+          first_name: firstName.trim(),
+          last_name: lastName.trim(),
+          full_name: `${firstName.trim()} ${lastName.trim()}`
+        }
+      });
+
+      if (error) {
+        setNameErrors({ form: error.message });
+        setUpdatingName(false);
+      } else {
+        setUpdatingName(false);
+        if (onSuccessNavigate) {
+          onSuccessNavigate("landing");
+        } else if (onNavigate) {
+          onNavigate("landing");
+        }
+      }
+    } catch {
+      setNameErrors({ form: "An unexpected error occurred. Please try again." });
+      setUpdatingName(false);
+    }
+  };
+
 
 
   const toggleMode = () => {
@@ -290,40 +363,120 @@ export default function Auth({ user, onNavigate, onSuccessNavigate }) {
 
             {success ? (
               <div className="auth-success-screen animate-fade-in">
-                <div className="success-icon-badge">
-                  <svg viewBox="0 0 24 24" width="48" height="48">
-                    <circle cx="12" cy="12" r="10" fill="#ffedd5" />
-                    <path d="M8 12.5 L11 15.5 L16 9" stroke="#ea580c" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" fill="none" />
-                  </svg>
-                </div>
-                <h2 className="success-title">
-                  {isLogin ? "Welcome back!" : "Verify your Email"}
-                </h2>
-                <p className="success-desc">
-                  {isLogin 
-                    ? `Successfully logged in as ${formData.email}. You now have full access to create & edit your resumes.` 
-                    : `We have sent a confirmation link to ${formData.email}. Please check your inbox and click the link to confirm your email before logging in.`
-                  }
-                </p>
-                <button 
-                  type="button" 
-                  className="auth-btn-primary" 
-                  onClick={() => {
-                    if (isLogin) {
-                      if (onSuccessNavigate) {
-                        onSuccessNavigate("landing");
-                      } else if (onNavigate) {
-                        onNavigate("landing");
+                {user && (!user.user_metadata?.first_name || !user.user_metadata?.last_name) ? (
+                  <form onSubmit={handleNameSubmit} style={{ width: "100%" }}>
+                    <div className="success-icon-badge">
+                      <svg viewBox="0 0 24 24" width="48" height="48">
+                        <circle cx="12" cy="12" r="10" fill="#ffedd5" />
+                        <path d="M12 6V14M12 18H12.01" stroke="#ea580c" strokeWidth="2.5" strokeLinecap="round" fill="none" />
+                      </svg>
+                    </div>
+                    <h2 className="success-title" style={{ marginBottom: "0.5rem" }}>
+                      Complete Your Profile
+                    </h2>
+                    <p className="success-desc" style={{ marginBottom: "1.2rem" }}>
+                      Please enter your first and last name to complete your registration.
+                    </p>
+
+                    <div className="auth-name-notice" style={{
+                      padding: "0.85rem",
+                      backgroundColor: "#fff7ed",
+                      border: "1px solid #ffedd5",
+                      color: "#9a3412",
+                      fontSize: "0.82rem",
+                      borderRadius: "8px",
+                      marginBottom: "1.2rem",
+                      lineHeight: "1.45",
+                      textAlign: "left"
+                    }}>
+                      <strong>Notice:</strong> Your name will be automatically placed in the resume builder and <strong>cannot be edited later</strong>. Please make sure it is correct.
+                    </div>
+
+                    {nameErrors.form && (
+                      <div className="auth-error-alert" style={{ padding: "0.8rem", backgroundColor: "#fef2f2", border: "1px solid #fca5a5", color: "#b91c1c", fontSize: "0.88rem", borderRadius: "6px", marginBottom: "1.2rem", textAlign: "left" }}>
+                        {nameErrors.form}
+                      </div>
+                    )}
+
+                    <div style={{ display: "flex", gap: "1rem", marginBottom: "1rem" }}>
+                      <div className="auth-input-group" style={{ flex: 1, marginBottom: 0, textAlign: "left" }}>
+                        <label className="auth-label">First Name <span className="req">*</span></label>
+                        <input
+                          type="text"
+                          value={firstName}
+                          onChange={(e) => {
+                            setFirstName(e.target.value);
+                            if (nameErrors.firstName) setNameErrors(prev => ({ ...prev, firstName: "" }));
+                          }}
+                          placeholder="John"
+                          className={`auth-input ${nameErrors.firstName ? "error" : ""}`}
+                          disabled={updatingName}
+                        />
+                        {nameErrors.firstName && <span className="auth-error-msg">{nameErrors.firstName}</span>}
+                      </div>
+                      <div className="auth-input-group" style={{ flex: 1, marginBottom: 0, textAlign: "left" }}>
+                        <label className="auth-label">Last Name <span className="req">*</span></label>
+                        <input
+                          type="text"
+                          value={lastName}
+                          onChange={(e) => {
+                            setLastName(e.target.value);
+                            if (nameErrors.lastName) setNameErrors(prev => ({ ...prev, lastName: "" }));
+                          }}
+                          placeholder="Doe"
+                          className={`auth-input ${nameErrors.lastName ? "error" : ""}`}
+                          disabled={updatingName}
+                        />
+                        {nameErrors.lastName && <span className="auth-error-msg">{nameErrors.lastName}</span>}
+                      </div>
+                    </div>
+
+                    <button type="submit" className="auth-btn-primary" disabled={updatingName} style={{ marginTop: "0.5rem" }}>
+                      {updatingName ? (
+                        <span className="auth-spinner"></span>
+                      ) : (
+                        "Save & Go to Dashboard"
+                      )}
+                    </button>
+                  </form>
+                ) : (
+                  <>
+                    <div className="success-icon-badge">
+                      <svg viewBox="0 0 24 24" width="48" height="48">
+                        <circle cx="12" cy="12" r="10" fill="#ffedd5" />
+                        <path d="M8 12.5 L11 15.5 L16 9" stroke="#ea580c" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" fill="none" />
+                      </svg>
+                    </div>
+                    <h2 className="success-title">
+                      {isLogin ? "Welcome back!" : "Verify your Email"}
+                    </h2>
+                    <p className="success-desc">
+                      {isLogin 
+                        ? `Successfully logged in as ${formData.email}. You now have full access to create & edit your resumes.` 
+                        : `We have sent a confirmation link to ${formData.email}. Please check your inbox and click the link to confirm your email before logging in.`
                       }
-                    } else {
-                      setIsLogin(true);
-                      setSuccess(false);
-                      setFormData(prev => ({ ...prev, password: "", confirmPassword: "" }));
-                    }
-                  }}
-                >
-                  {isLogin ? "Go to Dashboard" : "Return to Sign In"}
-                </button>
+                    </p>
+                    <button 
+                      type="button" 
+                      className="auth-btn-primary" 
+                      onClick={() => {
+                        if (isLogin) {
+                          if (onSuccessNavigate) {
+                            onSuccessNavigate("landing");
+                          } else if (onNavigate) {
+                            onNavigate("landing");
+                          }
+                        } else {
+                          setIsLogin(true);
+                          setSuccess(false);
+                          setFormData(prev => ({ ...prev, password: "", confirmPassword: "" }));
+                        }
+                      }}
+                    >
+                      {isLogin ? "Go to Dashboard" : "Return to Sign In"}
+                    </button>
+                  </>
+                )}
               </div>
             ) : (
               <div className="auth-form-content">

@@ -36,6 +36,7 @@ function Field({
   rows,
   hint,
   error,
+  readOnly,
 }) {
   const Tag = rows ? "textarea" : "input";
   const ref = useRef(null);
@@ -68,6 +69,7 @@ function Field({
         rows={rows}
         className={error ? "input-error" : ""}
         style={rows ? { overflow: "hidden" } : undefined}
+        readOnly={readOnly}
       />
       {error && <span className="field-error-msg" style={{ color: "#dc2626", fontSize: "0.75rem", marginTop: "0.2rem" }}>{error}</span>}
     </label>
@@ -116,6 +118,7 @@ function ResumeEditor({
   updateSummary,
   updateTechnicalSkill,
   profession,
+  user,
 }) {
   const {
     personal,
@@ -333,6 +336,7 @@ function ResumeEditor({
             onChange={(v) => updatePersonal("fullName", v)}
             placeholder="Jane Doe"
             error={errors.fullName}
+            readOnly={!!user}
           />
           <Field
             label="Email"

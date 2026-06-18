@@ -175,6 +175,20 @@ select:focus {
   box-shadow: 0 0 0 3px rgba(var(--primary-rgb), 0.15);
 }
 
+input[readonly],
+textarea[readonly] {
+  background-color: #f1f5f9;
+  color: #64748b;
+  border-color: #cbd5e1;
+  cursor: not-allowed;
+}
+
+input[readonly]:focus,
+textarea[readonly]:focus {
+  border-color: #cbd5e1 !important;
+  box-shadow: none !important;
+}
+
 textarea {
   resize: vertical;
   min-height: 80px;

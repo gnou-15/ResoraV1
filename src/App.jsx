@@ -64,6 +64,14 @@ function App() {
     return () => subscription.unsubscribe();
   }, []);
 
+  useEffect(() => {
+    if (user && (!user.user_metadata?.first_name || !user.user_metadata?.last_name)) {
+      if (route.page !== "auth") {
+        setRoute({ page: "auth", profession: null });
+      }
+    }
+  }, [user, route.page]);
+
   const handleBackToLanding = () => {
     setIsExitingBuilder(true);
     setRoute((prev) => ({ ...prev, page: "landing" }));

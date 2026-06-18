@@ -296,6 +296,7 @@ function Home({ profession, user, onBack }) {
             updateHeadline={updateHeadline}
             updateSummary={updateSummary}
             updateTechnicalSkill={updateTechnicalSkill}
+            user={user}
           />
         </div>
         <div
