@@ -141,6 +141,7 @@ export function migrateResume(data) {
     return {
       ...defaultResume,
       ...data,
+      skills: data.skills || (tech.languages && Array.isArray(tech.languages) ? tech.languages.join(', ') : ''),
       technicalSkills: { ...defaultResume.technicalSkills, ...tech },
       personal: migratePersonal(data.personal),
     };

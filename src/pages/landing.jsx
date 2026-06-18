@@ -24,6 +24,28 @@ const PREDICTABLE_PROFESSIONS = [
   "Backend Engineer",
   "Web Programmer",
   "Full-Stack Developer",
+  "Civil Engineer",
+  "Mechanical Engineer",
+  "Electrical Engineer",
+  "Engineering Consultant",
+  "Accountant",
+  "Financial Analyst",
+  "Business Administrator",
+  "Management Consultant",
+  "Customs Broker",
+  "Import/Export Specialist",
+  "Customs Compliance Officer",
+  "Safety Officer",
+  "EHS Specialist",
+  "Safety Coordinator",
+  "Graphic Designer",
+  "UI/UX Designer",
+  "Data Analyst",
+  "Business Intelligence Analyst",
+  "Sales Representative",
+  "Account Executive",
+  "HR Specialist",
+  "Recruitment Coordinator",
 ];
 
 export default function Landing({ onSelect, onNavigate, isEmbedded, user, mascotMood, onMascotMoodChange }) {
@@ -115,27 +137,35 @@ export default function Landing({ onSelect, onNavigate, isEmbedded, user, mascot
     const t = (text || "").toLowerCase();
     if (!t.trim()) return null;
 
-    const hasIT = /(developer|engineer|software|programmer|full[- ]stack|web|frontend|backend|react|node|coding|programming|tech|technology|computer|\bit\b|\bbsit\b|\bcs\b)/.test(t);
+    // Specific role detections first to avoid overlapping general keywords
+    const hasEngineering = /(civil engineer|mechanical engineer|electrical engineer|chemical engineer|industrial engineer|safety engineer|\bengineering\b)/.test(t);
+    const hasSafety = /(safety officer|safety coordinator|ehs|occupational safety|safety inspector)/.test(t);
+    const hasCustoms = /(customs|import|export|tariff|declarant)/.test(t);
+    const hasBusiness = /(accountant|accountancy|cpa|bookkeeper|financial analyst|business admin|finance|auditor)/.test(t);
+    const hasDesigner = /(designer|graphic|illustrator|artist|ui\/ux|ux designer|ui designer)/.test(t);
+    const hasData = /(data analyst|data scientist|business intelligence|bi analyst|analyst)/.test(t);
+    const hasSales = /(sales|account executive|representative|seller|telemarketing)/.test(t);
+    const hasHR = /(hr|human resources|recruiter|onboarding|recruitment)/.test(t);
+
+    const hasIT = /(developer|software|programmer|full[- ]stack|web|frontend|backend|react|node|coding|programming|tech|technology|computer|\bit\b|\bbsit\b|\bcs\b|software engineer|it engineer|systems engineer|devops)/.test(t);
     const hasHealthcare = /(nurse|doctor|clinic|health|patient|rn|lpn|clinical|medical|hospital)/.test(t);
     const hasEducation = /(teacher|instructor|professor|tutor|education|school|teaching|classroom)/.test(t);
     const hasManagement = /(manager|project|product|operations|pm|lead|supervisor|management)/.test(t);
 
-    // 1. IT / Technical Roles (always takes priority for specialized tech templates)
-    if (hasIT) {
-      return "it";
-    }
-    // 2. Clinical / Medical Roles (e.g. Nurse, School Nurse)
-    if (hasHealthcare) {
-      return "healthcare";
-    }
-    // 3. General Education Roles (e.g. Teacher, Professor)
-    if (hasEducation) {
-      return "education";
-    }
-    // 4. General Management / Operations Roles
-    if (hasManagement) {
-      return "management";
-    }
+    if (hasEngineering) return "engineering";
+    if (hasSafety) return "safety";
+    if (hasCustoms) return "customs";
+    if (hasBusiness) return "business";
+    if (hasDesigner) return "designer";
+    if (hasData) return "data";
+    if (hasSales) return "sales";
+    if (hasHR) return "hr";
+    
+    if (hasIT) return "it";
+    if (hasHealthcare) return "healthcare";
+    if (hasEducation) return "education";
+    if (hasManagement) return "management";
+    
     return null;
   }
 
@@ -165,7 +195,7 @@ export default function Landing({ onSelect, onNavigate, isEmbedded, user, mascot
         onSelect(prof);
       }
     } else {
-      setSearchError("Unsupported profession. Try: Nurse, Developer, Teacher, PM");
+      setSearchError("Unsupported profession. Try: Nurse, Developer, Engineer, Accountant, Safety Officer");
     }
   }
 

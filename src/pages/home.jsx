@@ -14,6 +14,14 @@ const PROFESSION_TITLES = {
   healthcare: "Healthcare Resume Builder",
   education: "Education Resume Builder",
   management: "Management Resume Builder",
+  engineering: "Engineering Resume Builder",
+  business: "Business & Accountancy Resume Builder",
+  customs: "Customs Administration Resume Builder",
+  safety: "Safety Officer Resume Builder",
+  designer: "Graphic Design Resume Builder",
+  data: "Data Analytics Resume Builder",
+  sales: "Sales & Account Executive Resume Builder",
+  hr: "Human Resources Resume Builder",
 };
 
 function Home({ profession, user, onBack }) {

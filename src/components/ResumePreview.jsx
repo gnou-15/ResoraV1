@@ -153,12 +153,18 @@ function ResumePreview({ resume, profession }) {
 
   const skillsSection = hasSkills && (
     <section className="preview-section">
-      <h2>Technical Skills</h2>
-      <SkillBlock label="Languages" value={technicalSkills.languages} />
-      <SkillBlock label="Frameworks" value={technicalSkills.frameworks} />
-      <SkillBlock label="Tools" value={technicalSkills.tools} />
-      <SkillBlock label="Databases" value={technicalSkills.databases} />
-      <SkillBlock label="Cloud" value={technicalSkills.cloud} />
+      <h2>{profession === "it" ? "Technical Skills" : "Key Skills"}</h2>
+      {profession === "it" ? (
+        <>
+          <SkillBlock label="Languages" value={technicalSkills.languages} />
+          <SkillBlock label="Frameworks" value={technicalSkills.frameworks} />
+          <SkillBlock label="Tools" value={technicalSkills.tools} />
+          <SkillBlock label="Databases" value={technicalSkills.databases} />
+          <SkillBlock label="Cloud" value={technicalSkills.cloud} />
+        </>
+      ) : (
+        <SkillBlock label="Skills" value={technicalSkills.languages} />
+      )}
     </section>
   );
 
