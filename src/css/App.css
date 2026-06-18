@@ -1,5 +1,6 @@
 .app {
   height: 100vh;
+  height: 100dvh;
   display: flex;
   flex-direction: column;
   background: var(--bg);
@@ -17,11 +18,12 @@
   /* horizontal padding only, vertical controlled by height */
   height: var(--header-height);
   min-height: var(--header-height);
+  max-height: 400px;
   background: var(--surface);
   border-bottom: 1px solid var(--border);
   flex-wrap: nowrap;
   /* avoid growing header on wide screens */
-  transition: margin-top 0.3s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.25s ease;
+  transition: max-height 0.3s cubic-bezier(0.4, 0, 0.2, 1), min-height 0.3s cubic-bezier(0.4, 0, 0.2, 1), padding 0.3s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.25s ease;
 }
 
 
@@ -603,6 +605,7 @@
 .panel {
   overflow-y: auto;
   height: 100%;
+  -webkit-overflow-scrolling: touch;
 }
 
 
@@ -1135,6 +1138,11 @@
 
   .panel-editor {
     border-right: none;
+    padding-bottom: 120px !important;
+  }
+
+  .panel-preview {
+    padding-bottom: 120px !important;
   }
 
   .field-grid {
@@ -1617,6 +1625,7 @@ select.input-error {
   position: relative;
   width: 100vw;
   height: 100vh;
+  height: 100dvh;
   overflow: hidden;
   background-color: #eaeaea;
   z-index: 100;
@@ -1626,6 +1635,7 @@ select.input-error {
 
 .slider-wrapper.on-builder {
   transform: translateY(-100vh);
+  transform: translateY(-100dvh);
   transition: none;
   /* Move off-screen instantly when entering Editor */
 }
@@ -1640,12 +1650,14 @@ select.input-error {
   display: flex;
   width: 500vw;
   height: 100vh;
+  height: 100dvh;
   transition: transform 0.8s cubic-bezier(0.76, 0, 0.24, 1);
 }
 
 .slide-item {
   width: 100vw;
   height: 100vh;
+  height: 100dvh;
   flex-shrink: 0;
   overflow-y: auto;
   overflow-x: hidden;
@@ -1744,6 +1756,7 @@ select.input-error {
   left: 0;
   width: 100vw;
   height: 100vh;
+  height: 100dvh;
   background-color: #f8fafc;
 }
 
@@ -4330,10 +4343,15 @@ select.input-error {
 
   /* Dynamic header collapse logic */
   .app.header-collapsed .app-header {
-    margin-top: -190px !important;
-    /* shift the header out of viewport cleanly */
+    max-height: 0 !important;
+    min-height: 0 !important;
+    padding-top: 0 !important;
+    padding-bottom: 0 !important;
+    margin-top: 0 !important;
+    border-bottom-width: 0 !important;
     opacity: 0 !important;
     pointer-events: none !important;
+    overflow: hidden !important;
   }
 
   .app-header {

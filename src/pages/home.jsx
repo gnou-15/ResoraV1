@@ -3,9 +3,7 @@ import "../css/App.css";
 import ResumeEditor from "../components/ResumeEditor";
 import ResumePreview from "../components/ResumePreview";
 import { useResume } from "../hooks/useResume";
-import { getTemplateForProfession } from "../data/professionTemplates";
-import { migrateResume, defaultResume } from "../data/defaultResume";
-import { loadResume, loadResumeFromSupabase } from "../services/api";
+import { defaultResume } from "../data/defaultResume";
 import AIScoreWidget from "../components/AIScoreWidget";
 import { analyzeResume, fetchAPIAnalysis } from "../services/aiScorer";
 
@@ -37,48 +35,6 @@ function Home({ profession, user, onBack }) {
     updateUserType,
     resetResume,
   } = useResume(profession, user);
-
-  useEffect(() => {
-    if (!profession) return;
-
-    const applyTemplate = async () => {
-      // First, check if we already have saved data for this profession
-      if (user) {
-        const supabaseData = await loadResumeFromSupabase(profession, user.id);
-        if (supabaseData) {
-          return;
-        }
-      } else {
-        const savedData = loadResume(profession);
-        if (savedData) {
-          return;
-        }
-      }
-
-      // Try API if configured
-      const api = localStorage.getItem("templateApi");
-      if (api) {
-        try {
-          const url = `${api.replace(/\/?$/, "")}?profession=${encodeURIComponent(profession)}`;
-          const res = await fetch(url);
-          if (res.ok) {
-            const data = await res.json();
-            const payload = data.resume || data;
-            setResume((prev) => ({ ...migrateResume(payload) }));
-            return;
-          }
-        } catch (e) {
-          // fall back to local template
-        }
-      }
-
-      // local template fallback
-      const tpl = getTemplateForProfession(profession);
-      setResume((prev) => ({ ...migrateResume({ ...defaultResume, ...tpl }) }));
-    };
-
-    applyTemplate();
-  }, [profession, user]);
 
   const [mobileTab, setMobileTab] = useState("edit");
   const [analysisResult, setAnalysisResult] = useState(() => analyzeResume(defaultResume, profession));

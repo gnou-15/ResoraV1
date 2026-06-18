@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback, useRef } from 'react'
 import { defaultResume, migrateResume } from '../data/defaultResume'
+import { getTemplateForProfession } from '../data/professionTemplates'
 import {
   loadResume,
   saveResume,
@@ -11,7 +12,15 @@ import {
 
 export function useResume(profession, user) {
   const [resume, setResumeRaw] = useState(() => {
-    if (user) return defaultResume;
+    if (user) {
+      return {
+        ...defaultResume,
+        personal: {
+          ...defaultResume.personal,
+          fullName: user.user_metadata?.full_name || "",
+        },
+      };
+    }
     return migrateResume(loadResume(profession));
   })
 
@@ -19,11 +28,13 @@ export function useResume(profession, user) {
     setResumeRaw((prev) => {
       let next = typeof value === "function" ? value(prev) : value;
       if (user) {
+        const currentPersonal = next.personal || {};
         next = {
           ...next,
           personal: {
-            ...(next.personal || {}),
-            fullName: user.user_metadata?.full_name || (next.personal && next.personal.fullName) || "",
+            ...defaultResume.personal,
+            ...currentPersonal,
+            fullName: user.user_metadata?.full_name || currentPersonal.fullName || "",
           },
         };
       }
@@ -43,16 +54,41 @@ export function useResume(profession, user) {
       let data;
       if (user) {
         data = await loadResumeFromSupabase(profession, user.id);
-        if (!data) {
-          data = defaultResume;
-        }
       } else {
         data = loadResume(profession);
       }
       if (active) {
-        const migrated = migrateResume(data);
+        let migrated;
+        if (data) {
+          migrated = migrateResume(data);
+        } else {
+          // Check if there is an API configured for templates
+          let apiPayload = null;
+          const api = localStorage.getItem("templateApi");
+          if (api) {
+            try {
+              const url = `${api.replace(/\/?$/, "")}?profession=${encodeURIComponent(profession)}`;
+              const res = await fetch(url);
+              if (res.ok) {
+                const apiData = await res.json();
+                apiPayload = apiData.resume || apiData;
+              }
+            } catch (e) {
+              // ignore and fallback
+            }
+          }
+
+          if (apiPayload) {
+            migrated = migrateResume(apiPayload);
+          } else {
+            const tpl = getTemplateForProfession(profession);
+            migrated = migrateResume({ ...defaultResume, ...tpl });
+          }
+        }
+
         if (user) {
           migrated.personal = {
+            ...defaultResume.personal,
             ...migrated.personal,
             fullName: user.user_metadata?.full_name || migrated.personal.fullName || "",
           };
