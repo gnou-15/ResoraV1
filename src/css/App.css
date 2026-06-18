@@ -903,7 +903,7 @@
   .editor-overlay-container>:not(.app),
   .app>:not(.app-main),
   .app-main>:not(.panel-preview),
-  .panel-preview>:not(.preview-wrapper) {
+  .panel-preview>:not(.preview-container) {
     display: none !important
   }
 
@@ -956,7 +956,8 @@
     box-shadow: none !important;
     width: var(--print-preview-width, 8.5in) !important;
     max-width: var(--print-preview-width, 8.5in) !important;
-    background: #fff !important
+    background: #fff !important;
+    transform: none !important;
   }
 }
 
@@ -1304,7 +1305,7 @@ select.input-error {
     display: none !important;
   }
 
-  .panel-preview>*:not(.preview-wrapper) {
+  .panel-preview>*:not(.preview-container) {
     display: none !important;
   }
 
@@ -1371,6 +1372,7 @@ select.input-error {
     margin: 0 auto !important;
     padding: 0 !important;
     background: white !important;
+    transform: none !important;
   }
 
   /* Resume ATS Content styles - match preview styles exactly */
