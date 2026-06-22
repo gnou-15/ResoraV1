@@ -1987,6 +1987,7 @@ select.input-error {
   display: flex;
   flex-direction: column;
   gap: 0.5rem;
+  margin-bottom: 1.25rem;
 }
 
 .auth-title {
@@ -2012,20 +2013,157 @@ select.input-error {
 }
 
 .auth-input-group {
+  position: relative;
   display: flex;
   flex-direction: column;
-  gap: 0.4rem;
+  margin-bottom: 1.5rem;
 }
 
 .auth-label {
-  font-size: 0.82rem;
-  font-weight: 600;
-  color: #334155;
+  position: absolute;
+  left: 12px;
+  top: 23px; /* vertical center of 46px input */
+  transform: translateY(-50%);
+  background-color: transparent;
+  padding: 0;
+  border-radius: 4px;
+  transition: all 0.2s cubic-bezier(0.2, 0, 0, 1.0);
+  pointer-events: none;
+  color: #64748b;
+  font-size: 0.92rem;
+  font-weight: 500;
+  z-index: 10;
 }
 
 .auth-label .req {
   color: #ef4444;
   margin-left: 2px;
+  display: inline-block;
+  vertical-align: middle;
+  opacity: 1;
+  max-width: 20px;
+  overflow: hidden;
+  transition: opacity 0.2s cubic-bezier(0.2, 0, 0, 1.0),
+              max-width 0.2s cubic-bezier(0.2, 0, 0, 1.0),
+              margin-left 0.2s cubic-bezier(0.2, 0, 0, 1.0);
+}
+
+/* Hide red asterisk when the label floats upwards */
+.auth-input:not(:placeholder-shown) ~ .auth-label .req,
+.auth-input:-webkit-autofill ~ .auth-label .req,
+.auth-password-wrapper .auth-input:not(:placeholder-shown) ~ .auth-label .req,
+.auth-password-wrapper .auth-input:-webkit-autofill ~ .auth-label .req,
+.auth-input-group textarea:not(:placeholder-shown) ~ .auth-label .req,
+.auth-input-group textarea:-webkit-autofill ~ .auth-label .req,
+.auth-input:focus ~ .auth-label .req,
+.auth-password-wrapper .auth-input:focus ~ .auth-label .req,
+.auth-input-group textarea:focus ~ .auth-label .req {
+  opacity: 0;
+  max-width: 0;
+  margin-left: 0;
+}
+
+
+/* Float label when NOT focused but has content (keep it grey and centered on border line) */
+.auth-input:not(:placeholder-shown) ~ .auth-label,
+.auth-input:-webkit-autofill ~ .auth-label {
+  top: 100%;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: #475569; /* darker text for contrast on grey background */
+  background-color: #e2e8f0; /* matching default border #e2e8f0 */
+  padding: 2px 4px;
+}
+
+.auth-password-wrapper .auth-input:not(:placeholder-shown) ~ .auth-label,
+.auth-password-wrapper .auth-input:-webkit-autofill ~ .auth-label {
+  top: 100%;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: #475569;
+  background-color: #e2e8f0;
+  padding: 2px 4px;
+}
+
+.auth-input-group textarea:not(:placeholder-shown) ~ .auth-label,
+.auth-input-group textarea:-webkit-autofill ~ .auth-label {
+  top: 100%;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: #475569;
+  background-color: #e2e8f0;
+  padding: 2px 4px;
+}
+
+/* Float label when focused (highlight in active primary orange, centered on border line) */
+.auth-input:focus ~ .auth-label {
+  top: 100%;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: #ffffff;
+  background-color: #f97316; /* orange background matching focused border */
+  padding: 2px 4px;
+}
+
+.auth-password-wrapper .auth-input:focus ~ .auth-label {
+  top: 100%;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: #ffffff;
+  background-color: #f97316;
+  padding: 2px 4px;
+}
+
+/* Off-center textarea label when empty/unfocused */
+.auth-input-group textarea ~ .auth-label {
+  top: 20px;
+}
+
+/* Floating behavior for textarea label when focused */
+.auth-input-group textarea:focus ~ .auth-label {
+  top: 100%;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: #ffffff;
+  background-color: #f97316;
+  padding: 2px 4px;
+}
+
+/* Error state label colors */
+.auth-input.error ~ .auth-label {
+  color: #ef4444;
+  background-color: transparent;
+  padding: 0;
+}
+
+.auth-input.error:not(:placeholder-shown) ~ .auth-label,
+.auth-input.error:-webkit-autofill ~ .auth-label,
+.auth-password-wrapper .auth-input.error:not(:placeholder-shown) ~ .auth-label,
+.auth-password-wrapper .auth-input.error:-webkit-autofill ~ .auth-label,
+.auth-input-group textarea.error:not(:placeholder-shown) ~ .auth-label,
+.auth-input-group textarea.error:-webkit-autofill ~ .auth-label {
+  color: #ffffff !important;
+  background-color: #f87171 !important;
+  padding: 2px 4px;
+}
+
+.auth-input.error:focus ~ .auth-label,
+.auth-password-wrapper .auth-input.error:focus ~ .auth-label,
+.auth-input-group textarea.error:focus ~ .auth-label {
+  color: #ffffff !important;
+  background-color: #dc2626 !important;
+  padding: 2px 4px;
+}
+
+
+/* Browser autofill style override to force white background and avoid overlapping blue/yellow boxes */
+.auth-input:-webkit-autofill,
+.auth-input:-webkit-autofill:hover, 
+.auth-input:-webkit-autofill:focus, 
+.auth-input:-webkit-autofill:active {
+  -webkit-box-shadow: 0 0 0 1000px #ffffff inset !important;
+  -webkit-text-fill-color: #0f172a !important;
+  transition: background-color 5000s ease-in-out 0s;
 }
 
 .auth-input {
@@ -2107,7 +2245,7 @@ select.input-error {
 
 .auth-checkbox-label {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   gap: 0.5rem;
   cursor: pointer;
   user-select: none;
@@ -2120,6 +2258,7 @@ select.input-error {
   border: 1.5px solid #cbd5e1;
   accent-color: #f97316;
   cursor: pointer;
+  margin-top: 2px; /* visual alignment with first line of text */
 }
 
 .auth-checkbox-text {

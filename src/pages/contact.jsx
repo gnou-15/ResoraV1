@@ -166,7 +166,6 @@ export default function Contact({ onNavigate, isEmbedded, onMascotMoodChange }) 
                   <h3 className="contact-form-title">Send a Message</h3>
                   
                   <div className="auth-input-group">
-                    <label className="auth-label">Full Name <span className="req">*</span></label>
                     <input
                       type="text"
                       name="name"
@@ -174,15 +173,15 @@ export default function Contact({ onNavigate, isEmbedded, onMascotMoodChange }) 
                       onChange={handleInputChange}
                       onFocus={handleFocus}
                       onBlur={handleBlur}
-                      placeholder="Your name"
+                      placeholder=" "
                       className={`auth-input ${errors.name ? "error" : ""}`}
                       disabled={loading}
                     />
+                    <label className="auth-label">Full Name <span className="req">*</span></label>
                     {errors.name && <span className="auth-error-msg">{errors.name}</span>}
                   </div>
 
                   <div className="auth-input-group">
-                    <label className="auth-label">Email Address <span className="req">*</span></label>
                     <input
                       type="text"
                       name="email"
@@ -190,15 +189,15 @@ export default function Contact({ onNavigate, isEmbedded, onMascotMoodChange }) 
                       onChange={handleInputChange}
                       onFocus={handleFocus}
                       onBlur={handleBlur}
-                      placeholder="Your email address"
+                      placeholder=" "
                       className={`auth-input ${errors.email ? "error" : ""}`}
                       disabled={loading}
                     />
+                    <label className="auth-label">Email Address <span className="req">*</span></label>
                     {errors.email && <span className="auth-error-msg">{errors.email}</span>}
                   </div>
 
                   <div className="auth-input-group">
-                    <label className="auth-label">Subject <span className="req">*</span></label>
                     <input
                       type="text"
                       name="subject"
@@ -206,26 +205,27 @@ export default function Contact({ onNavigate, isEmbedded, onMascotMoodChange }) 
                       onChange={handleInputChange}
                       onFocus={handleFocus}
                       onBlur={handleBlur}
-                      placeholder="Subject of message"
+                      placeholder=" "
                       className={`auth-input ${errors.subject ? "error" : ""}`}
                       disabled={loading}
                     />
+                    <label className="auth-label">Subject <span className="req">*</span></label>
                     {errors.subject && <span className="auth-error-msg">{errors.subject}</span>}
                   </div>
 
                   <div className="auth-input-group">
-                    <label className="auth-label">Message <span className="req">*</span></label>
                     <textarea
                       name="message"
                       value={formData.message}
                       onChange={handleInputChange}
                       onFocus={handleFocus}
                       onBlur={handleBlur}
-                      placeholder="Type your message here..."
+                      placeholder=" "
                       className={`auth-input ${errors.message ? "error" : ""}`}
                       style={{ height: "120px", padding: "0.75rem 1rem", resize: "none" }}
                       disabled={loading}
                     />
+                    <label className="auth-label">Message <span className="req">*</span></label>
                     {errors.message && <span className="auth-error-msg">{errors.message}</span>}
                   </div>
 

@@ -399,9 +399,8 @@ export default function Auth({ user, onNavigate, onSuccessNavigate }) {
                       </div>
                     )}
 
-                    <div style={{ display: "flex", gap: "1rem", marginBottom: "1rem", width: "100%" }}>
+                    <div style={{ display: "flex", gap: "1rem", marginBottom: "1.5rem", width: "100%" }}>
                       <div className="auth-input-group" style={{ flex: 1, marginBottom: 0, textAlign: "left" }}>
-                        <label className="auth-label">First Name <span className="req">*</span></label>
                         <input
                           type="text"
                           value={firstName}
@@ -409,14 +408,14 @@ export default function Auth({ user, onNavigate, onSuccessNavigate }) {
                             setFirstName(e.target.value);
                             if (nameErrors.firstName) setNameErrors(prev => ({ ...prev, firstName: "" }));
                           }}
-                          placeholder="John"
+                          placeholder=" "
                           className={`auth-input ${nameErrors.firstName ? "error" : ""}`}
                           disabled={updatingName}
                         />
+                        <label className="auth-label">First Name <span className="req">*</span></label>
                         {nameErrors.firstName && <span className="auth-error-msg">{nameErrors.firstName}</span>}
                       </div>
                       <div className="auth-input-group" style={{ flex: 1, marginBottom: 0, textAlign: "left" }}>
-                        <label className="auth-label">Last Name <span className="req">*</span></label>
                         <input
                           type="text"
                           value={lastName}
@@ -424,10 +423,11 @@ export default function Auth({ user, onNavigate, onSuccessNavigate }) {
                             setLastName(e.target.value);
                             if (nameErrors.lastName) setNameErrors(prev => ({ ...prev, lastName: "" }));
                           }}
-                          placeholder="Doe"
+                          placeholder=" "
                           className={`auth-input ${nameErrors.lastName ? "error" : ""}`}
                           disabled={updatingName}
                         />
+                        <label className="auth-label">Last Name <span className="req">*</span></label>
                         {nameErrors.lastName && <span className="auth-error-msg">{nameErrors.lastName}</span>}
                       </div>
                     </div>
@@ -502,48 +502,48 @@ export default function Auth({ user, onNavigate, onSuccessNavigate }) {
                   {/* Name field (Signup only) */}
                   {!isLogin && (
                     <div className="auth-input-group">
-                      <label className="auth-label">Name <span className="req">*</span></label>
                       <input
                         type="text"
                         name="name"
                         value={formData.name}
                         onChange={handleInputChange}
-                        placeholder="Enter your full name"
+                        placeholder=" "
                         className={`auth-input ${errors.name ? "error" : ""}`}
                         disabled={loading}
                       />
+                      <label className="auth-label">Name <span className="req">*</span></label>
                       {errors.name && <span className="auth-error-msg">{errors.name}</span>}
                     </div>
                   )}
 
                   {/* Email field */}
                   <div className="auth-input-group">
-                    <label className="auth-label">Email <span className="req">*</span></label>
                     <input
                       type="text"
                       name="email"
                       value={formData.email}
                       onChange={handleInputChange}
-                      placeholder="Enter your mail address"
+                      placeholder=" "
                       className={`auth-input ${errors.email ? "error" : ""}`}
                       disabled={loading}
                     />
+                    <label className="auth-label">Email <span className="req">*</span></label>
                     {errors.email && <span className="auth-error-msg">{errors.email}</span>}
                   </div>
 
                   {/* Password field */}
                   <div className="auth-input-group">
-                    <label className="auth-label">Password <span className="req">*</span></label>
                     <div className="auth-password-wrapper">
                       <input
                         type={showPassword ? "text" : "password"}
                         name="password"
                         value={formData.password}
                         onChange={handleInputChange}
-                        placeholder="Enter password"
+                        placeholder=" "
                         className={`auth-input ${errors.password ? "error" : ""}`}
                         disabled={loading}
                       />
+                      <label className="auth-label">Password <span className="req">*</span></label>
                       <button
                         type="button"
                         className="auth-password-toggle-btn"
@@ -571,17 +571,17 @@ export default function Auth({ user, onNavigate, onSuccessNavigate }) {
                   {/* Confirm Password (Signup only) */}
                   {!isLogin && (
                     <div className="auth-input-group">
-                      <label className="auth-label">Confirm Password <span className="req">*</span></label>
                       <div className="auth-password-wrapper">
                         <input
                           type={showConfirmPassword ? "text" : "password"}
                           name="confirmPassword"
                           value={formData.confirmPassword}
                           onChange={handleInputChange}
-                          placeholder="Confirm your password"
+                          placeholder=" "
                           className={`auth-input ${errors.confirmPassword ? "error" : ""}`}
                           disabled={loading}
                         />
+                        <label className="auth-label">Confirm Password <span className="req">*</span></label>
                         <button
                           type="button"
                           className="auth-password-toggle-btn"
@@ -636,7 +636,7 @@ export default function Auth({ user, onNavigate, onSuccessNavigate }) {
                             disabled={loading}
                           />
                           <span className="auth-checkbox-text">
-                            I agree to the <a href="#" onClick={(e) => { e.preventDefault(); setShowTermsModal(true); }} className="auth-inline-link">Terms & Conditions</a>
+                            I certify that I have read, understood, and agree to the <a href="#" onClick={(e) => { e.preventDefault(); setShowTermsModal(true); }} className="auth-inline-link">Terms & Conditions</a> of using Resora, including the collection and usage of my personal data.
                           </span>
                         </label>
                         {errors.termsAgree && <span className="auth-error-msg block">{errors.termsAgree}</span>}

@@ -537,14 +537,27 @@ export function analyzeResume(resume, profession = 'it') {
 }
 
 /**
- * Simulates a multi-source API call (LinkedIn + CareerBuilder + ResumeWorded)
- * Returns a promise that resolves after a specified duration to simulate network delay.
+ * Contacts the Python FastAPI backend to evaluate the resume.
+ * Falls back to the client-side JavaScript engine if the backend is offline.
  */
-export function fetchAPIAnalysis(resume, profession = 'it') {
-  return new Promise((resolve) => {
-    setTimeout(() => {
-      const result = analyzeResume(resume, profession);
-      resolve(result);
-    }, 1200); // 1.2 second mock latency for premium feel
-  });
+export async function fetchAPIAnalysis(resume, profession = 'it') {
+  try {
+    const response = await fetch("http://localhost:8000/analyze", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ resume, profession }),
+    });
+    
+    if (response.ok) {
+      return await response.json();
+    }
+    throw new Error("FastAPI server returned an error response status.");
+  } catch (error) {
+    console.warn("Python backend offline. Falling back to local JS scorer.", error);
+    // Graceful fallback: run the local JS evaluation
+    return analyzeResume(resume, profession);
+  }
 }
+
