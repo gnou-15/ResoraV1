@@ -2022,7 +2022,8 @@ select.input-error {
 .auth-label {
   position: absolute;
   left: 12px;
-  top: 23px; /* vertical center of 46px input */
+  top: 23px;
+  /* vertical center of 46px input */
   transform: translateY(-50%);
   background-color: transparent;
   padding: 0;
@@ -2044,20 +2045,20 @@ select.input-error {
   max-width: 20px;
   overflow: hidden;
   transition: opacity 0.2s cubic-bezier(0.2, 0, 0, 1.0),
-              max-width 0.2s cubic-bezier(0.2, 0, 0, 1.0),
-              margin-left 0.2s cubic-bezier(0.2, 0, 0, 1.0);
+    max-width 0.2s cubic-bezier(0.2, 0, 0, 1.0),
+    margin-left 0.2s cubic-bezier(0.2, 0, 0, 1.0);
 }
 
 /* Hide red asterisk when the label floats upwards */
-.auth-input:not(:placeholder-shown) ~ .auth-label .req,
-.auth-input:-webkit-autofill ~ .auth-label .req,
-.auth-password-wrapper .auth-input:not(:placeholder-shown) ~ .auth-label .req,
-.auth-password-wrapper .auth-input:-webkit-autofill ~ .auth-label .req,
-.auth-input-group textarea:not(:placeholder-shown) ~ .auth-label .req,
-.auth-input-group textarea:-webkit-autofill ~ .auth-label .req,
-.auth-input:focus ~ .auth-label .req,
-.auth-password-wrapper .auth-input:focus ~ .auth-label .req,
-.auth-input-group textarea:focus ~ .auth-label .req {
+.auth-input:not(:placeholder-shown)~.auth-label .req,
+.auth-input:-webkit-autofill~.auth-label .req,
+.auth-password-wrapper .auth-input:not(:placeholder-shown)~.auth-label .req,
+.auth-password-wrapper .auth-input:-webkit-autofill~.auth-label .req,
+.auth-input-group textarea:not(:placeholder-shown)~.auth-label .req,
+.auth-input-group textarea:-webkit-autofill~.auth-label .req,
+.auth-input:focus~.auth-label .req,
+.auth-password-wrapper .auth-input:focus~.auth-label .req,
+.auth-input-group textarea:focus~.auth-label .req {
   opacity: 0;
   max-width: 0;
   margin-left: 0;
@@ -2065,18 +2066,20 @@ select.input-error {
 
 
 /* Float label when NOT focused but has content (keep it grey and centered on border line) */
-.auth-input:not(:placeholder-shown) ~ .auth-label,
-.auth-input:-webkit-autofill ~ .auth-label {
+.auth-input:not(:placeholder-shown)~.auth-label,
+.auth-input:-webkit-autofill~.auth-label {
   top: 100%;
   font-size: 0.75rem;
   font-weight: 600;
-  color: #475569; /* darker text for contrast on grey background */
-  background-color: #e2e8f0; /* matching default border #e2e8f0 */
+  color: #475569;
+  /* darker text for contrast on grey background */
+  background-color: #e2e8f0;
+  /* matching default border #e2e8f0 */
   padding: 2px 4px;
 }
 
-.auth-password-wrapper .auth-input:not(:placeholder-shown) ~ .auth-label,
-.auth-password-wrapper .auth-input:-webkit-autofill ~ .auth-label {
+.auth-password-wrapper .auth-input:not(:placeholder-shown)~.auth-label,
+.auth-password-wrapper .auth-input:-webkit-autofill~.auth-label {
   top: 100%;
   font-size: 0.75rem;
   font-weight: 600;
@@ -2085,8 +2088,8 @@ select.input-error {
   padding: 2px 4px;
 }
 
-.auth-input-group textarea:not(:placeholder-shown) ~ .auth-label,
-.auth-input-group textarea:-webkit-autofill ~ .auth-label {
+.auth-input-group textarea:not(:placeholder-shown)~.auth-label,
+.auth-input-group textarea:-webkit-autofill~.auth-label {
   top: 100%;
   font-size: 0.75rem;
   font-weight: 600;
@@ -2096,16 +2099,17 @@ select.input-error {
 }
 
 /* Float label when focused (highlight in active primary orange, centered on border line) */
-.auth-input:focus ~ .auth-label {
+.auth-input:focus~.auth-label {
   top: 100%;
   font-size: 0.75rem;
   font-weight: 600;
   color: #ffffff;
-  background-color: #f97316; /* orange background matching focused border */
+  background-color: #f97316;
+  /* orange background matching focused border */
   padding: 2px 4px;
 }
 
-.auth-password-wrapper .auth-input:focus ~ .auth-label {
+.auth-password-wrapper .auth-input:focus~.auth-label {
   top: 100%;
   font-size: 0.75rem;
   font-weight: 600;
@@ -2115,12 +2119,12 @@ select.input-error {
 }
 
 /* Off-center textarea label when empty/unfocused */
-.auth-input-group textarea ~ .auth-label {
+.auth-input-group textarea~.auth-label {
   top: 20px;
 }
 
 /* Floating behavior for textarea label when focused */
-.auth-input-group textarea:focus ~ .auth-label {
+.auth-input-group textarea:focus~.auth-label {
   top: 100%;
   font-size: 0.75rem;
   font-weight: 600;
@@ -2130,26 +2134,26 @@ select.input-error {
 }
 
 /* Error state label colors */
-.auth-input.error ~ .auth-label {
+.auth-input.error~.auth-label {
   color: #ef4444;
   background-color: transparent;
   padding: 0;
 }
 
-.auth-input.error:not(:placeholder-shown) ~ .auth-label,
-.auth-input.error:-webkit-autofill ~ .auth-label,
-.auth-password-wrapper .auth-input.error:not(:placeholder-shown) ~ .auth-label,
-.auth-password-wrapper .auth-input.error:-webkit-autofill ~ .auth-label,
-.auth-input-group textarea.error:not(:placeholder-shown) ~ .auth-label,
-.auth-input-group textarea.error:-webkit-autofill ~ .auth-label {
+.auth-input.error:not(:placeholder-shown)~.auth-label,
+.auth-input.error:-webkit-autofill~.auth-label,
+.auth-password-wrapper .auth-input.error:not(:placeholder-shown)~.auth-label,
+.auth-password-wrapper .auth-input.error:-webkit-autofill~.auth-label,
+.auth-input-group textarea.error:not(:placeholder-shown)~.auth-label,
+.auth-input-group textarea.error:-webkit-autofill~.auth-label {
   color: #ffffff !important;
   background-color: #f87171 !important;
   padding: 2px 4px;
 }
 
-.auth-input.error:focus ~ .auth-label,
-.auth-password-wrapper .auth-input.error:focus ~ .auth-label,
-.auth-input-group textarea.error:focus ~ .auth-label {
+.auth-input.error:focus~.auth-label,
+.auth-password-wrapper .auth-input.error:focus~.auth-label,
+.auth-input-group textarea.error:focus~.auth-label {
   color: #ffffff !important;
   background-color: #dc2626 !important;
   padding: 2px 4px;
@@ -2158,8 +2162,8 @@ select.input-error {
 
 /* Browser autofill style override to force white background and avoid overlapping blue/yellow boxes */
 .auth-input:-webkit-autofill,
-.auth-input:-webkit-autofill:hover, 
-.auth-input:-webkit-autofill:focus, 
+.auth-input:-webkit-autofill:hover,
+.auth-input:-webkit-autofill:focus,
 .auth-input:-webkit-autofill:active {
   -webkit-box-shadow: 0 0 0 1000px #ffffff inset !important;
   -webkit-text-fill-color: #0f172a !important;
@@ -2258,7 +2262,8 @@ select.input-error {
   border: 1.5px solid #cbd5e1;
   accent-color: #f97316;
   cursor: pointer;
-  margin-top: 2px; /* visual alignment with first line of text */
+  margin-top: 2px;
+  /* visual alignment with first line of text */
 }
 
 .auth-checkbox-text {
@@ -3806,7 +3811,7 @@ select.input-error {
 }
 
 .ai-widget-loading {
-  opacity: 0.85;
+  opacity: 1;
 }
 
 /* Simulated API Syncing Banner */
@@ -3893,10 +3898,22 @@ select.input-error {
 /* Body layout */
 .ai-widget-body {
   padding: 1.25rem;
-  display: grid;
-  grid-template-columns: auto 1fr;
+  display: flex;
+  flex-direction: row;
   gap: 1.5rem;
   align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  box-sizing: border-box;
+  position: relative;
+  transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Give the body enough height during loading so mascot doesn't overlap header */
+.ai-widget-loading .ai-widget-body {
+  min-height: 180px;
+  padding-top: 2rem;
+  padding-bottom: 2rem;
 }
 
 .score-and-mascot-panel {
@@ -3905,14 +3922,17 @@ select.input-error {
   gap: 1.25rem;
   border-right: 1px dashed var(--skeuo-border, #f4e7db);
   padding-right: 1.5rem;
+  flex-shrink: 0;
+  transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-/* Circular Gauge */
 .circular-gauge-container {
   position: relative;
   width: 90px;
   height: 90px;
   flex-shrink: 0;
+  opacity: 1;
+  transition: width 0.5s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.4s ease-out, margin 0.5s ease-out;
 }
 
 .score-svg {
@@ -3961,23 +3981,51 @@ select.input-error {
 }
 
 /* Mascot Bubble Panel */
+.mascot-placeholder {
+  width: 90px;
+  height: 140px;
+  flex-shrink: 0;
+  transition: width 0.5s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.4s ease-out;
+}
+
+.ai-widget-loading .mascot-placeholder {
+  width: 0px;
+  opacity: 0;
+  pointer-events: none;
+}
+
 .mascot-panel {
   display: flex;
   flex-direction: column;
   align-items: center;
-  position: relative;
+  position: absolute;
+  z-index: 10;
+  width: 90px;
+  left: 130px;
+  /* padding-left (20px) + gauge (90px) + gap (20px) */
+  top: 50%;
+  transform: translateY(-50%);
+  transition: left 0.6s cubic-bezier(0.34, 1.56, 0.64, 1), top 0.6s cubic-bezier(0.34, 1.56, 0.64, 1), transform 0.6s cubic-bezier(0.34, 1.56, 0.64, 1), opacity 0.5s ease;
+}
+
+.ai-widget-loading .mascot-panel {
+  left: calc(50% - 45px);
+  /* center horizontally; push down from top to avoid header overlap */
+  top: 55%;
+  transform: translateY(-45%);
 }
 
 .mascot-bubble {
   background: white;
   border: 1px solid var(--skeuo-border, #f4e7db);
   border-radius: 12px;
-  padding: 0.3rem 0.5rem;
+  padding: 0.4rem 0.65rem;
   font-size: 0.65rem;
   line-height: 1.3;
   color: #334155;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.03);
-  max-width: 120px;
+  max-width: 200px;
+  min-width: 140px;
   text-align: center;
   position: relative;
   margin-top: 4px;
@@ -4012,6 +4060,12 @@ select.input-error {
   display: flex;
   flex-direction: column;
   justify-content: center;
+  flex-grow: 1;
+  opacity: 1;
+  max-width: 600px;
+  max-height: 500px;
+  transform: translateY(0);
+  transition: opacity 0.4s ease, transform 0.5s cubic-bezier(0.4, 0, 0.2, 1), max-width 0.5s ease, max-height 0.5s ease, padding 0.5s ease, margin 0.5s ease;
 }
 
 .placement-rank {
@@ -4401,7 +4455,7 @@ select.input-error {
 /* Responsive adjustments for Widget */
 @media (max-width: 600px) {
   .ai-widget-body {
-    grid-template-columns: 1fr;
+    flex-direction: column;
     gap: 1rem;
   }
 
@@ -4411,6 +4465,17 @@ select.input-error {
     padding-right: 0;
     padding-bottom: 1rem;
     justify-content: center;
+  }
+
+  .mascot-placeholder {
+    display: none !important;
+  }
+
+  .mascot-panel {
+    position: relative !important;
+    left: auto !important;
+    top: auto !important;
+    transform: none !important;
   }
 
   .mini-breakdown {
@@ -4616,5 +4681,328 @@ select.input-error {
   .format-badge {
     display: none !important;
     /* Hide badge on tiny screens to save space */
+  }
+}
+
+/* ==========================================================================
+   Insufficient Data State for AIScoreWidget
+   ========================================================================== */
+
+.insufficient-data-body {
+  display: flex;
+  align-items: flex-start;
+  gap: 1.5rem;
+  padding: 0 1.5rem;
+  max-height: 0;
+  opacity: 0;
+  overflow: hidden;
+  pointer-events: none;
+  transition: max-height 0.5s cubic-bezier(0.4, 0, 0.2, 1),
+              opacity 0.4s ease-out,
+              padding 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Show the insufficient body when the card has the insufficient class */
+.ai-widget-insufficient .insufficient-data-body {
+  max-height: 600px;
+  opacity: 1;
+  padding: 1.5rem 1.5rem 1.75rem;
+  pointer-events: auto;
+}
+
+/* Hide the normal analysis body during insufficient state */
+.ai-widget-insufficient .ai-widget-body {
+  max-height: 0 !important;
+  opacity: 0 !important;
+  padding: 0 !important;
+  margin: 0 !important;
+  overflow: hidden;
+  pointer-events: none;
+  transition: max-height 0.5s cubic-bezier(0.4, 0, 0.2, 1),
+              opacity 0.4s ease-out,
+              padding 0.5s ease;
+}
+
+/* Hide suggestions during insufficient state */
+.ai-widget-insufficient .ai-widget-suggestions {
+  opacity: 0 !important;
+  max-height: 0px !important;
+  padding: 0 !important;
+  margin: 0 !important;
+  pointer-events: none;
+}
+
+/* Also hide the insufficient body during loading (syncing takes priority) */
+.ai-widget-loading .insufficient-data-body {
+  max-height: 0;
+  opacity: 0;
+  padding: 0 1.5rem;
+  pointer-events: none;
+}
+
+.insufficient-mascot {
+  flex-shrink: 0;
+}
+
+.insufficient-content {
+  flex: 1;
+  min-width: 0;
+}
+
+.insufficient-title {
+  margin: 0 0 0.4rem;
+  font-family: 'Outfit', sans-serif;
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: #1e293b;
+}
+
+.insufficient-desc {
+  margin: 0 0 1rem;
+  font-size: 0.82rem;
+  line-height: 1.55;
+  color: #475569;
+}
+
+.insufficient-desc strong {
+  color: #ea580c;
+  font-weight: 700;
+}
+
+/* Fill progress bar */
+.insufficient-fill-bar {
+  margin-bottom: 1rem;
+}
+
+.fill-track {
+  position: relative;
+  height: 10px;
+  background: #f1f5f9;
+  border-radius: 999px;
+  overflow: visible;
+}
+
+.fill-progress {
+  height: 100%;
+  border-radius: 999px;
+  background: linear-gradient(90deg, #fbbf24, #f97316);
+  transition: width 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+  min-width: 4px;
+}
+
+.fill-midpoint {
+  position: absolute;
+  left: 80%;
+  top: -3px;
+  width: 2px;
+  height: 16px;
+  background: #ef4444;
+  border-radius: 1px;
+  transform: translateX(-50%);
+}
+
+.fill-midpoint::after {
+  content: '';
+  position: absolute;
+  top: -2px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 6px;
+  height: 6px;
+  background: #ef4444;
+  border-radius: 50%;
+}
+
+.fill-labels {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 4px;
+  font-size: 0.65rem;
+  color: #94a3b8;
+  font-weight: 500;
+}
+
+.midpoint-label {
+  color: #ef4444;
+  font-weight: 700;
+  position: relative;
+  left: -4px;
+}
+
+/* Missing sections checklist */
+.insufficient-checklist {
+  background: rgba(241, 245, 249, 0.7);
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  padding: 0.75rem 1rem;
+}
+
+.checklist-title {
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: #334155;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  display: block;
+  margin-bottom: 0.5rem;
+}
+
+.insufficient-checklist ul {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem 0.75rem;
+}
+
+.insufficient-checklist li {
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
+  font-size: 0.76rem;
+  color: #475569;
+  line-height: 1.5;
+}
+
+.checklist-icon {
+  color: #ea580c;
+  font-weight: 700;
+  font-size: 0.85rem;
+  flex-shrink: 0;
+}
+
+/* ==========================================================================
+   Syncing State Loading Animations for AIScoreWidget
+   ========================================================================== */
+
+.sync-dance-wrapper {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  transform: rotate(0deg) translateY(0) scale(1);
+  transition: transform 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+  transform-origin: center center;
+}
+
+/* Run spin/dance animation only during loading */
+.ai-widget-loading .sync-dance-wrapper {
+  animation: mascot-dance 3.2s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+}
+
+/* Blinking text underneath mascot on syncing */
+.sync-blinking-text {
+  font-size: 0.76rem;
+  color: #ea580c;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  margin-top: 0;
+  text-align: center;
+  position: relative;
+  white-space: nowrap;
+  opacity: 0;
+  height: 0;
+  overflow: hidden;
+  pointer-events: none;
+  transition: opacity 0.3s ease, height 0.3s ease, margin 0.3s ease;
+}
+
+.ai-widget-loading .sync-blinking-text {
+  opacity: 1;
+  height: auto;
+  margin-top: 6px;
+  animation: modern-blink 1.5s ease-in-out infinite;
+}
+
+.mascot-bubble {
+  opacity: 1;
+  transform: scale(1);
+  transition: opacity 0.4s ease, transform 0.4s ease;
+}
+
+.ai-widget-loading .mascot-bubble {
+  opacity: 0 !important;
+  transform: scale(0.8) !important;
+  pointer-events: none;
+}
+
+/* Transition classes for smooth loading -> loaded states */
+.ai-widget-loading .circular-gauge-container {
+  width: 0px !important;
+  opacity: 0 !important;
+  margin-right: -1.25rem !important;
+  pointer-events: none;
+}
+
+.ai-widget-loading .score-and-mascot-panel {
+  border-right-color: transparent !important;
+  padding-right: 0 !important;
+  flex-grow: 1 !important;
+  justify-content: center !important;
+}
+
+.ai-widget-loading .placement-details-panel {
+  opacity: 0 !important;
+  transform: scale(0.9) translateY(20px) !important;
+  max-width: 0px !important;
+  max-height: 0px !important;
+  padding: 0 !important;
+  margin: 0 !important;
+  overflow: hidden !important;
+  pointer-events: none;
+}
+
+.ai-widget-suggestions {
+  opacity: 1;
+  max-height: 2000px;
+  transition: opacity 0.4s ease, max-height 0.5s cubic-bezier(0.4, 0, 0.2, 1), padding 0.5s ease, margin 0.5s ease;
+  overflow: hidden;
+}
+
+.ai-widget-loading .ai-widget-suggestions {
+  opacity: 0 !important;
+  max-height: 0px !important;
+  padding: 0 !important;
+  margin: 0 !important;
+  pointer-events: none;
+}
+
+/* Animations */
+@keyframes mascot-dance {
+  0% {
+    transform: rotate(0deg) translateY(0) scale(1);
+  }
+
+  20% {
+    transform: rotate(15deg) translateY(-6px) scale(1.04);
+  }
+
+  40% {
+    transform: rotate(-15deg) translateY(2px) scale(0.96);
+  }
+
+  60% {
+    transform: rotate(375deg) translateY(-6px) scale(1.04);
+  }
+
+  80% {
+    transform: rotate(345deg) translateY(2px) scale(0.96);
+  }
+
+  100% {
+    transform: rotate(360deg) translateY(0) scale(1);
+  }
+}
+
+@keyframes modern-blink {
+
+  0%,
+  100% {
+    opacity: 0.35;
+  }
+
+  50% {
+    opacity: 1;
   }
 }

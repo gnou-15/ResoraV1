@@ -1,4 +1,5 @@
 import { supabase } from './supabase';
+import { encryptData, decryptData } from './encryption';
 
 const STORAGE_KEY = 'resume-builder-data';
 
@@ -26,7 +27,6 @@ export function clearResume(profession) {
 }
 
 // --- Supabase Persistence (Authenticated Users) ---
-
 export async function loadResumeFromSupabase(profession, userId) {
   try {
     const { data, error } = await supabase
@@ -40,7 +40,10 @@ export async function loadResumeFromSupabase(profession, userId) {
       console.error('Error loading resume from Supabase:', error);
       return null;
     }
-    return data ? data.resume_data : null;
+
+    const rawData = data ? data.resume_data : null;
+    // Decrypt data, falling back to plaintext if the record is legacy/unencrypted
+    return decryptData(rawData, userId);
   } catch (err) {
     console.error('Catch error loading resume from Supabase:', err);
     return null;
@@ -49,12 +52,15 @@ export async function loadResumeFromSupabase(profession, userId) {
 
 export async function saveResumeToSupabase(data, profession, userId) {
   try {
+    // Encrypt the JSON data using the user's derived key
+    const encryptedData = encryptData(data, userId);
+
     const { error } = await supabase
       .from('resumes')
       .upsert({
         user_id: userId,
         profession: profession,
-        resume_data: data,
+        resume_data: encryptedData,
         updated_at: new Date().toISOString()
       }, { onConflict: 'user_id,profession' });
 

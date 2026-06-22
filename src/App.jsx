@@ -26,7 +26,7 @@ function App() {
     }
     return { page: "landing", profession: null };
   });
-  
+
   const [isExitingBuilder, setIsExitingBuilder] = useState(false);
   const [showLoader, setShowLoader] = useState(false);
   const [user, setUser] = useState(null);
@@ -63,14 +63,6 @@ function App() {
 
     return () => subscription.unsubscribe();
   }, []);
-
-  useEffect(() => {
-    if (user && (!user.user_metadata?.first_name || !user.user_metadata?.last_name)) {
-      if (route.page !== "auth") {
-        setRoute({ page: "auth", profession: null });
-      }
-    }
-  }, [user, route.page]);
 
   const handleBackToLanding = () => {
     setIsExitingBuilder(true);
@@ -125,7 +117,7 @@ function App() {
     <>
       <div className={wrapperClass}>
         <InteractiveBackground />
-        
+
         {/* Static parent header that does not slide with the page contents */}
         <header className={`landing-header ${isHeaderHidden ? "header-hidden" : ""} ${isHeaderScrolledOut ? "header-scrolled-out" : ""}`}>
           <a href="/" className="logo-container" onClick={(e) => { e.preventDefault(); setRoute({ page: "landing", profession: null }); }}>
@@ -177,13 +169,13 @@ function App() {
                 <span className="user-greeting">
                   Hi, {(user.user_metadata?.full_name || user.email.split('@')[0]).trim().split(/\s+/)[0]}
                 </span>
-                <button 
-                  className="nav-btn-signin signout-btn" 
-                  onClick={async (e) => { 
-                    e.preventDefault(); 
+                <button
+                  className="nav-btn-signin signout-btn"
+                  onClick={async (e) => {
+                    e.preventDefault();
                     setIsSigningOut(true);
                     setMascotMood("frantic");
-                    await supabase.auth.signOut(); 
+                    await supabase.auth.signOut();
                     transitionToPage("auth", "See you again!");
                   }}
                   onMouseEnter={() => setMascotMood("frantic")}
@@ -197,9 +189,9 @@ function App() {
                 </button>
               </div>
             ) : (
-              <a 
-                href="#" 
-                className="nav-btn-signin" 
+              <a
+                href="#"
+                className="nav-btn-signin"
                 onClick={(e) => { e.preventDefault(); setRoute({ page: "auth", profession: null }); }}
                 onMouseEnter={() => {
                   if (!isSigningOut) {

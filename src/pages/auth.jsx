@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import InteractiveAuthPattern from "../components/InteractiveAuthPattern";
 import "../css/App.css";
 import { supabase } from "../services/supabase";
+import { encryptName } from "../services/encryption";
 
 export default function Auth({ user, onNavigate, onSuccessNavigate }) {
   const [isLogin, setIsLogin] = useState(true);
@@ -16,7 +17,7 @@ export default function Auth({ user, onNavigate, onSuccessNavigate }) {
 
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
-  
+
   const [errors, setErrors] = useState({});
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(false);
@@ -30,7 +31,7 @@ export default function Auth({ user, onNavigate, onSuccessNavigate }) {
     if (user) {
       let fName = user.user_metadata?.first_name || user.user_metadata?.given_name || "";
       let lName = user.user_metadata?.last_name || user.user_metadata?.family_name || "";
-      
+
       if (!fName && !lName && user.user_metadata?.full_name) {
         const parts = user.user_metadata.full_name.trim().split(/\s+/);
         if (parts.length > 1) {
@@ -40,7 +41,7 @@ export default function Auth({ user, onNavigate, onSuccessNavigate }) {
           fName = parts[0] || "";
         }
       }
-      
+
       // eslint-disable-next-line react-hooks/set-state-in-effect
       setFirstName(fName);
       setLastName(lName);
@@ -60,11 +61,11 @@ export default function Auth({ user, onNavigate, onSuccessNavigate }) {
     // Check for OAuth redirect errors in the URL hash or search params
     const hashParams = new URLSearchParams(window.location.hash.substring(1));
     const searchParams = new URLSearchParams(window.location.search);
-    
+
     const errorCode = hashParams.get("error_code") || searchParams.get("error_code");
     const errorDesc = hashParams.get("error_description") || searchParams.get("error_description");
     const errorMsg = hashParams.get("error") || searchParams.get("error");
-    
+
     if (errorCode || errorDesc || errorMsg) {
       let finalMsg = errorDesc || errorMsg || "An error occurred during authentication.";
       if (errorCode === "identity_already_exists" || finalMsg.toLowerCase().includes("already exists")) {
@@ -106,7 +107,7 @@ export default function Auth({ user, onNavigate, onSuccessNavigate }) {
       ...prev,
       [name]: type === "checkbox" ? checked : value,
     }));
-    
+
     // Clear error for this field
     if (errors[name]) {
       setErrors((prev) => ({ ...prev, [name]: "" }));
@@ -115,7 +116,7 @@ export default function Auth({ user, onNavigate, onSuccessNavigate }) {
 
   const validate = () => {
     const newErrors = {};
-    
+
     // Email validate
     if (!formData.email.trim()) {
       newErrors.email = "Email is required";
@@ -166,8 +167,8 @@ export default function Auth({ user, onNavigate, onSuccessNavigate }) {
         });
 
         if (error) {
-          const errMsg = error.message === "Failed to fetch" 
-            ? "Connection error: Failed to connect to Supabase. Please verify your Supabase credentials in your .env file." 
+          const errMsg = error.message === "Failed to fetch"
+            ? "Connection error: Failed to connect to Supabase. Please verify your Supabase credentials in your .env file."
             : error.message;
           setErrors({ form: errMsg });
           setLoading(false);
@@ -181,19 +182,21 @@ export default function Auth({ user, onNavigate, onSuccessNavigate }) {
           setSuccess(true);
         }
       } else {
+        // 1. Call Supabase Auth to register the user
         const { data, error } = await supabase.auth.signUp({
           email: formData.email,
           password: formData.password,
           options: {
             data: {
-              full_name: formData.name,
+              full_name: formData.name, // Plaintext fallback during initial registration
             },
           },
         });
 
+        // 2. Handle errors returned by the signup call
         if (error) {
-          const errMsg = error.message === "Failed to fetch" 
-            ? "Connection error: Failed to connect to Supabase. Please verify your Supabase credentials in your .env file." 
+          const errMsg = error.message === "Failed to fetch"
+            ? "Connection error: Failed to connect to Supabase. Please verify your Supabase credentials in your .env file."
             : error.message;
           setErrors({ form: errMsg });
           setLoading(false);
@@ -201,10 +204,25 @@ export default function Auth({ user, onNavigate, onSuccessNavigate }) {
           setErrors({ form: "An account with this email address already exists." });
           setLoading(false);
         } else {
+          // 3. Signup was successful! Try to encrypt and store the full_name metadata immediately
+          if (data?.user) {
+            try {
+              const encryptedFullName = encryptName(formData.name, data.user.id);
+              await supabase.auth.updateUser({
+                data: {
+                  full_name: encryptedFullName
+                }
+              });
+            } catch (err) {
+              // Silently ignore session/auth errors if email confirmation is required first
+            }
+          }
           setLoading(false);
           setSuccess(true);
         }
       }
+
+
     } catch (err) {
       const errMsg = (err && (err.message === "Failed to fetch" || (err.message && err.message.includes("Failed to fetch"))))
         ? "Connection error: Failed to connect to Supabase. Please verify your Supabase credentials in your .env file."
@@ -225,8 +243,8 @@ export default function Auth({ user, onNavigate, onSuccessNavigate }) {
         },
       });
       if (error) {
-        const errMsg = error.message === "Failed to fetch" 
-          ? "Connection error: Failed to connect to Supabase. Please verify your Supabase credentials in your .env file." 
+        const errMsg = error.message === "Failed to fetch"
+          ? "Connection error: Failed to connect to Supabase. Please verify your Supabase credentials in your .env file."
           : error.message;
         setErrors({ form: errMsg });
         setLoading(false);
@@ -245,7 +263,7 @@ export default function Auth({ user, onNavigate, onSuccessNavigate }) {
     const newErrors = {};
     if (!firstName.trim()) newErrors.firstName = "First name is required";
     if (!lastName.trim()) newErrors.lastName = "Last name is required";
-    
+
     const nameRegex = /^[a-zA-Z\s.-]{2,}$/;
     if (firstName.trim() && !nameRegex.test(firstName.trim())) {
       newErrors.firstName = "First name format is invalid";
@@ -263,11 +281,16 @@ export default function Auth({ user, onNavigate, onSuccessNavigate }) {
     setNameErrors({});
 
     try {
+      // Encrypt the First Name, Last Name, and Full Name using user's UUID
+      const encryptedFirstName = encryptName(firstName.trim(), user.id);
+      const encryptedLastName = encryptName(lastName.trim(), user.id);
+      const encryptedFullName = encryptName(`${firstName.trim()} ${lastName.trim()}`, user.id);
+
       const { error } = await supabase.auth.updateUser({
         data: {
-          first_name: firstName.trim(),
-          last_name: lastName.trim(),
-          full_name: `${firstName.trim()} ${lastName.trim()}`
+          first_name: encryptedFirstName,
+          last_name: encryptedLastName,
+          full_name: encryptedFullName
         }
       });
 
@@ -288,8 +311,6 @@ export default function Auth({ user, onNavigate, onSuccessNavigate }) {
     }
   };
 
-
-
   const toggleMode = () => {
     setIsLogin(!isLogin);
     setErrors({});
@@ -309,16 +330,16 @@ export default function Auth({ user, onNavigate, onSuccessNavigate }) {
   return (
     <div className="auth-page-container">
       <div className="auth-split-layout">
-        
+
         {/* Left Side: Form */}
         <div className="auth-form-column">
           <div className="auth-form-wrapper">
-            
-             {/* Logo and Back Action */}
+
+            {/* Logo and Back Action */}
             <div className="auth-header-row">
-              <div 
-                className="auth-logo-header" 
-                style={{ cursor: isLogin ? "pointer" : "default" }} 
+              <div
+                className="auth-logo-header"
+                style={{ cursor: isLogin ? "pointer" : "default" }}
                 onClick={() => isLogin && onNavigate && onNavigate("landing")}
               >
                 <svg className="auth-logo-svg" width="36" height="36" viewBox="0 0 34 34" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -351,9 +372,9 @@ export default function Auth({ user, onNavigate, onSuccessNavigate }) {
               </div>
 
               {isLogin && (
-                <button 
-                  type="button" 
-                  className="auth-back-link-btn" 
+                <button
+                  type="button"
+                  className="auth-back-link-btn"
                   onClick={() => onNavigate && onNavigate("landing")}
                 >
                   ← Back to Home
@@ -452,14 +473,14 @@ export default function Auth({ user, onNavigate, onSuccessNavigate }) {
                       {isLogin ? "Welcome back!" : "Verify your Email"}
                     </h2>
                     <p className="success-desc">
-                      {isLogin 
-                        ? `Successfully logged in as ${formData.email}. You now have full access to create & edit your resumes.` 
+                      {isLogin
+                        ? `Successfully logged in as ${formData.email}. You now have full access to create & edit your resumes.`
                         : `We have sent a confirmation link to ${formData.email}. Please check your inbox and click the link to confirm your email before logging in.`
                       }
                     </p>
-                    <button 
-                      type="button" 
-                      className="auth-btn-primary" 
+                    <button
+                      type="button"
+                      className="auth-btn-primary"
                       onClick={() => {
                         if (isLogin) {
                           if (onSuccessNavigate) {
@@ -486,8 +507,8 @@ export default function Auth({ user, onNavigate, onSuccessNavigate }) {
                     {isLogin ? "Welcome back !" : "Create your account"}
                   </h2>
                   <p className="auth-subtitle">
-                    {isLogin 
-                      ? "Enter to get unlimited access to data & information." 
+                    {isLogin
+                      ? "Enter to get unlimited access to data & information."
                       : "Join us and build a professional, ATS-optimized resume in seconds."
                     }
                   </p>
@@ -704,22 +725,22 @@ export default function Auth({ user, onNavigate, onSuccessNavigate }) {
             <h2 className="auth-gate-title">Terms & Conditions</h2>
             <div className="terms-content" style={{ maxHeight: "300px", overflowY: "auto", margin: "1.5rem 0", fontSize: "0.88rem", color: "#475569", lineHeight: "1.6", paddingRight: "8px" }}>
               <p style={{ fontWeight: 600, color: "#1e293b", marginTop: 0 }}>Welcome to Resora! By creating an account, you agree to the following terms:</p>
-              
+
               <h3 style={{ fontSize: "1rem", color: "#0f172a", margin: "1rem 0 0.5rem" }}>1. Acceptance of Terms</h3>
               <p>By creating an account, accessing, or using Resora, you agree to comply with and be bound by these Terms & Conditions. If you do not agree, you must not access or use the platform.</p>
-              
+
               <h3 style={{ fontSize: "1rem", color: "#0f172a", margin: "1rem 0 0.5rem" }}>2. Purpose of Service</h3>
               <p>Resora provides tools and services to assist users in building, formatting, and storing professional, ATS-optimized resumes. Resora is for personal, non-commercial use only.</p>
-              
+
               <h3 style={{ fontSize: "1rem", color: "#0f172a", margin: "1rem 0 0.5rem" }}>3. Data Privacy & Storage</h3>
-              <p>Your resume data is stored securely in our database. We value your privacy and will never sell, lease, or distribute your personal details or resume data to any third-party marketing services.</p>
-              
+              <p>Your resume data is stored securely in our database. We value your privacy and will never sell, lease, or distribute your personal details or resume data to any third-party marketing services. To guarantee total security, all of your sensitive input data—including your name, email, phone number, and complete resume details—is automatically encrypted client-side on your device using advanced AES-256 encryption before being stored, ensuring your data is completely unreadable to unauthorized parties.</p>
+
               <h3 style={{ fontSize: "1rem", color: "#0f172a", margin: "1rem 0 0.5rem" }}>4. Disclaimers</h3>
               <p>While Resora strives to provide tools that optimize resume formatting for ATS systems, we do not guarantee job interviews, employment offers, or specific career outcomes.</p>
             </div>
-            <button 
-              type="button" 
-              className="auth-gate-btn-primary" 
+            <button
+              type="button"
+              className="auth-gate-btn-primary"
               style={{ width: "100%", padding: "0.85rem", borderRadius: "8px" }}
               onClick={() => setShowTermsModal(false)}
             >

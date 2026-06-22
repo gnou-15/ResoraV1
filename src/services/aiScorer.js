@@ -115,16 +115,6 @@ const MOCK_JOBS = {
  * simulating calculations from LinkedIn / ATS APIs
  */
 export function analyzeResume(resume, profession = 'it') {
-  const tips = [];
-  const scoreBreakdown = {
-    contact: 0,
-    headline: 0,
-    summary: 0,
-    skills: 0,
-    experience: 0,
-    projects: 0
-  };
-
   const {
     personal = {},
     headline = '',
@@ -138,6 +128,142 @@ export function analyzeResume(resume, profession = 'it') {
   } = resume;
 
   const isStudent = resume.userType === 'student';
+
+  // ── Content Sufficiency Check ──
+  // Estimate how many "lines" of content the resume would fill on a standard
+  // letter-size page (8.5 × 11in). A full page is roughly 55 printable lines.
+  // The midpoint is ~28 lines. We count filled sections and text volume to
+  // determine if the resume has enough substance for a meaningful analysis.
+  let estimatedLines = 0;
+
+  // Header block: name, contact info → ~3 lines if present
+  const hasName = personal.fullName?.trim();
+  const hasEmail = personal.email?.trim();
+  const hasPhone = personal.phoneNumber?.trim();
+  const filledContactFields = [hasName, hasEmail, hasPhone, personal.linkedin?.trim(), personal.github?.trim(), personal.portfolio?.trim(), personal.location?.city?.trim()].filter(Boolean).length;
+  if (filledContactFields > 0) estimatedLines += Math.min(3, Math.ceil(filledContactFields / 2));
+
+  // Headline → 1 line
+  if (headline?.trim()) estimatedLines += 2; // section header + content
+
+  // Summary → approximately 1 line per 80 chars
+  if (summary?.trim()) {
+    estimatedLines += 2; // section header + spacing
+    estimatedLines += Math.ceil(summary.length / 80);
+  }
+
+  // Skills → 1 line per category that has items
+  let filledSkillCategories = 0;
+  if (profession === 'it') {
+    ['languages', 'frameworks', 'tools', 'databases', 'cloud'].forEach(k => {
+      if (Array.isArray(technicalSkills[k]) && technicalSkills[k].length > 0) filledSkillCategories++;
+    });
+  } else {
+    const rawSkills = resume.skills || '';
+    const skillCount = typeof rawSkills === 'string'
+      ? rawSkills.split(',').filter(s => s.trim()).length
+      : Array.isArray(rawSkills) ? rawSkills.length : 0;
+    if (skillCount > 0) filledSkillCategories = Math.ceil(skillCount / 5);
+  }
+  if (filledSkillCategories > 0) {
+    estimatedLines += 2; // section header + spacing
+    estimatedLines += filledSkillCategories;
+  }
+
+  // Education → ~3 lines per entry (school + degree + dates/gpa)
+  const filledEducation_chk = education.filter(e => e.school || e.degree);
+  if (filledEducation_chk.length > 0) {
+    estimatedLines += 2; // section header + spacing
+    filledEducation_chk.forEach(edu => {
+      estimatedLines += 2; // school + degree line
+      if (edu.gpa?.trim()) estimatedLines += 1;
+      if (edu.coursework?.trim()) estimatedLines += Math.ceil(edu.coursework.length / 80);
+    });
+  }
+
+  // Experience → ~2 lines per role header + 1 line per bullet
+  const filledExp_chk = experience.filter(e => e.company || e.title);
+  if (filledExp_chk.length > 0) {
+    estimatedLines += 2; // section header + spacing
+    filledExp_chk.forEach(job => {
+      estimatedLines += 2; // company + title line
+      const jobBullets = (job.bullets || []).filter(b => b && b.trim());
+      estimatedLines += jobBullets.length;
+    });
+  }
+
+  // Projects → ~2 lines per project header + 1 per bullet
+  const filledProjects_chk = projects.filter(p => p.name);
+  if (filledProjects_chk.length > 0) {
+    estimatedLines += 2; // section header + spacing
+    filledProjects_chk.forEach(proj => {
+      estimatedLines += 1; // project name
+      if (proj.stack?.trim()) estimatedLines += 1;
+      const projBullets = (proj.bullets || []).filter(b => b && b.trim());
+      estimatedLines += projBullets.length;
+    });
+  }
+
+  // Certifications → 1 line each
+  const filledCerts_chk = certifications.filter(c => c.name);
+  if (filledCerts_chk.length > 0) {
+    estimatedLines += 2;
+    estimatedLines += filledCerts_chk.length;
+  }
+
+  // Achievements (students) → 1-2 lines each
+  if (isStudent) {
+    const filledAchievements = achievements.filter(a => a.title);
+    if (filledAchievements.length > 0) {
+      estimatedLines += 2;
+      filledAchievements.forEach(a => {
+        estimatedLines += 1;
+        const aBullets = (a.bullets || []).filter(b => b && b.trim());
+        estimatedLines += aBullets.length;
+      });
+    }
+  }
+
+  // Content threshold: ~44 lines = roughly 4/5 of a letter page
+  const MIDPOINT_THRESHOLD = 44;
+
+  if (estimatedLines < MIDPOINT_THRESHOLD) {
+    // Build a list of missing sections to guide the user
+    const missingSections = [];
+    if (!hasName) missingSections.push('your full name');
+    if (!hasEmail && !hasPhone) missingSections.push('contact details (email, phone)');
+    if (!headline?.trim()) missingSections.push('a target role headline');
+    if (!summary?.trim()) missingSections.push('a professional summary');
+    if (filledSkillCategories === 0) missingSections.push('your key skills');
+    if (filledExp_chk.length === 0) missingSections.push(isStudent ? 'internships or student org roles' : 'work experience');
+    if (filledEducation_chk.length === 0 || (!filledEducation_chk[0].school && !filledEducation_chk[0].degree)) missingSections.push('education details');
+    if (filledProjects_chk.length === 0) missingSections.push('projects');
+
+    return {
+      insufficientData: true,
+      estimatedFill: Math.round((estimatedLines / 55) * 100), // percentage of page filled
+      missingSections,
+      score: 0,
+      placement: '',
+      placementColor: '#94a3b8',
+      acceptancePercentage: 0,
+      mascotMood: 'normal',
+      tips: [],
+      scoreBreakdown: { contact: 0, headline: 0, summary: 0, skills: 0, experience: 0, projects: 0 },
+      jobs: []
+    };
+  }
+
+  // ── Full Analysis (content is sufficient) ──
+  const tips = [];
+  const scoreBreakdown = {
+    contact: 0,
+    headline: 0,
+    summary: 0,
+    skills: 0,
+    experience: 0,
+    projects: 0
+  };
 
   // 1. CONTACT INFO COMPLETENESS (Max 15 points)
   let contactPoints = 0;
