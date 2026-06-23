@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback, useRef } from 'react'
 import { defaultResume, migrateResume } from '../data/defaultResume'
 import { getTemplateForProfession } from '../data/professionTemplates'
+import { decryptName } from '../services/encryption'
 import {
   loadResume,
   saveResume,
@@ -17,7 +18,7 @@ export function useResume(profession, user) {
         ...defaultResume,
         personal: {
           ...defaultResume.personal,
-          fullName: user.user_metadata?.full_name || "",
+          fullName: decryptName(user.user_metadata?.full_name || "", user.id),
         },
       };
     }
@@ -34,7 +35,7 @@ export function useResume(profession, user) {
           personal: {
             ...defaultResume.personal,
             ...currentPersonal,
-            fullName: user.user_metadata?.full_name || currentPersonal.fullName || "",
+            fullName: decryptName(user.user_metadata?.full_name || "", user.id) || currentPersonal.fullName || "",
           },
         };
       }
@@ -90,7 +91,7 @@ export function useResume(profession, user) {
           migrated.personal = {
             ...defaultResume.personal,
             ...migrated.personal,
-            fullName: user.user_metadata?.full_name || migrated.personal.fullName || "",
+            fullName: decryptName(user.user_metadata?.full_name || "", user.id) || migrated.personal.fullName || "",
           };
         }
         setResume(migrated);
@@ -187,7 +188,7 @@ export function useResume(profession, user) {
     if (user) {
       resetData.personal = {
         ...resetData.personal,
-        fullName: user.user_metadata?.full_name || "",
+        fullName: decryptName(user.user_metadata?.full_name || "", user.id),
       };
     }
     setResume(resetData);

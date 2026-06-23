@@ -9,6 +9,7 @@ import LoadingScreen from "./components/LoadingScreen";
 import InteractiveBackground from "./components/InteractiveBackground";
 import AuthTransitionBuffer from "./components/AuthTransitionBuffer";
 import { supabase } from "./services/supabase";
+import { decryptName } from "./services/encryption";
 
 function App() {
   const [route, setRoute] = useState(() => {
@@ -167,7 +168,7 @@ function App() {
             {user ? (
               <div className="user-profile-header">
                 <span className="user-greeting">
-                  Hi, {(user.user_metadata?.full_name || user.email.split('@')[0]).trim().split(/\s+/)[0]}
+                  Hi, {(decryptName(user.user_metadata?.full_name, user.id) || user.email.split('@')[0]).trim().split(/\s+/)[0]}
                 </span>
                 <button
                   className="nav-btn-signin signout-btn"

@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import InteractiveAuthPattern from "../components/InteractiveAuthPattern";
 import "../css/App.css";
 import { supabase } from "../services/supabase";
-import { encryptName } from "../services/encryption";
+import { encryptName, decryptName } from "../services/encryption";
 
 export default function Auth({ user, onNavigate, onSuccessNavigate }) {
   const [isLogin, setIsLogin] = useState(true);
@@ -29,11 +29,15 @@ export default function Auth({ user, onNavigate, onSuccessNavigate }) {
 
   useEffect(() => {
     if (user) {
-      let fName = user.user_metadata?.first_name || user.user_metadata?.given_name || "";
-      let lName = user.user_metadata?.last_name || user.user_metadata?.family_name || "";
+      const rawFName = user.user_metadata?.first_name || user.user_metadata?.given_name || "";
+      const rawLName = user.user_metadata?.last_name || user.user_metadata?.family_name || "";
+
+      let fName = decryptName(rawFName, user.id);
+      let lName = decryptName(rawLName, user.id);
 
       if (!fName && !lName && user.user_metadata?.full_name) {
-        const parts = user.user_metadata.full_name.trim().split(/\s+/);
+        const decFullName = decryptName(user.user_metadata.full_name, user.id);
+        const parts = decFullName.trim().split(/\s+/);
         if (parts.length > 1) {
           fName = parts.slice(0, -1).join(" ");
           lName = parts[parts.length - 1];
@@ -83,7 +87,7 @@ export default function Auth({ user, onNavigate, onSuccessNavigate }) {
       setFormData((prev) => ({
         ...prev,
         email: user.email || "",
-        name: user.user_metadata?.full_name || user.email?.split("@")[0] || "",
+        name: decryptName(user.user_metadata?.full_name, user.id) || user.email?.split("@")[0] || "",
       }));
     } else {
       setSuccess(false);
