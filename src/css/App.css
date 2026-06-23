@@ -3808,6 +3808,7 @@ select.input-error {
   overflow: hidden;
   font-family: 'Inter', sans-serif;
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  min-height: 236px;
 }
 
 .ai-widget-loading {
@@ -3909,11 +3910,9 @@ select.input-error {
   transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-/* Give the body enough height during loading so mascot doesn't overlap header */
+/* Mascot stays inline during loading, no need for body height override */
 .ai-widget-loading .ai-widget-body {
-  min-height: 180px;
-  padding-top: 2rem;
-  padding-bottom: 2rem;
+  /* Keep inline next to gauge */
 }
 
 .score-and-mascot-panel {
@@ -3989,8 +3988,6 @@ select.input-error {
 }
 
 .ai-widget-loading .mascot-placeholder {
-  width: 0px;
-  opacity: 0;
   pointer-events: none;
 }
 
@@ -4009,10 +4006,7 @@ select.input-error {
 }
 
 .ai-widget-loading .mascot-panel {
-  left: calc(50% - 45px);
-  /* center horizontally; push down from top to avoid header overlap */
-  top: 55%;
-  transform: translateY(-45%);
+  /* Keep inline next to gauge */
 }
 
 .mascot-bubble {
@@ -4983,34 +4977,22 @@ select.input-error {
 }
 
 .ai-widget-loading .mascot-bubble {
-  opacity: 0 !important;
-  transform: scale(0.8) !important;
+  opacity: 0.55 !important;
   pointer-events: none;
 }
 
-/* Transition classes for smooth loading -> loaded states */
+/* Transition classes for smooth loading -> loaded states - fade elements instead of collapsing */
 .ai-widget-loading .circular-gauge-container {
-  width: 0px !important;
-  opacity: 0 !important;
-  margin-right: -1.25rem !important;
+  opacity: 0.45 !important;
   pointer-events: none;
 }
 
 .ai-widget-loading .score-and-mascot-panel {
-  border-right-color: transparent !important;
-  padding-right: 0 !important;
-  flex-grow: 1 !important;
-  justify-content: center !important;
+  /* Keep layout stable */
 }
 
 .ai-widget-loading .placement-details-panel {
-  opacity: 0 !important;
-  transform: scale(0.9) translateY(20px) !important;
-  max-width: 0px !important;
-  max-height: 0px !important;
-  padding: 0 !important;
-  margin: 0 !important;
-  overflow: hidden !important;
+  opacity: 0.45 !important;
   pointer-events: none;
 }
 
@@ -5022,10 +5004,6 @@ select.input-error {
 }
 
 .ai-widget-loading .ai-widget-suggestions {
-  opacity: 0 !important;
-  max-height: 0px !important;
-  padding: 0 !important;
-  margin: 0 !important;
   pointer-events: none;
 }
 

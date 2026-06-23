@@ -214,9 +214,9 @@ function AIScoreWidget({ resume, profession, analysisResult, loading, onUpdateRe
         <div 
           className="suggestions-expanded-panel" 
           style={{
-            maxHeight: expanded && !loading && !insufficientData ? '1200px' : '0px',
-            opacity: expanded && !loading && !insufficientData ? 1 : 0,
-            padding: expanded && !loading && !insufficientData ? '1.25rem' : '0px 1.25rem',
+            maxHeight: expanded && !insufficientData ? '1200px' : '0px',
+            opacity: expanded && !insufficientData ? (loading ? 0.55 : 1) : 0,
+            padding: expanded && !insufficientData ? '1.25rem' : '0px 1.25rem',
             overflow: 'hidden',
             transition: 'max-height 0.5s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.4s ease-out, padding 0.5s cubic-bezier(0.4, 0, 0.2, 1)'
           }}
