@@ -14,17 +14,27 @@ function hasContent(value) {
   return Boolean(String(value));
 }
 
-function ContactLine({ personal }) {
+function ContactLine({ personal, profession }) {
   const phone = formatPhone(personal);
   const location = formatLocationShort(personal.location);
+
+  const showGithub = ["it", "data", "engineering"].includes(profession);
+  const showPortfolio = !["healthcare", "business", "customs", "safety"].includes(profession);
+
+  const licenseText =
+    profession === "healthcare" && personal.portfolio
+      ? `License: ${personal.portfolio}`
+      : profession === "business" && personal.portfolio
+        ? `CPA / License: ${personal.portfolio}`
+        : null;
 
   const items = [
     personal.email,
     phone,
     location,
-    personal.github,
+    showGithub ? personal.github : null,
     personal.linkedin,
-    personal.portfolio,
+    licenseText || (showPortfolio ? personal.portfolio : null),
   ].filter(hasContent);
 
   if (items.length === 0) return null;
@@ -70,7 +80,22 @@ function ResumePreview({ resume, profession }) {
     (a) => a.title || a.organization || a.bullets.some((b) => hasContent(b)),
   );
 
-  const hasSkills = Object.values(technicalSkills).some(hasContent);
+  const hasSkills = profession === "it"
+    ? Object.values(technicalSkills).some(hasContent)
+    : (
+        hasContent(resume.skills) ||
+        (profession === "healthcare" && (hasContent(resume.license) || (resume.clinicalSkills && resume.clinicalSkills.some(hasContent)))) ||
+        (profession === "education" && (hasContent(resume.teacherCert) || (resume.subjects && resume.subjects.some(hasContent)))) ||
+        (profession === "management" && (hasContent(resume.managementCert) || (resume.managementSkills && resume.managementSkills.some(hasContent)))) ||
+        (profession === "engineering" && (hasContent(resume.engineeringTools) || hasContent(resume.engineeringMethods))) ||
+        (profession === "business" && (hasContent(resume.accountingSoftware) || hasContent(resume.cpaLicense))) ||
+        (profession === "customs" && (hasContent(resume.regulatoryKnowledge) || hasContent(resume.complianceSkills))) ||
+        (profession === "safety" && (hasContent(resume.safetyCerts) || hasContent(resume.safetyProtocols))) ||
+        (profession === "designer" && (hasContent(resume.designTools) || hasContent(resume.designSpecialties))) ||
+        (profession === "data" && (hasContent(resume.analyticsTools) || hasContent(resume.dataTechniques))) ||
+        (profession === "sales" && (hasContent(resume.crmTools) || hasContent(resume.salesMethods))) ||
+        (profession === "hr" && (hasContent(resume.hrisTools) || hasContent(resume.hrCompetencies)))
+      );
 
   function parseDateValue(d) {
     if (!d) return 0;
@@ -163,7 +188,75 @@ function ResumePreview({ resume, profession }) {
           <SkillBlock label="Cloud" value={technicalSkills.cloud} />
         </>
       ) : (
-        <SkillBlock label="Skills" value={technicalSkills.languages} />
+        <>
+          <SkillBlock label="Key Skills" value={resume.skills} />
+          {profession === "healthcare" && (
+            <>
+              <SkillBlock label="License / Registration" value={resume.license} />
+              <SkillBlock label="Clinical Skills" value={resume.clinicalSkills} />
+            </>
+          )}
+          {profession === "education" && (
+            <>
+              <SkillBlock label="Teaching Certificate" value={resume.teacherCert} />
+              <SkillBlock label="Subjects Taught" value={resume.subjects} />
+            </>
+          )}
+          {profession === "management" && (
+            <>
+              <SkillBlock label="Management Certifications" value={resume.managementCert} />
+              <SkillBlock label="Leadership Competencies" value={resume.managementSkills} />
+            </>
+          )}
+          {profession === "engineering" && (
+            <>
+              <SkillBlock label="Engineering Software & Tools" value={resume.engineeringTools} />
+              <SkillBlock label="Methodologies & Standards" value={resume.engineeringMethods} />
+            </>
+          )}
+          {profession === "business" && (
+            <>
+              <SkillBlock label="Accounting Software" value={resume.accountingSoftware} />
+              <SkillBlock label="License / CPA" value={resume.cpaLicense} />
+            </>
+          )}
+          {profession === "customs" && (
+            <>
+              <SkillBlock label="Regulatory Knowledge" value={resume.regulatoryKnowledge} />
+              <SkillBlock label="Compliance & Documentation" value={resume.complianceSkills} />
+            </>
+          )}
+          {profession === "safety" && (
+            <>
+              <SkillBlock label="Safety Certifications" value={resume.safetyCerts} />
+              <SkillBlock label="Safety Protocols & Standards" value={resume.safetyProtocols} />
+            </>
+          )}
+          {profession === "designer" && (
+            <>
+              <SkillBlock label="Design Software" value={resume.designTools} />
+              <SkillBlock label="Design Specialties" value={resume.designSpecialties} />
+            </>
+          )}
+          {profession === "data" && (
+            <>
+              <SkillBlock label="Analytics & Visualization Tools" value={resume.analyticsTools} />
+              <SkillBlock label="Data Techniques" value={resume.dataTechniques} />
+            </>
+          )}
+          {profession === "sales" && (
+            <>
+              <SkillBlock label="CRM & Sales Tools" value={resume.crmTools} />
+              <SkillBlock label="Sales Methodologies" value={resume.salesMethods} />
+            </>
+          )}
+          {profession === "hr" && (
+            <>
+              <SkillBlock label="Clinical Tools & HRIS Systems" value={resume.hrisTools} />
+              <SkillBlock label="Behavioral & Organizational Competencies" value={resume.hrCompetencies} />
+            </>
+          )}
+        </>
       )}
     </section>
   );
@@ -200,10 +293,12 @@ function ResumePreview({ resume, profession }) {
     profession === "it"
       ? "Technical Projects"
       : profession === "healthcare"
-        ? "Clinical Experience"
+        ? "Clinical Rotations & Placements"
         : profession === "education"
           ? "Teaching Projects"
-          : "Project Experience";
+          : profession === "hr"
+            ? "Clinical Cases & Programs"
+            : "Project Experience";
 
   const projectsSection = filledProjects.length > 0 && (
     <section className="preview-section">
@@ -313,7 +408,7 @@ function ResumePreview({ resume, profession }) {
       <header className="preview-header">
         <h1>{(personal.fullName || "Your Name").toUpperCase()}</h1>
         {hasContent(headline) && <p className="preview-headline">{headline}</p>}
-        <ContactLine personal={personal} />
+        <ContactLine personal={personal} profession={profession} />
       </header>
 
       {summarySection}

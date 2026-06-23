@@ -19,7 +19,7 @@ const PROFESSION_TITLES = {
   designer: "Graphic Design Resume Builder",
   data: "Data Analytics Resume Builder",
   sales: "Sales & Account Executive Resume Builder",
-  hr: "Human Resources Resume Builder",
+  hr: "Behavioral Health & Social Services Resume Builder",
 };
 
 function Home({ profession, user, onBack }) {

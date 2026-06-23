@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import "../css/App.css";
 import InteractiveBackground from "../components/InteractiveBackground";
 import PeekingMonster from "../components/PeekingMonster";
@@ -46,6 +46,12 @@ const PREDICTABLE_PROFESSIONS = [
   "Account Executive",
   "HR Specialist",
   "Recruitment Coordinator",
+  "Psychologist",
+  "Psychiatrist",
+  "Counselor",
+  "Social Worker",
+  "Therapist",
+  "Behavioral Health Specialist",
 ];
 
 export default function Landing({ onSelect, onNavigate, isEmbedded, user, mascotMood, onMascotMoodChange }) {
@@ -54,6 +60,7 @@ export default function Landing({ onSelect, onNavigate, isEmbedded, user, mascot
   const [searchError, setSearchError] = useState("");
   const [showAuthModal, setShowAuthModal] = useState(false);
   const [localMood, setLocalMood] = useState("normal");
+  const inputRef = useRef(null);
 
   const suggestions = input.trim()
     ? PREDICTABLE_PROFESSIONS.filter(
@@ -66,6 +73,11 @@ export default function Landing({ onSelect, onNavigate, isEmbedded, user, mascot
   function handleSelectSuggestion(suggestion) {
     setInput(suggestion);
     setSearchError("");
+    setTimeout(() => {
+      if (inputRef.current) {
+        inputRef.current.focus();
+      }
+    }, 0);
   }
 
   const handleKeyDown = (e) => {
@@ -145,7 +157,7 @@ export default function Landing({ onSelect, onNavigate, isEmbedded, user, mascot
     const hasDesigner = /(designer|graphic|illustrator|artist|ui\/ux|ux designer|ui designer)/.test(t);
     const hasData = /(data analyst|data scientist|business intelligence|bi analyst|analyst)/.test(t);
     const hasSales = /(sales|account executive|representative|seller|telemarketing)/.test(t);
-    const hasHR = /(hr|human resources|recruiter|onboarding|recruitment)/.test(t);
+    const hasHR = /(hr|human resources|recruiter|onboarding|recruitment|psychology|psychologist|psychiatrist|counselor|social worker|therapist|behavioral)/.test(t);
 
     const hasIT = /(developer|software|programmer|full[- ]stack|web|frontend|backend|react|node|coding|programming|tech|technology|computer|\bit\b|\bbsit\b|\bcs\b|software engineer|it engineer|systems engineer|devops)/.test(t);
     const hasHealthcare = /(nurse|doctor|clinic|health|patient|rn|lpn|clinical|medical|hospital)/.test(t);
@@ -195,7 +207,7 @@ export default function Landing({ onSelect, onNavigate, isEmbedded, user, mascot
         onSelect(prof);
       }
     } else {
-      setSearchError("Unsupported profession. Try: Nurse, Developer, Engineer, Accountant, Safety Officer");
+      setSearchError("Unsupported profession. Try: Nurse, Developer, Engineer, Accountant, Psychologist");
     }
   }
 
@@ -262,6 +274,7 @@ export default function Landing({ onSelect, onNavigate, isEmbedded, user, mascot
         <form className={`search-bar-pill ${searchError ? "shake" : ""}`} onSubmit={handleSubmit}>
           <div className="search-input-wrapper">
             <input
+              ref={inputRef}
               type="text"
               className="search-input-field"
               placeholder={placeholder || "I am a ..."}

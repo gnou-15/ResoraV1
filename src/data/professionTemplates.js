@@ -265,22 +265,22 @@ const SALES_TEMPLATE = {
 }
 
 const HR_TEMPLATE = {
-  headline: 'HR Specialist | Recruitment & Employee Relations',
+  headline: 'Clinical Psychologist | CBT, Crisis Intervention, & Case Management',
   summary:
-    'Human Resources professional experienced in full-cycle recruitment, employee onboarding, benefits administration, and labor compliance. Skilled in applicant tracking systems (ATS) and employee engagement.',
-  skills: 'Full-cycle Recruiting, Employee Onboarding, Labor Compliance, ATS (Workday), Employee Relations, Benefits Administration',
+    'Dedicated Behavioral Health Specialist and Counselor experienced in clinical assessments, therapeutic interventions, and client advocacy. Proficient in DSM-5 and crisis resolution, with additional expertise in organizational psychology and team counseling.',
+  skills: 'Psychotherapy, CBT, Crisis Intervention, Case Management, DSM-5, Client Assessment, HRIS/EHR Systems, Conflict Resolution',
   experience: [
     {
       id: createId(),
       company: '',
-      title: 'HR Generalist',
+      title: 'Clinical Counselor / HR Specialist',
       location: '',
       startDate: '',
       endDate: '',
       current: false,
       bullets: [
-        'Managed end-to-end recruitment for 20+ open positions, reducing average time-to-hire by 10 days.',
-        'Redesigned the employee onboarding process, resulting in a 90% positive onboarding experience rating.',
+        'Conducted individual therapy sessions and diagnostic assessments for 35+ active clients.',
+        'Developed and implemented employee wellness programs, reducing workplace stress scores by 25%.',
       ],
     },
   ],

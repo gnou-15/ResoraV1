@@ -4872,6 +4872,67 @@ select.input-error {
   flex-shrink: 0;
 }
 
+/* Insufficient Data – Mobile Responsive */
+@media (max-width: 768px) {
+  .insufficient-data-body {
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    gap: 1rem;
+  }
+
+  .insufficient-mascot {
+    order: -1; /* mascot on top */
+  }
+
+  .insufficient-content {
+    width: 100%;
+  }
+
+  .insufficient-title {
+    font-size: 1rem;
+  }
+
+  .insufficient-desc {
+    font-size: 0.78rem;
+  }
+
+  .insufficient-checklist ul {
+    justify-content: center;
+  }
+
+  .fill-labels {
+    font-size: 0.6rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .ai-widget-insufficient .insufficient-data-body {
+    padding: 1rem 1rem 1.25rem;
+  }
+
+  .insufficient-title {
+    font-size: 0.92rem;
+  }
+
+  .insufficient-desc {
+    font-size: 0.74rem;
+    margin-bottom: 0.75rem;
+  }
+
+  .insufficient-checklist {
+    padding: 0.6rem 0.75rem;
+  }
+
+  .checklist-title {
+    font-size: 0.68rem;
+  }
+
+  .insufficient-checklist li {
+    font-size: 0.7rem;
+  }
+}
+
 /* ==========================================================================
    Syncing State Loading Animations for AIScoreWidget
    ========================================================================== */

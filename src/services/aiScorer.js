@@ -164,6 +164,37 @@ export function analyzeResume(resume, profession = 'it') {
       ? rawSkills.split(',').filter(s => s.trim()).length
       : Array.isArray(rawSkills) ? rawSkills.length : 0;
     if (skillCount > 0) filledSkillCategories = Math.ceil(skillCount / 5);
+
+    const checkSubField = (val) => {
+      if (!val) return 0;
+      if (typeof val === 'string' && val.trim()) return 1;
+      if (Array.isArray(val) && val.filter(Boolean).length > 0) return 1;
+      return 0;
+    };
+
+    if (profession === 'healthcare') {
+      filledSkillCategories += checkSubField(resume.license) + checkSubField(resume.clinicalSkills);
+    } else if (profession === 'education') {
+      filledSkillCategories += checkSubField(resume.teacherCert) + checkSubField(resume.subjects);
+    } else if (profession === 'management') {
+      filledSkillCategories += checkSubField(resume.managementCert) + checkSubField(resume.managementSkills);
+    } else if (profession === 'engineering') {
+      filledSkillCategories += checkSubField(resume.engineeringTools) + checkSubField(resume.engineeringMethods);
+    } else if (profession === 'business') {
+      filledSkillCategories += checkSubField(resume.accountingSoftware) + checkSubField(resume.cpaLicense);
+    } else if (profession === 'customs') {
+      filledSkillCategories += checkSubField(resume.regulatoryKnowledge) + checkSubField(resume.complianceSkills);
+    } else if (profession === 'safety') {
+      filledSkillCategories += checkSubField(resume.safetyCerts) + checkSubField(resume.safetyProtocols);
+    } else if (profession === 'designer') {
+      filledSkillCategories += checkSubField(resume.designTools) + checkSubField(resume.designSpecialties);
+    } else if (profession === 'data') {
+      filledSkillCategories += checkSubField(resume.analyticsTools) + checkSubField(resume.dataTechniques);
+    } else if (profession === 'sales') {
+      filledSkillCategories += checkSubField(resume.crmTools) + checkSubField(resume.salesMethods);
+    } else if (profession === 'hr') {
+      filledSkillCategories += checkSubField(resume.hrisTools) + checkSubField(resume.hrCompetencies);
+    }
   }
   if (filledSkillCategories > 0) {
     estimatedLines += 2; // section header + spacing
@@ -279,11 +310,33 @@ export function analyzeResume(resume, profession = 'it') {
   if (personal.linkedin?.trim()) contactPoints += 3;
   else tips.push({ id: 'linkedin', text: 'Add your LinkedIn profile link to compare with industry benchmarks', impact: 3, category: 'contact', type: 'add' });
 
-  const hasPortfolioOrGithub = personal.github?.trim() || personal.portfolio?.trim();
-  if (hasPortfolioOrGithub) contactPoints += 3;
-  else {
-    const label = profession === 'it' ? 'GitHub or portfolio' : 'portfolio or website';
-    tips.push({ id: 'portfolio', text: `Add a link to your ${label} to showcase work`, impact: 3, category: 'contact', type: 'add' });
+  const needsGithubOrPortfolio = ["it", "data", "engineering"].includes(profession);
+  const needsPortfolioOnly = ["designer", "education", "management", "sales", "hr"].includes(profession);
+  const needsLicenseOnly = ["healthcare", "business"].includes(profession);
+
+  if (needsGithubOrPortfolio) {
+    const hasPortfolioOrGithub = personal.github?.trim() || personal.portfolio?.trim();
+    if (hasPortfolioOrGithub) contactPoints += 3;
+    else {
+      tips.push({ id: 'portfolio', text: 'Add a link to your GitHub or portfolio to showcase work', impact: 3, category: 'contact', type: 'add' });
+    }
+  } else if (needsPortfolioOnly) {
+    if (personal.portfolio?.trim()) contactPoints += 3;
+    else {
+      const label = profession === 'designer' ? 'Behance/Dribbble portfolio' :
+                    profession === 'education' ? 'teaching portfolio' :
+                    profession === 'sales' ? 'personal website' : 'portfolio';
+      tips.push({ id: 'portfolio', text: `Add a link to your ${label} to showcase work`, impact: 3, category: 'contact', type: 'add' });
+    }
+  } else if (needsLicenseOnly) {
+    if (personal.portfolio?.trim()) contactPoints += 3;
+    else {
+      const label = profession === 'healthcare' ? 'license number' : 'CPA / license';
+      tips.push({ id: 'portfolio', text: `Add your ${label} to verify your credentials`, impact: 3, category: 'contact', type: 'add' });
+    }
+  } else {
+    // Customs and safety need neither, award the points automatically
+    contactPoints += 3;
   }
   scoreBreakdown.contact = contactPoints;
 
@@ -344,14 +397,56 @@ export function analyzeResume(resume, profession = 'it') {
       skillsCount = rawSkills.length;
     }
 
-    if (profession === 'healthcare' && Array.isArray(resume.clinicalSkills)) {
-      skillsCount += resume.clinicalSkills.filter(Boolean).length;
-    }
-    if (profession === 'management' && Array.isArray(resume.managementSkills)) {
-      skillsCount += resume.managementSkills.filter(Boolean).length;
-    }
-    if (profession === 'education' && Array.isArray(resume.subjects)) {
-      skillsCount += resume.subjects.filter(Boolean).length;
+    const countCommaSeparated = (val) => {
+      if (!val) return 0;
+      if (typeof val === 'string') {
+        return val.split(',').map(s => s.trim()).filter(Boolean).length;
+      }
+      if (Array.isArray(val)) {
+        return val.filter(Boolean).length;
+      }
+      return 0;
+    };
+
+    if (profession === 'healthcare') {
+      skillsCount += countCommaSeparated(resume.license);
+      if (Array.isArray(resume.clinicalSkills)) {
+        skillsCount += resume.clinicalSkills.filter(Boolean).length;
+      }
+    } else if (profession === 'education') {
+      skillsCount += countCommaSeparated(resume.teacherCert);
+      if (Array.isArray(resume.subjects)) {
+        skillsCount += resume.subjects.filter(Boolean).length;
+      }
+    } else if (profession === 'management') {
+      skillsCount += countCommaSeparated(resume.managementCert);
+      if (Array.isArray(resume.managementSkills)) {
+        skillsCount += resume.managementSkills.filter(Boolean).length;
+      }
+    } else if (profession === 'engineering') {
+      skillsCount += countCommaSeparated(resume.engineeringTools);
+      skillsCount += countCommaSeparated(resume.engineeringMethods);
+    } else if (profession === 'business') {
+      skillsCount += countCommaSeparated(resume.accountingSoftware);
+      skillsCount += countCommaSeparated(resume.cpaLicense);
+    } else if (profession === 'customs') {
+      skillsCount += countCommaSeparated(resume.regulatoryKnowledge);
+      skillsCount += countCommaSeparated(resume.complianceSkills);
+    } else if (profession === 'safety') {
+      skillsCount += countCommaSeparated(resume.safetyCerts);
+      skillsCount += countCommaSeparated(resume.safetyProtocols);
+    } else if (profession === 'designer') {
+      skillsCount += countCommaSeparated(resume.designTools);
+      skillsCount += countCommaSeparated(resume.designSpecialties);
+    } else if (profession === 'data') {
+      skillsCount += countCommaSeparated(resume.analyticsTools);
+      skillsCount += countCommaSeparated(resume.dataTechniques);
+    } else if (profession === 'sales') {
+      skillsCount += countCommaSeparated(resume.crmTools);
+      skillsCount += countCommaSeparated(resume.salesMethods);
+    } else if (profession === 'hr') {
+      skillsCount += countCommaSeparated(resume.hrisTools);
+      skillsCount += countCommaSeparated(resume.hrCompetencies);
     }
   }
 
@@ -585,7 +680,21 @@ export function analyzeResume(resume, profession = 'it') {
     if (certifications.filter(c => c.name).length > 0) {
       profRawExtra += 10;
     } else {
-      tips.push({ id: 'certifications', text: 'Add industry-standard certifications to prove expertise.', impact: 10, category: 'projects', type: 'add' });
+      const certTipText =
+        profession === 'it' ? 'Add industry-standard certifications (e.g. AWS, Azure, CompTIA) to prove technical expertise.' :
+        profession === 'healthcare' ? 'Add clinical licenses or certifications (e.g. BLS, ACLS, nursing license) to verify compliance.' :
+        profession === 'education' ? 'Add state teaching licenses, certifications, or endorsements.' :
+        profession === 'management' ? 'Add professional certifications (e.g. PMP, Certified Scrum Master) to demonstrate leadership credentials.' :
+        profession === 'engineering' ? 'Add engineering certifications or licenses (e.g. PE, SolidWorks Professional) to show specialized capability.' :
+        profession === 'business' ? 'Add financial or accounting certifications (e.g. CPA, CMA, QuickBooks User) to highlight credentials.' :
+        profession === 'customs' ? 'Add trade compliance certifications or a Customs Broker License to show credentials.' :
+        profession === 'safety' ? 'Add professional safety certifications (e.g. OSHA 30-Hour, NEBOSH, CSP) to verify compliance.' :
+        profession === 'designer' ? 'Add design tool certifications or credentials (e.g. Figma Certified Professional) to showcase expertise.' :
+        profession === 'data' ? 'Add analytics, cloud, or machine learning certifications to demonstrate technical skills.' :
+        profession === 'sales' ? 'Add sales training or CRM platform certifications (e.g. Salesforce Administrator) to prove ability.' :
+        profession === 'hr' ? 'Add HR professional certifications (e.g. SHRM-CP, PHR) to establish domain expertise.' :
+        'Add industry-standard certifications to prove expertise.';
+      tips.push({ id: 'certifications', text: certTipText, impact: 10, category: 'projects', type: 'add' });
     }
 
     // Scale 25 max raw points to 15 max breakdown points
