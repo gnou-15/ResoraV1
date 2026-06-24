@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import PeekingMonster from "./PeekingMonster";
 import { getMetricSuggestions } from "../services/aiScorer";
 
-function AIScoreWidget({ resume, profession, analysisResult, loading, onUpdateResume, moodOverride }) {
+function AIScoreWidget({ resume, profession, analysisResult, loading, onUpdateResume, moodOverride, plan, onOpenPricing }) {
   const [expanded, setExpanded] = useState(false);
   const [activeOptimizerBulletId, setActiveOptimizerBulletId] = useState(null);
 
@@ -80,11 +80,40 @@ function AIScoreWidget({ resume, profession, analysisResult, loading, onUpdateRe
         <div className="sync-badge">{badgeText}</div>
       </div>
 
-      {/* ── Insufficient Data Body (shown when not enough content) ── */}
-      <div className="insufficient-data-body">
-        <div className="insufficient-mascot">
-          <PeekingMonster mood="normal" />
+      {plan && !plan.hasAI ? (
+        <div className="ai-widget-locked-body">
+          <div className="lock-icon-wrapper">
+            <svg viewBox="0 0 24 24" width="48" height="48" stroke="#ea580c" strokeWidth="2.5" fill="none" strokeLinecap="round" strokeLinejoin="round">
+              <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
+              <path d="M7 11V7a5 5 0 0 1 10 0v4" />
+            </svg>
+          </div>
+          <h3 className="locked-title">AI Resume Scorer Locked</h3>
+          <p className="locked-desc">
+            Upgrade to <strong>Premium Pro</strong> to unlock the real-time AI scoring engine, interactive bullet rewrite suggestions, and verified LinkedIn job matching.
+          </p>
+          <button
+            type="button"
+            className="locked-upgrade-btn"
+            onClick={onOpenPricing}
+          >
+            Upgrade to Premium Pro (₱199)
+          </button>
         </div>
+      ) : loading ? (
+        <div className="ai-widget-loading-body animate-fade-in">
+          <div className="sync-dance-wrapper">
+            <PeekingMonster mood={moodOverride || "excited"} isPremium={plan && plan.isActive && (plan.type === "premium_plus" || plan.type === "premium_pro")} />
+          </div>
+          <div className="sync-blinking-text">Synchronizing...</div>
+        </div>
+      ) : insufficientData ? (
+        <>
+          {/* ── Insufficient Data Body (shown when not enough content) ── */}
+          <div className="insufficient-data-body animate-fade-in">
+            <div className="insufficient-mascot">
+              <PeekingMonster mood="normal" isPremium={plan && plan.isActive && (plan.type === "premium_plus" || plan.type === "premium_pro")} />
+            </div>
 
         <div className="insufficient-content">
           <h3 className="insufficient-title">Not Enough Information Yet</h3>
@@ -120,9 +149,11 @@ function AIScoreWidget({ resume, profession, analysisResult, loading, onUpdateRe
           )}
         </div>
       </div>
-
-      {/* ── Normal Analysis Body (shown when data is sufficient) ── */}
-      <div className="ai-widget-body">
+      </>
+      ) : (
+        <>
+          {/* ── Normal Analysis Body (shown when data is sufficient) ── */}
+          <div className="ai-widget-body animate-fade-in">
         {/* Left column: Score circle and Mascot */}
         <div className="score-and-mascot-panel">
           <div className="circular-gauge-container">
@@ -155,9 +186,8 @@ function AIScoreWidget({ resume, profession, analysisResult, loading, onUpdateRe
 
           <div className="mascot-panel">
             <div className="sync-dance-wrapper">
-              <PeekingMonster mood={moodOverride || (loading ? "excited" : mascotMood)} />
+              <PeekingMonster mood={moodOverride || (loading ? "excited" : mascotMood)} isPremium={plan && plan.isActive && (plan.type === "premium_plus" || plan.type === "premium_pro")} />
             </div>
-            <div className="sync-blinking-text">Synchronizing...</div>
             <div className="mascot-bubble">
               {score >= 85 ? (
                 <span>Looking extremely dapper! Ready for hiring!</span>
@@ -201,7 +231,7 @@ function AIScoreWidget({ resume, profession, analysisResult, loading, onUpdateRe
       </div>
 
       {/* Accordion list of tips */}
-      <div className="ai-widget-suggestions">
+      <div className="ai-widget-suggestions animate-fade-in">
         <button 
           type="button" 
           className="suggestions-toggle-btn"
@@ -321,8 +351,9 @@ function AIScoreWidget({ resume, profession, analysisResult, loading, onUpdateRe
           </div>
         </div>
       </div>
-
-    </div>
+        </>
+      )}
+</div>
   );
 }
 

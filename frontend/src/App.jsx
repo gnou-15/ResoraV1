@@ -10,8 +10,13 @@ import InteractiveBackground from "./components/InteractiveBackground";
 import AuthTransitionBuffer from "./components/AuthTransitionBuffer";
 import { supabase } from "./services/supabase";
 import { decryptName } from "./services/encryption";
+import { getUserPlan } from "./utils/subscription";
+import PricingModal from "./components/PricingModal";
+import AdminPanel from "./components/AdminPanel";
+import { useDialog } from "./context/DialogContext";
 
 function App() {
+  const { showAlert } = useDialog();
   const [route, setRoute] = useState(() => {
     try {
       const savedRoute = sessionStorage.getItem("resora-route");
@@ -31,6 +36,75 @@ function App() {
   const [isExitingBuilder, setIsExitingBuilder] = useState(false);
   const [showLoader, setShowLoader] = useState(false);
   const [user, setUser] = useState(null);
+  const [pricingModalOpen, setPricingModalOpen] = useState(false);
+  const [pricingTriggerRect, setPricingTriggerRect] = useState(null);
+  const [adminPanelOpen, setAdminPanelOpen] = useState(false);
+
+  const handleOpenPricing = (e) => {
+    if (e && typeof e === "object" && "currentTarget" in e && e.currentTarget) {
+      const rect = e.currentTarget.getBoundingClientRect();
+      setPricingTriggerRect({
+        x: rect.left + rect.width / 2,
+        y: rect.top + rect.height / 2
+      });
+    } else if (e && typeof e === "object" && "clientX" in e && "clientY" in e) {
+      setPricingTriggerRect({
+        x: e.clientX,
+        y: e.clientY
+      });
+    } else {
+      setPricingTriggerRect({
+        x: window.innerWidth / 2,
+        y: window.innerHeight * 0.8
+      });
+    }
+    setPricingModalOpen(true);
+  };
+
+  const isAdmin = user && user.email === (import.meta.env.VITE_ADMIN_EMAIL || "nezer.resora@gmail.com");
+  const [plan, setPlan] = useState({
+    type: "none",
+    name: "No Plan",
+    isActive: false,
+    hasAI: false,
+    hasExport: false,
+    hasWatermark: false,
+    daysLeft: 0,
+  });
+
+  useEffect(() => {
+    setPlan(getUserPlan(user));
+  }, [user]);
+
+  const handlePurchase = async (selectedPlan) => {
+    if (!user) return false;
+    try {
+      const expiry = new Date();
+      expiry.setFullYear(expiry.getFullYear() + 3);
+
+      const { data, error } = await supabase.auth.updateUser({
+        data: {
+          plan: selectedPlan,
+          plan_expiry: expiry.toISOString()
+        }
+      });
+
+      if (error) {
+        console.error("Error upgrading plan:", error);
+        return false;
+      }
+
+      if (data?.user) {
+        setUser(data.user);
+        setPlan(getUserPlan(data.user));
+      }
+      return true;
+    } catch (e) {
+      console.error("Catch error upgrading plan:", e);
+      return false;
+    }
+  };
+
   const [showAuthTransition, setShowAuthTransition] = useState(false);
   const [transitionMessage, setTransitionMessage] = useState("Preparing your space...");
   const [mascotMood, setMascotMood] = useState("normal");
@@ -64,6 +138,44 @@ function App() {
 
     return () => subscription.unsubscribe();
   }, []);
+
+  // Background polling checker for approved payments
+  useEffect(() => {
+    if (!user) return;
+
+    const checkApproved = async () => {
+      try {
+        const { data, error } = await supabase
+          .from("gcash_payments")
+          .select("*")
+          .eq("user_id", user.id)
+          .eq("status", "approved");
+
+        if (error || !data || data.length === 0) return;
+
+        for (const payment of data) {
+          const success = await handlePurchase(payment.plan_name);
+          if (success) {
+            await supabase
+              .from("gcash_payments")
+              .update({ status: "completed" })
+              .eq("reference_number", payment.reference_number);
+
+            await showAlert(
+              `🎉 Congratulations! Your payment for ${payment.plan_name === 'premium_pro' ? 'Premium Pro' : 'Premium Plus'} (Ref: ${payment.reference_number}) has been verified. Welcome to Premium!`,
+              "Payment Verified"
+            );
+          }
+        }
+      } catch (e) {
+        // ignore
+      }
+    };
+
+    checkApproved();
+    const interval = setInterval(checkApproved, 30000);
+    return () => clearInterval(interval);
+  }, [user]);
 
   const handleBackToLanding = () => {
     setIsExitingBuilder(true);
@@ -167,6 +279,16 @@ function App() {
             </a>
             {user ? (
               <div className="user-profile-header">
+                {isAdmin && (
+                  <button
+                    type="button"
+                    className="nav-link admin-nav-btn"
+                    onClick={() => setAdminPanelOpen(true)}
+                    style={{ background: "none", border: "none", cursor: "pointer", marginRight: "1rem", color: "#ea580c", fontWeight: "700" }}
+                  >
+                    👑 Admin Panel
+                  </button>
+                )}
                 <span className="user-greeting">
                   Hi, {(decryptName(user.user_metadata?.full_name, user.id) || user.email.split('@')[0]).trim().split(/\s+/)[0]}
                 </span>
@@ -224,6 +346,8 @@ function App() {
               isEmbedded
               mascotMood={mascotMood}
               onMascotMoodChange={setMascotMood}
+              plan={plan}
+              onOpenPricing={handleOpenPricing}
             />
           </div>
           <div className="slide-item about-slide-item" onScroll={handleScroll}>
@@ -262,6 +386,8 @@ function App() {
             profession={route.profession}
             user={user}
             onBack={handleBackToLanding}
+            plan={plan}
+            onOpenPricing={handleOpenPricing}
           />
         </div>
       )}
@@ -273,6 +399,22 @@ function App() {
       )}
 
       <AuthTransitionBuffer active={showAuthTransition} message={transitionMessage} />
+
+      <PricingModal
+        isOpen={pricingModalOpen}
+        triggerRect={pricingTriggerRect}
+        onClose={() => setPricingModalOpen(false)}
+        currentPlan={plan}
+        onPurchase={handlePurchase}
+        user={user}
+        onNavigate={transitionToPage}
+      />
+
+      <AdminPanel
+        isOpen={adminPanelOpen}
+        onClose={() => setAdminPanelOpen(false)}
+        user={user}
+      />
     </>
   );
 }

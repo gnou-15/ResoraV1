@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from "react";
 
-export default function PeekingMonster({ mood = "normal" }) {
+export default function PeekingMonster({ mood = "normal", isPremium = false }) {
   const [offsets, setOffsets] = useState({
     pupilX: 0,
     pupilY: 0,
@@ -103,6 +103,21 @@ export default function PeekingMonster({ mood = "normal" }) {
             <stop offset="0%" stopColor="#1e293b" />
             <stop offset="100%" stopColor="#0f172a" />
           </linearGradient>
+          {/* Gold gradient for crown */}
+          <linearGradient id="goldCrownGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+            <stop offset="0%" stopColor="#ca8a04" />
+            <stop offset="15%" stopColor="#eab308" />
+            <stop offset="30%" stopColor="#fef9c3" />
+            <stop offset="45%" stopColor="#ffffff" />
+            <stop offset="60%" stopColor="#fef9c3" />
+            <stop offset="75%" stopColor="#eab308" />
+            <stop offset="90%" stopColor="#ca8a04" />
+            <stop offset="100%" stopColor="#854d0e" />
+          </linearGradient>
+          {/* Gold Glow Filter */}
+          <filter id="goldGlow" x="-30%" y="-30%" width="160%" height="160%">
+            <feDropShadow dx="0" dy="1.2" stdDeviation="1.2" floodColor="#eab308" floodOpacity="0.8" />
+          </filter>
         </defs>
 
         {/* 1. Stationary Body Silhouette (Face features slide on top) */}
@@ -116,6 +131,28 @@ export default function PeekingMonster({ mood = "normal" }) {
         }}>
           {/* Hat Crown */}
           <rect x="30" y="3" width="30" height="24" rx="2" fill="url(#hatGrad)" />
+          
+          {/* Premium Gold Crown (Brook/One Piece style) */}
+          {isPremium && (
+            <g className="premium-hat-crown" filter="url(#goldGlow)">
+              <path 
+                d="M 34 3 L 32 -8 L 39 -2 L 45 -12 L 51 -2 L 58 -8 L 56 3 Z" 
+                fill="url(#goldCrownGrad)" 
+                stroke="#92400e" 
+                strokeWidth="0.8" 
+                strokeLinejoin="round" 
+              />
+              {/* Peak Tip Circles */}
+              <circle cx="32" cy="-8" r="1.4" fill="url(#goldCrownGrad)" stroke="#92400e" strokeWidth="0.5" />
+              <circle cx="45" cy="-12" r="1.6" fill="url(#goldCrownGrad)" stroke="#92400e" strokeWidth="0.5" />
+              <circle cx="58" cy="-8" r="1.4" fill="url(#goldCrownGrad)" stroke="#92400e" strokeWidth="0.5" />
+              {/* Base Gems/Studs */}
+              <circle cx="39" cy="0" r="1" fill="#ffffff" stroke="#92400e" strokeWidth="0.4" />
+              <circle cx="45" cy="0" r="1" fill="#ffffff" stroke="#92400e" strokeWidth="0.4" />
+              <circle cx="51" cy="0" r="1" fill="#ffffff" stroke="#92400e" strokeWidth="0.4" />
+            </g>
+          )}
+
           {/* Ribbon (Brand Orange) */}
           <rect x="30" y="26" width="30" height="4" fill="#ea580c" />
           {/* Hat Brim (overlaps head at y=33 to prevent gap) */}

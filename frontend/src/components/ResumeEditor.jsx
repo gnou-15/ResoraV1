@@ -1,8 +1,9 @@
 import React, { useState, useEffect, useRef } from "react";
 import { createId, skillCategories } from "../data/defaultResume";
 import { PhoneField, LocationFields } from "./ContactFields";
+import { useDialog } from "../context/DialogContext";
 
-function Section({ title, hint, children, onAdd, addLabel }) {
+function Section({ title, hint, children, onAdd, addLabel, onRemoveSection, removeSectionLabel }) {
   return (
     <section className="editor-section">
       <div className="section-header">
@@ -10,6 +11,16 @@ function Section({ title, hint, children, onAdd, addLabel }) {
           <h2>{title}</h2>
           {hint && <p className="section-hint">{hint}</p>}
         </div>
+        {onRemoveSection && (
+          <button
+            type="button"
+            className="btn btn-ghost btn-sm btn-danger"
+            onClick={onRemoveSection}
+            style={{ marginLeft: "auto" }}
+          >
+            {removeSectionLabel || "Remove"}
+          </button>
+        )}
       </div>
       {children}
       {onAdd && (
@@ -120,17 +131,22 @@ function ResumeEditor({
   profession,
   user,
 }) {
+  const { showConfirm } = useDialog();
   const {
     personal,
     experience,
     education,
     projects,
     certifications,
+    licenses = [],
     technicalSkills,
   } = resume;
   const { achievements = [], userType } = resume;
 
   const [errors, setErrors] = useState({});
+  const [showLicensesSection, setShowLicensesSection] = useState(
+    resume.licenses && resume.licenses.some(lic => lic.name || lic.issuer)
+  );
 
   useEffect(() => {
     const newErrors = {};
@@ -838,6 +854,7 @@ function ResumeEditor({
             field: "",
             endDate: "",
             gpa: "",
+            latinHonors: "",
             coursework: "",
           })
         }
@@ -888,6 +905,12 @@ function ResumeEditor({
                 onChange={(v) => updateList("education", edu.id, "gpa", v)}
                 placeholder="3.7"
                 error={errors[`edu_gpa_${edu.id}`]}
+              />
+              <Field
+                label="Distinctions"
+                value={edu.latinHonors || ""}
+                onChange={(v) => updateList("education", edu.id, "latinHonors", v)}
+                placeholder="Cum Laude, Dean's List"
               />
             </div>
             <Field
@@ -1393,6 +1416,106 @@ function ResumeEditor({
           </div>
         ))}
       </Section>
+
+      {!showLicensesSection ? (
+        <div style={{ display: "flex", justifyContent: "center", margin: "1.5rem 0" }}>
+          <button
+            type="button"
+            className="btn btn-outline"
+            onClick={() => {
+              setShowLicensesSection(true);
+              if (!licenses || licenses.length === 0) {
+                addItem("licenses", { name: "", issuer: "", number: "", date: "" });
+              }
+            }}
+          >
+            + Add Professional Licenses Section
+          </button>
+        </div>
+      ) : (
+        <Section
+          title="Licenses"
+          hint="State licensing, board registries, or professional operating licenses"
+          onAdd={() =>
+            addItem("licenses", {
+              name: "",
+              issuer: "",
+              number: "",
+              date: "",
+            })
+          }
+          addLabel="Add License"
+          onRemoveSection={async () => {
+            const confirmed = await showConfirm(
+              "Are you sure you want to remove the Licenses section and clear all its entries?",
+              "Remove Section"
+            );
+            if (confirmed) {
+              setShowLicensesSection(false);
+              updateField("licenses", []);
+            }
+          }}
+          removeSectionLabel="Remove Section"
+        >
+          {licenses.map((lic, licIndex) => (
+            <div key={lic.id} className="card">
+              <div className="card-header">
+                <span className="card-label">License {licIndex + 1}</span>
+                {licenses.length > 1 && (
+                  <button
+                    type="button"
+                    className="btn btn-ghost btn-sm btn-danger"
+                    onClick={() => removeItem("licenses", lic.id)}
+                  >
+                    Remove
+                  </button>
+                )}
+              </div>
+              <div className="field-grid">
+                <Field
+                  label="License Name"
+                  value={lic.name}
+                  onChange={(v) =>
+                    updateList("licenses", lic.id, "name", v)
+                  }
+                  placeholder={
+                    profession === "healthcare" ? "Registered Nurse (RN) License" :
+                    profession === "education" ? "Professional Teacher License" :
+                    profession === "engineering" ? "Registered Mechanical Engineer" :
+                    profession === "business" ? "CPA License" :
+                    profession === "customs" ? "Customs Broker License" :
+                    "Professional License"
+                  }
+                />
+                <Field
+                  label="Issuer"
+                  value={lic.issuer}
+                  onChange={(v) =>
+                    updateList("licenses", lic.id, "issuer", v)
+                  }
+                  placeholder="Professional Regulation Commission (PRC)"
+                />
+                <Field
+                  label="License Number"
+                  value={lic.number}
+                  onChange={(v) =>
+                    updateList("licenses", lic.id, "number", v)
+                  }
+                  placeholder="0123456"
+                />
+                <Field
+                  label="Date / Expiration"
+                  value={lic.date}
+                  onChange={(v) =>
+                    updateList("licenses", lic.id, "date", v)
+                  }
+                  placeholder="Jan 2026"
+                />
+              </div>
+            </div>
+          ))}
+        </Section>
+      )}
     </div>
   );
 }

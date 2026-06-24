@@ -92,7 +92,7 @@ export default function Contact({ onNavigate, isEmbedded, onMascotMoodChange }) 
   return (
     <div className="contact-container">
       {!isEmbedded && <InteractiveBackground />}
-      
+
       {!isEmbedded && (
         <header className="landing-header">
           <a href="/" className="logo-container" onClick={(e) => { e.preventDefault(); onNavigate && onNavigate("landing"); }}>
@@ -120,17 +120,17 @@ export default function Contact({ onNavigate, isEmbedded, onMascotMoodChange }) 
             <h2 className="contact-title">Get in Touch</h2>
             <h3 className="contact-subtitle">We would love to hear from you</h3>
             <p className="contact-description">
-              Have a question about our ATS template designs, found a bug, or just want to suggest a new feature? 
+              Have a question about our ATS template designs, found a bug, or just want to suggest a new feature?
               Shoot us a message! Nezer company is dedicated to continuous improvement and supporting your job search journey.
             </p>
-            
+
             <div className="contact-details-box">
               <div className="contact-detail-item">
                 <svg viewBox="0 0 24 24" width="20" height="20" stroke="currentColor" strokeWidth="2" fill="none" className="contact-icon">
                   <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z" />
                   <polyline points="22,6 12,13 2,6" />
                 </svg>
-                <span>support@resora.com</span>
+                <span>nezer.resora@gmail.com</span>
               </div>
               <div className="contact-detail-item">
                 <svg viewBox="0 0 24 24" width="20" height="20" stroke="currentColor" strokeWidth="2" fill="none" className="contact-icon">
@@ -164,7 +164,7 @@ export default function Contact({ onNavigate, isEmbedded, onMascotMoodChange }) 
               ) : (
                 <form onSubmit={handleSubmit} className="contact-form-el">
                   <h3 className="contact-form-title">Send a Message</h3>
-                  
+
                   <div className="auth-input-group">
                     <input
                       type="text"

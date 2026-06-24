@@ -40,6 +40,7 @@ export const defaultResume = {
       field: '',
       endDate: '',
       gpa: '',
+      latinHonors: '',
       coursework: '',
     },
   ],
@@ -69,6 +70,15 @@ export const defaultResume = {
       id: createId(),
       name: '',
       issuer: '',
+      date: '',
+    },
+  ],
+  licenses: [
+    {
+      id: createId(),
+      name: '',
+      issuer: '',
+      number: '',
       date: '',
     },
   ],
@@ -173,6 +183,7 @@ export function migrateResume(data) {
       field: edu.field ?? '',
       endDate: edu.endDate ?? '',
       gpa: edu.gpa ?? edu.details ?? '',
+      latinHonors: edu.latinHonors ?? '',
       coursework: edu.coursework ?? '',
     })),
     projects: (data.projects ?? defaultResume.projects).map((proj) => ({
@@ -193,6 +204,7 @@ export function migrateResume(data) {
     })),
     userType: data.userType ?? defaultResume.userType,
     certifications: data.certifications ?? defaultResume.certifications,
+    licenses: data.licenses ?? defaultResume.licenses ?? [],
   }
 }
 

@@ -6,6 +6,7 @@ import { useResume } from "../hooks/useResume";
 import { defaultResume } from "../data/defaultResume";
 import AIScoreWidget from "../components/AIScoreWidget";
 import { analyzeResume, fetchAPIAnalysis } from "../services/aiScorer";
+import { useDialog } from "../context/DialogContext";
 
 const PROFESSION_TITLES = {
   it: "IT Resume Builder",
@@ -22,7 +23,8 @@ const PROFESSION_TITLES = {
   hr: "Behavioral Health & Social Services Resume Builder",
 };
 
-function Home({ profession, user, onBack }) {
+function Home({ profession, user, onBack, plan, onOpenPricing }) {
+  const { showAlert, showConfirm } = useDialog();
   const {
     resume,
     setResume,
@@ -113,7 +115,16 @@ function Home({ profession, user, onBack }) {
   }, [resume, profession]);
 
 
-  const handleExport = () => {
+  const handleExport = async () => {
+    if (plan && !plan.hasExport) {
+      await showAlert(
+        "PDF Export is locked. Please upgrade to a Premium plan to unlock high-fidelity exports.",
+        "Premium Required"
+      );
+      onOpenPricing();
+      return;
+    }
+
     // ensure preview is visible
     setMobileTab("preview");
 
@@ -139,8 +150,12 @@ function Home({ profession, user, onBack }) {
     }, 250);
   };
 
-  const handleReset = () => {
-    if (window.confirm("Clear all resume data? This cannot be undone.")) {
+  const handleReset = async () => {
+    const confirmed = await showConfirm(
+      "Clear all resume data? This cannot be undone.",
+      "Reset Resume"
+    );
+    if (confirmed) {
       resetResume();
     }
   };
@@ -205,7 +220,19 @@ function Home({ profession, user, onBack }) {
               Student
             </button>
           </div>
-          <span className="format-badge">ATS Standard Format</span>
+          <div className="format-badge-container">
+            <span className="format-badge">ATS Standard Format</span>
+            <div className="ats-tooltip-bubble">
+              <h4>What is ATS?</h4>
+              <p>
+                An <strong>Applicant Tracking System</strong> is software recruiters use to scan, parse, and filter candidate resumes for relevant skills and keywords.
+              </p>
+              <h4>Why it matters:</h4>
+              <p>
+                Resora generates clean, single-column documents. By avoiding complex graphic assets, tables, or text columns, it guarantees <strong>100% parsing accuracy</strong> when processed by hiring algorithms.
+              </p>
+            </div>
+          </div>
           <span className={`save-status ${saved ? "saved" : "saving"}`}>
             {saved ? "Saved" : "Saving…"}
           </span>
@@ -273,13 +300,15 @@ function Home({ profession, user, onBack }) {
             loading={syncing}
             onUpdateResume={setResume}
             moodOverride={mascotMoodOverride}
+            plan={plan}
+            onOpenPricing={onOpenPricing}
           />
           <div className="preview-toolbar">
             <span>Live preview — optimized for one page when printed</span>
           </div>
           <div className="preview-container" style={{ height: `${1056 * previewScale}px`, overflow: "hidden", width: "100%", position: "relative" }}>
             <div className="preview-wrapper" style={{ transform: `scale(${previewScale})`, transformOrigin: "top center" }}>
-              <ResumePreview resume={resume} profession={profession} />
+              <ResumePreview resume={resume} profession={profession} plan={plan} />
             </div>
           </div>
 

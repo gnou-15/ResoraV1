@@ -1,3 +1,4 @@
+import { useState, useEffect } from "react";
 import { formatPhone, formatLocationShort } from "../utils/contactFormat";
 
 function formatDateRange(start, end, current) {
@@ -54,7 +55,61 @@ function SkillBlock({ label, value }) {
   );
 }
 
-function ResumePreview({ resume, profession }) {
+function ResumePreview({ resume, profession, plan }) {
+  const [isBlurred, setIsBlurred] = useState(false);
+
+  useEffect(() => {
+    const wrapper = document.getElementById("resume-preview-root-wrapper");
+
+    const applyBlur = () => {
+      if (wrapper) {
+        wrapper.classList.add("blurred-preview");
+      }
+      setIsBlurred(true);
+    };
+
+    const handleBlur = () => {
+      applyBlur();
+    };
+
+    const handleFocus = () => {
+      if (wrapper) {
+        wrapper.classList.remove("blurred-preview");
+      }
+      setIsBlurred(false);
+    };
+
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === "hidden") {
+        applyBlur();
+      }
+    };
+
+    const handleKeyDown = (e) => {
+      const isPrintScreen = e.key === "PrintScreen" || e.keyCode === 44;
+      const isSnippingTool = e.metaKey && e.shiftKey && (e.key === "s" || e.key === "S");
+      
+      if (isPrintScreen || isSnippingTool) {
+        applyBlur();
+      }
+    };
+
+    // Bind listeners to capture phase (true) for sub-millisecond execution
+    window.addEventListener("blur", handleBlur, true);
+    window.addEventListener("focus", handleFocus, true);
+    document.addEventListener("visibilitychange", handleVisibilityChange, true);
+    window.addEventListener("keydown", handleKeyDown, true);
+    window.addEventListener("keyup", handleKeyDown, true);
+
+    return () => {
+      window.removeEventListener("blur", handleBlur, true);
+      window.removeEventListener("focus", handleFocus, true);
+      document.removeEventListener("visibilitychange", handleVisibilityChange, true);
+      window.removeEventListener("keydown", handleKeyDown, true);
+      window.removeEventListener("keyup", handleKeyDown, true);
+    };
+  }, []);
+
   const {
     personal,
     headline,
@@ -66,6 +121,7 @@ function ResumePreview({ resume, profession }) {
     certifications,
     achievements,
     userType,
+    licenses = [],
   } = resume;
 
   const filledEducation = education.filter((e) => e.school || e.degree);
@@ -76,6 +132,7 @@ function ResumePreview({ resume, profession }) {
     (e) => e.title || e.company || e.bullets.some((b) => hasContent(b)),
   );
   const filledCerts = certifications.filter((c) => c.name || c.issuer);
+  const filledLicenses = (licenses || []).filter((l) => l.name || l.issuer);
   const filledAchievements = (achievements || []).filter(
     (a) => a.title || a.organization || a.bullets.some((b) => hasContent(b)),
   );
@@ -272,6 +329,7 @@ function ResumePreview({ resume, profession }) {
                 {[edu.degree, edu.field].filter(hasContent).join(" in ") ||
                   "Degree"}
                 {hasContent(edu.gpa) && ` | GPA: ${edu.gpa}`}
+                {hasContent(edu.latinHonors) && ` | ${edu.latinHonors}`}
               </h3>
               <p className="entry-sub">{edu.school}</p>
               {hasContent(edu.coursework) && (
@@ -403,34 +461,89 @@ function ResumePreview({ resume, profession }) {
     </section>
   );
 
+  const licensesSection = filledLicenses.length > 0 && (
+    <section className="preview-section">
+      <h2>Licenses</h2>
+      {filledLicenses.map((lic) => (
+        <p key={lic.id} className="cert-line">
+          <strong>{lic.name || "License"}</strong>
+          {hasContent(lic.issuer) && ` — ${lic.issuer}`}
+          {hasContent(lic.number) && ` | Lic No. ${lic.number}`}
+          {hasContent(lic.date) && ` (${lic.date})`}
+        </p>
+      ))}
+    </section>
+  );
+
+  const handleDismissUnblur = () => {
+    setIsBlurred(false);
+    const wrapper = document.getElementById("resume-preview-root-wrapper");
+    if (wrapper) {
+      wrapper.classList.remove("blurred-preview");
+    }
+  };
+
   return (
-    <article className="resume-preview resume-ats">
-      <header className="preview-header">
-        <h1>{(personal.fullName || "Your Name").toUpperCase()}</h1>
-        {hasContent(headline) && <p className="preview-headline">{headline}</p>}
-        <ContactLine personal={personal} profession={profession} />
-      </header>
+    <div 
+      id="resume-preview-root-wrapper"
+      className={`resume-preview-outer-wrapper ${isBlurred ? "blurred-preview" : ""}`}
+      onContextMenu={(e) => e.preventDefault()}
+      onCopy={(e) => e.preventDefault()}
+      onDragStart={(e) => e.preventDefault()}
+      style={{ position: "relative", width: "100%", height: "100%" }}
+    >
+      <article className="resume-preview resume-ats">
+        <header className="preview-header">
+          <h1>{(personal.fullName || "Your Name").toUpperCase()}</h1>
+          {hasContent(headline) && <p className="preview-headline">{headline}</p>}
+          <ContactLine personal={personal} profession={profession} />
+        </header>
 
-      {summarySection}
-      {skillsSection}
+        {summarySection}
+        {skillsSection}
 
-      {userType === "student" ? (
-        <>
-          {educationSection}
-          {projectsSection}
-          {achievementsSection}
-          {experienceSection}
-          {certificationsSection}
-        </>
-      ) : (
-        <>
-          {experienceSection}
-          {projectsSection}
-          {educationSection}
-          {certificationsSection}
-        </>
+        {userType === "student" ? (
+          <>
+            {educationSection}
+            {projectsSection}
+            {achievementsSection}
+            {experienceSection}
+            {certificationsSection}
+            {licensesSection}
+          </>
+        ) : (
+          <>
+            {experienceSection}
+            {projectsSection}
+            {educationSection}
+            {certificationsSection}
+            {licensesSection}
+          </>
+        )}
+      </article>
+
+      {plan && plan.hasWatermark && (
+        <div className="trial-watermark-overlay" aria-hidden="true">
+          <div className="watermark-diagonal-text">RESORA TRIAL - PREMIUM PRO</div>
+          <div className="watermark-diagonal-text">RESORA TRIAL - PREMIUM PRO</div>
+          <div className="watermark-diagonal-text">RESORA TRIAL - PREMIUM PRO</div>
+          <div className="watermark-diagonal-text">RESORA TRIAL - PREMIUM PRO</div>
+        </div>
       )}
-    </article>
+
+      {isBlurred && (
+        <div className="screenshot-blur-overlay">
+          <div className="blur-alert-box">
+            <span className="blur-lock-icon">🔒</span>
+            <h4>Content Protected</h4>
+            <p>Screenshots are disabled on this preview panel to protect premium designs.</p>
+            <button type="button" className="unblur-btn" onClick={handleDismissUnblur}>
+              Dismiss & Unblur
+            </button>
+          </div>
+        </div>
+      )}
+    </div>
   );
 }
 
