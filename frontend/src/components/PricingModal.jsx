@@ -18,6 +18,7 @@ export default function PricingModal({ isOpen, triggerRect, onClose, currentPlan
   const [isAwaitingSMS, setIsAwaitingSMS] = useState(false);
   const [pendingRef, setPendingRef] = useState(null);
   const [hasDismissedPending, setHasDismissedPending] = useState(false);
+  const [isCheckingPending, setIsCheckingPending] = useState(false);
 
   // Genie Transition and Exit animation states
   const [shouldRender, setShouldRender] = useState(isOpen);
@@ -25,12 +26,17 @@ export default function PricingModal({ isOpen, triggerRect, onClose, currentPlan
   const [dx, setDx] = useState(0);
   const [dy, setDy] = useState(0);
 
-  // Reset dismissed state when modal opens
+  // Reset dismissed state and set loading check state when modal opens
   useEffect(() => {
     if (isOpen) {
       setHasDismissedPending(false);
+      if (user) {
+        setIsCheckingPending(true);
+      }
+    } else {
+      setIsCheckingPending(false);
     }
-  }, [isOpen]);
+  }, [isOpen, user]);
 
   useEffect(() => {
     if (isOpen) {
@@ -50,62 +56,64 @@ export default function PricingModal({ isOpen, triggerRect, onClose, currentPlan
       const timer = setTimeout(() => {
         setShouldRender(false);
         setIsClosing(false);
+        // Clean up checkout states after the exit animation completes to prevent flashing cards
+        setGcashMode(false);
+        setSelectedPlan(null);
+        setIsSuccess(false);
+        setIsVerifying(false);
+        setIsAwaitingSMS(false);
+        setPendingRef(null);
+        setRefNumber("");
+        setRefError("");
       }, 350); // 350ms animation duration (matching our faster exit duration)
       return () => clearTimeout(timer);
     }
   }, [isOpen, shouldRender, triggerRect]);
 
-  // Check if gcash_payments table exists in Supabase
+  // Combined Table Check and Pending Payment Lookup on Load
   useEffect(() => {
-    if (!isOpen) return;
-    const checkTable = async () => {
+    if (!isOpen || !user || hasDismissedPending) {
+      setIsCheckingPending(false);
+      return;
+    }
+
+    const checkTableAndPending = async () => {
       try {
-        const { error } = await supabase
+        const { error: tableError } = await supabase
           .from("gcash_payments")
           .select("status")
           .limit(1);
 
-        if (!error || error.code !== "42P01") {
-          setDbTableExists(true);
-        } else {
-          setDbTableExists(false);
-        }
-      } catch (e) {
-        setDbTableExists(false);
-      }
-    };
-    checkTable();
-  }, [isOpen]);
+        const exists = !tableError || tableError.code !== "42P01";
+        setDbTableExists(exists);
 
-  // Check for any existing pending payments for this user in the database
-  useEffect(() => {
-    if (!isOpen || !user || !dbTableExists || hasDismissedPending) return;
+        if (exists) {
+          const { data, error } = await supabase
+            .from("gcash_payments")
+            .select("*")
+            .eq("user_id", user.id)
+            .eq("status", "pending")
+            .order("created_at", { ascending: false })
+            .limit(1);
 
-    const checkPendingPayment = async () => {
-      try {
-        const { data, error } = await supabase
-          .from("gcash_payments")
-          .select("*")
-          .eq("user_id", user.id)
-          .eq("status", "pending")
-          .order("created_at", { ascending: false })
-          .limit(1);
-
-        if (!error && data && data.length > 0) {
-          const pending = data[0];
-          setSelectedPlan(pending.plan_name);
-          setRefNumber(pending.reference_number);
-          setPendingRef(pending.reference_number);
-          setIsAwaitingSMS(true);
-          setGcashMode(true);
+          if (!error && data && data.length > 0) {
+            const pending = data[0];
+            setSelectedPlan(pending.plan_name);
+            setRefNumber(pending.reference_number);
+            setPendingRef(pending.reference_number);
+            setIsAwaitingSMS(true);
+            setGcashMode(true);
+          }
         }
       } catch (err) {
-        console.error("Error checking pending payment:", err);
+        console.error("Error in table and pending payment checks:", err);
+      } finally {
+        setIsCheckingPending(false);
       }
     };
 
-    checkPendingPayment();
-  }, [isOpen, user, dbTableExists, hasDismissedPending]);
+    checkTableAndPending();
+  }, [isOpen, user, hasDismissedPending]);
 
   // Poll for SMS Receipt / Admin approval
   useEffect(() => {
@@ -303,9 +311,6 @@ export default function PricingModal({ isOpen, triggerRect, onClose, currentPlan
   const planQR = selectedPlan === "premium_pro" ? "/gcash-pro.png" : "/gcash-plus.png";
 
   const handleCloseSuccess = () => {
-    setIsSuccess(false);
-    setGcashMode(false);
-    setSelectedPlan(null);
     onClose();
   };
 
@@ -323,7 +328,12 @@ export default function PricingModal({ isOpen, triggerRect, onClose, currentPlan
           ✕
         </button>
 
-        {!gcashMode ? (
+        {isCheckingPending ? (
+          <div className="pricing-loading-container">
+            <span className="pricing-loading-spinner"></span>
+            <p className="pricing-loading-text">Loading secure gateway details...</p>
+          </div>
+        ) : !gcashMode ? (
           // Plan Grid View
           <div className="pricing-grid-container">
             <div className="pricing-header-section">
@@ -592,9 +602,6 @@ export default function PricingModal({ isOpen, triggerRect, onClose, currentPlan
                 <div className="awaiting-actions-row">
                   <button type="button" className="awaiting-close-btn" onClick={handleCloseSuccess}>
                     Close and Wait
-                  </button>
-                  <button type="button" className="awaiting-cancel-btn" onClick={handleCancelPayment}>
-                    Cancel & Try Again
                   </button>
                 </div>
               </div>

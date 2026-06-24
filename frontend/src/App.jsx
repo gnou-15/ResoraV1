@@ -139,32 +139,48 @@ function App() {
     return () => subscription.unsubscribe();
   }, []);
 
-  // Background polling checker for approved payments
+  // Background polling checker for approved or rejected payments
   useEffect(() => {
     if (!user) return;
 
-    const checkApproved = async () => {
+    const checkPayments = async () => {
       try {
         const { data, error } = await supabase
           .from("gcash_payments")
           .select("*")
           .eq("user_id", user.id)
-          .eq("status", "approved");
+          .in("status", ["approved", "rejected"]);
 
         if (error || !data || data.length === 0) return;
 
         for (const payment of data) {
-          const success = await handlePurchase(payment.plan_name);
-          if (success) {
-            await supabase
+          if (payment.status === "approved") {
+            const success = await handlePurchase(payment.plan_name);
+            if (success) {
+              await supabase
+                .from("gcash_payments")
+                .update({ status: "completed" })
+                .eq("reference_number", payment.reference_number);
+
+              await showAlert(
+                `🎉 Congratulations! Your payment for ${payment.plan_name === 'premium_pro' ? 'Premium Pro' : 'Premium Plus'} (Ref: ${payment.reference_number}) has been verified. Welcome to Premium!`,
+                "Payment Verified"
+              );
+            }
+          } else if (payment.status === "rejected") {
+            // Acknowledge the rejection so the user is only prompted once
+            const { error: updateError } = await supabase
               .from("gcash_payments")
-              .update({ status: "completed" })
+              .update({ status: "rejected_notified" })
               .eq("reference_number", payment.reference_number);
 
-            await showAlert(
-              `🎉 Congratulations! Your payment for ${payment.plan_name === 'premium_pro' ? 'Premium Pro' : 'Premium Plus'} (Ref: ${payment.reference_number}) has been verified. Welcome to Premium!`,
-              "Payment Verified"
-            );
+            if (!updateError) {
+              const friendlyPlanName = payment.plan_name === "premium_pro" ? "Premium Pro" : "Premium Plus";
+              await showAlert(
+                `❌ Your payment verification request for ${friendlyPlanName} (Ref: ${payment.reference_number}) was rejected. Please double-check your GCash receipt reference number or contact support.`,
+                "Payment Rejected"
+              );
+            }
           }
         }
       } catch (e) {
@@ -172,8 +188,8 @@ function App() {
       }
     };
 
-    checkApproved();
-    const interval = setInterval(checkApproved, 30000);
+    checkPayments();
+    const interval = setInterval(checkPayments, 30000);
     return () => clearInterval(interval);
   }, [user]);
 

@@ -1,7 +1,6 @@
--- =========================================================================
--- DATABASE SETUP FOR AUTOMATED GCash PAYMENTS VIA PHONE SMS Webhook
--- Run this script in your Supabase Dashboard SQL Editor.
--- =========================================================================
+-- Safe migration query to update the CHECK constraint if the table already exists
+ALTER TABLE public.gcash_payments DROP CONSTRAINT IF EXISTS gcash_payments_status_check;
+ALTER TABLE public.gcash_payments ADD CONSTRAINT gcash_payments_status_check CHECK (status IN ('pending', 'approved', 'rejected', 'rejected_notified', 'completed'));
 
 -- Create GCash Payments Table
 CREATE TABLE IF NOT EXISTS public.gcash_payments (
@@ -10,7 +9,7 @@ CREATE TABLE IF NOT EXISTS public.gcash_payments (
     email text,
     amount numeric,
     plan_name text,
-    status text NOT NULL DEFAULT 'pending' CHECK (status IN ('pending', 'approved', 'rejected', 'completed')),
+    status text NOT NULL DEFAULT 'pending' CHECK (status IN ('pending', 'approved', 'rejected', 'rejected_notified', 'completed')),
     created_at timestamp with time zone DEFAULT timezone('utc'::text, now()) NOT NULL
 );
 
@@ -28,11 +27,11 @@ DROP POLICY IF EXISTS "Users can read own payments" ON public.gcash_payments;
 CREATE POLICY "Users can read own payments" ON public.gcash_payments
     FOR SELECT USING (auth.uid() = user_id);
 
--- 3. Users can update their own payments (to claim/complete them)
+-- 3. Users can update their own payments (to claim/complete them or acknowledge rejections)
 DROP POLICY IF EXISTS "Users can update own payments" ON public.gcash_payments;
 CREATE POLICY "Users can update own payments" ON public.gcash_payments
-    FOR UPDATE USING (auth.uid() = user_id AND status = 'approved')
-    WITH CHECK (status = 'completed');
+    FOR UPDATE USING (auth.uid() = user_id AND status IN ('approved', 'rejected'))
+    WITH CHECK (status IN ('completed', 'rejected_notified'));
 
 -- 4. Public/Anonymous can search payments by reference number (specifically for checking verification status)
 DROP POLICY IF EXISTS "Allow selecting status by reference number" ON public.gcash_payments;
@@ -145,7 +144,7 @@ BEGIN
         RETURN json_build_object('success', false, 'error', 'already_used');
     END IF;
 
-    IF v_status = 'rejected' THEN
+    IF v_status IN ('rejected', 'rejected_notified') THEN
         RETURN json_build_object('success', false, 'error', 'rejected');
     END IF;
 

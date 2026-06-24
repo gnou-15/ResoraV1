@@ -70,7 +70,9 @@ export default function AdminPanel({ isOpen, onClose, user }) {
 
   // Filter and search
   const filteredPayments = payments.filter(p => {
-    const matchesFilter = filter === "all" || p.status === filter;
+    const matchesFilter = filter === "all" 
+      || p.status === filter 
+      || (filter === "rejected" && p.status === "rejected_notified");
     const matchesSearch = 
       (p.email && p.email.toLowerCase().includes(search.toLowerCase())) ||
       (p.reference_number && p.reference_number.includes(search)) ||
@@ -168,8 +170,8 @@ export default function AdminPanel({ isOpen, onClose, user }) {
                       <strong style={{ marginLeft: "6px" }}>₱{payment.amount || (payment.plan_name === "premium_pro" ? 199 : 179)}</strong>
                     </td>
                     <td>
-                      <span className={`status-pill status-${payment.status}`}>
-                        {payment.status}
+                      <span className={`status-pill status-${payment.status === "rejected_notified" ? "rejected" : payment.status}`}>
+                        {payment.status === "rejected_notified" ? "rejected" : payment.status}
                       </span>
                     </td>
                     <td>
@@ -197,7 +199,7 @@ export default function AdminPanel({ isOpen, onClose, user }) {
                         {(payment.status === "approved" || payment.status === "completed") && (
                           <span className="action-completed-check">Verified ✓</span>
                         )}
-                        {payment.status === "rejected" && (
+                        {(payment.status === "rejected" || payment.status === "rejected_notified") && (
                           <button
                             type="button"
                             className="admin-action-btn-reconsider"
