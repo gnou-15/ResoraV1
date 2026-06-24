@@ -50,7 +50,7 @@ export default function Contact({ onNavigate, isEmbedded, onMascotMoodChange }) 
     return Object.keys(newErrors).length === 0;
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     if (!validate()) {
       if (onMascotMoodChange) {
@@ -65,14 +65,46 @@ export default function Contact({ onNavigate, isEmbedded, onMascotMoodChange }) 
       onMascotMoodChange("normal");
     }
 
-    // Simulate sending message (network latency simulation)
-    setTimeout(() => {
-      setLoading(false);
-      setSubmitted(true);
-      if (onMascotMoodChange) {
-        onMascotMoodChange("excited");
+    try {
+      // Retrieve Web3Forms access key from environment variables
+      const accessKey = import.meta.env.VITE_WEB3FORMS_ACCESS_KEY || "YOUR_ACCESS_KEY_HERE";
+      
+      const response = await fetch("https://api.web3forms.com/submit", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Accept: "application/json",
+        },
+        body: JSON.stringify({
+          access_key: accessKey,
+          name: formData.name,
+          email: formData.email,
+          subject: formData.subject,
+          message: formData.message,
+          from_name: "Resora Contact Form",
+        }),
+      });
+
+      const result = await response.json();
+      if (response.ok && result.success) {
+        setSubmitted(true);
+        if (onMascotMoodChange) {
+          onMascotMoodChange("excited");
+        }
+      } else {
+        setErrors({ form: result.message || "Failed to send message. Please verify your email configuration." });
+        if (onMascotMoodChange) {
+          onMascotMoodChange("frantic");
+        }
       }
-    }, 1500);
+    } catch (err) {
+      setErrors({ form: "Connection error: Failed to reach the mail server. Please check your internet connection." });
+      if (onMascotMoodChange) {
+        onMascotMoodChange("frantic");
+      }
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleResetForm = () => {
@@ -164,6 +196,12 @@ export default function Contact({ onNavigate, isEmbedded, onMascotMoodChange }) 
               ) : (
                 <form onSubmit={handleSubmit} className="contact-form-el">
                   <h3 className="contact-form-title">Send a Message</h3>
+
+                  {errors.form && (
+                    <div className="auth-error-alert" style={{ padding: "0.8rem", backgroundColor: "#fef2f2", border: "1px solid #fca5a5", color: "#b91c1c", fontSize: "0.82rem", borderRadius: "6px", marginBottom: "1.2rem", textAlign: "center", width: "100%" }}>
+                      {errors.form}
+                    </div>
+                  )}
 
                   <div className="auth-input-group">
                     <input
