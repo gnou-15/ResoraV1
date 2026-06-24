@@ -17,12 +17,20 @@ export default function PricingModal({ isOpen, triggerRect, onClose, currentPlan
   const [dbTableExists, setDbTableExists] = useState(false);
   const [isAwaitingSMS, setIsAwaitingSMS] = useState(false);
   const [pendingRef, setPendingRef] = useState(null);
+  const [hasDismissedPending, setHasDismissedPending] = useState(false);
 
   // Genie Transition and Exit animation states
   const [shouldRender, setShouldRender] = useState(isOpen);
   const [isClosing, setIsClosing] = useState(false);
   const [dx, setDx] = useState(0);
   const [dy, setDy] = useState(0);
+
+  // Reset dismissed state when modal opens
+  useEffect(() => {
+    if (isOpen) {
+      setHasDismissedPending(false);
+    }
+  }, [isOpen]);
 
   useEffect(() => {
     if (isOpen) {
@@ -68,6 +76,36 @@ export default function PricingModal({ isOpen, triggerRect, onClose, currentPlan
     };
     checkTable();
   }, [isOpen]);
+
+  // Check for any existing pending payments for this user in the database
+  useEffect(() => {
+    if (!isOpen || !user || !dbTableExists || hasDismissedPending) return;
+
+    const checkPendingPayment = async () => {
+      try {
+        const { data, error } = await supabase
+          .from("gcash_payments")
+          .select("*")
+          .eq("user_id", user.id)
+          .eq("status", "pending")
+          .order("created_at", { ascending: false })
+          .limit(1);
+
+        if (!error && data && data.length > 0) {
+          const pending = data[0];
+          setSelectedPlan(pending.plan_name);
+          setRefNumber(pending.reference_number);
+          setPendingRef(pending.reference_number);
+          setIsAwaitingSMS(true);
+          setGcashMode(true);
+        }
+      } catch (err) {
+        console.error("Error checking pending payment:", err);
+      }
+    };
+
+    checkPendingPayment();
+  }, [isOpen, user, dbTableExists, hasDismissedPending]);
 
   // Poll for SMS Receipt / Admin approval
   useEffect(() => {
@@ -156,6 +194,7 @@ export default function PricingModal({ isOpen, triggerRect, onClose, currentPlan
     setRefError("");
     setIsAwaitingSMS(false);
     setPendingRef(null);
+    setHasDismissedPending(true);
   };
 
   const handleVerifyPayment = async (e) => {
