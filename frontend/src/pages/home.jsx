@@ -44,6 +44,7 @@ function Home({ profession, user, onBack, plan, onOpenPricing }) {
   const [mascotMoodOverride, setMascotMoodOverride] = useState(null);
   const [previewScale, setPreviewScale] = useState(1);
   const [headerCollapsed, setHeaderCollapsed] = useState(false);
+  const [pageCount, setPageCount] = useState(1);
 
   useEffect(() => {
     const handleResize = () => {
@@ -304,11 +305,11 @@ function Home({ profession, user, onBack, plan, onOpenPricing }) {
             onOpenPricing={onOpenPricing}
           />
           <div className="preview-toolbar">
-            <span>Live preview — optimized for one page when printed</span>
+            <span>Live preview — multi-page pagination enabled</span>
           </div>
-          <div className="preview-container" style={{ height: `${1056 * previewScale}px`, overflow: "hidden", width: "100%", position: "relative" }}>
+          <div className="preview-container" style={{ height: `${((pageCount * 1056) + (pageCount - 1) * 20) * previewScale}px`, overflow: "hidden", width: "100%", position: "relative" }}>
             <div className="preview-wrapper" style={{ transform: `scale(${previewScale})`, transformOrigin: "top center" }}>
-              <ResumePreview resume={resume} profession={profession} plan={plan} />
+              <ResumePreview resume={resume} profession={profession} plan={plan} onPageCountChange={setPageCount} />
             </div>
           </div>
 

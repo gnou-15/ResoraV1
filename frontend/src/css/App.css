@@ -709,15 +709,35 @@
 }
 
 .preview-wrapper {
-  background: white;
-  box-shadow: var(--shadow-lg);
+  background: transparent !important;
+  box-shadow: none !important;
   width: 816px !important;
   min-width: 816px !important;
   max-width: none !important;
   flex-shrink: 0 !important;
-  min-height: 11in;
+  height: auto !important;
+  min-height: 0 !important;
   margin: 0 auto;
 }
+
+.resume-page-sheet {
+  background: white;
+  box-shadow: var(--shadow-lg);
+  width: 816px;
+  min-width: 816px;
+  height: 1056px;
+  min-height: 1056px;
+  max-height: 1056px;
+  margin-bottom: 20px;
+  box-sizing: border-box;
+  position: relative;
+  overflow: hidden;
+}
+
+.resume-page-sheet:last-child {
+  margin-bottom: 0;
+}
+
 
 
 /* Editor */
@@ -1040,8 +1060,32 @@
     box-shadow: none !important;
     width: var(--print-preview-width, 8.5in) !important;
     max-width: var(--print-preview-width, 8.5in) !important;
-    background: #fff !important;
+    background: transparent !important;
     transform: none !important;
+    height: auto !important;
+    min-height: 0 !important;
+  }
+
+  .resume-page-sheet {
+    box-shadow: none !important;
+    border-radius: 0 !important;
+    width: var(--print-preview-width, 8.5in) !important;
+    max-width: var(--print-preview-width, 8.5in) !important;
+    height: 11in !important;
+    min-height: 11in !important;
+    max-height: 11in !important;
+    margin: 0 auto !important;
+    padding: 0 !important;
+    background: white !important;
+    page-break-after: always;
+    break-after: page;
+    overflow: hidden !important;
+    box-sizing: border-box !important;
+  }
+
+  .resume-page-sheet:last-child {
+    page-break-after: avoid;
+    break-after: avoid;
   }
 }
 
@@ -1456,13 +1500,36 @@ select.input-error {
     box-shadow: none !important;
     width: 8.5in !important;
     max-width: 8.5in !important;
+    height: auto !important;
+    min-height: 0 !important;
+    margin: 0 auto !important;
+    padding: 0 !important;
+    background: transparent !important;
+    transform: none !important;
+  }
+
+  .resume-page-sheet {
+    box-shadow: none !important;
+    border-radius: 0 !important;
+    width: 8.5in !important;
+    max-width: 8.5in !important;
     height: 11in !important;
     min-height: 11in !important;
+    max-height: 11in !important;
     margin: 0 auto !important;
     padding: 0 !important;
     background: white !important;
-    transform: none !important;
+    page-break-after: always;
+    break-after: page;
+    overflow: hidden !important;
+    box-sizing: border-box !important;
   }
+
+  .resume-page-sheet:last-child {
+    page-break-after: avoid;
+    break-after: avoid;
+  }
+
 
   /* Resume ATS Content styles - match preview styles exactly */
   .resume-ats {
@@ -6201,8 +6268,8 @@ select.input-error {
     position: absolute !important;
     top: 0 !important;
     left: 0 !important;
-    width: 8.5in !important;
-    height: 11in !important;
+    width: 100% !important;
+    height: 100% !important;
     z-index: 99999 !important;
     display: grid !important;
     opacity: 1 !important;
@@ -6221,7 +6288,8 @@ select.input-error {
 /* ==========================================================================
    Screenshot Blur Protection Overlay
    ========================================================================== */
-.resume-preview-outer-wrapper.blurred-preview .resume-preview {
+.resume-preview-outer-wrapper.blurred-preview .resume-preview,
+.resume-preview-outer-wrapper.blurred-preview .resume-page-sheet {
   filter: blur(16px);
   transition: none !important;
 }

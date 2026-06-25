@@ -105,7 +105,7 @@
 }
 
 /* Large preview card feels like a real paper tray */
-.app.theme-skeuo .preview-wrapper{
+.app.theme-skeuo .resume-page-sheet{
   border-radius: 18px;
   box-shadow: 24px 32px 60px rgba(0,0,0,0.20), inset 0 8px 18px rgba(255,255,255,0.6);
   background: linear-gradient(180deg,#fffefc,#fff9f3);

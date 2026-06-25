@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useLayoutEffect } from "react";
 import { formatPhone, formatLocationShort } from "../utils/contactFormat";
 
 function formatDateRange(start, end, current) {
@@ -6,6 +6,18 @@ function formatDateRange(start, end, current) {
   if (current) return `${start} - Present`;
   if (start && end) return `${start} - ${end}`;
   return start || end;
+}
+
+function SkillBlock({ label, value, blockId }) {
+  const content = Array.isArray(value)
+    ? value.filter(Boolean).join(", ")
+    : value;
+  if (!content || !String(content).trim()) return null;
+  return (
+    <p className="skill-line" data-block-id={blockId}>
+      <strong>{label}:</strong> {content}
+    </p>
+  );
 }
 
 function hasContent(value) {
@@ -43,20 +55,25 @@ function ContactLine({ personal, profession }) {
   return <p className="preview-contact">{items.join(" | ")}</p>;
 }
 
-function SkillBlock({ label, value }) {
-  const content = Array.isArray(value)
-    ? value.filter(Boolean).join(", ")
-    : value;
-  if (!content || !String(content).trim()) return null;
-  return (
-    <p className="skill-line">
-      <strong>{label}:</strong> {content}
-    </p>
-  );
-}
-
-function ResumePreview({ resume, profession, plan }) {
+function ResumePreview({ resume, profession, plan, onPageCountChange }) {
+  const [pages, setPages] = useState([]);
   const [isBlurred, setIsBlurred] = useState(false);
+  const [measureTrigger, setMeasureTrigger] = useState(0);
+  const [measurerNode, setMeasurerNode] = useState(null);
+
+  // Monitor size / visibility changes on the hidden measurer
+  useEffect(() => {
+    if (!measurerNode) return;
+
+    const resizeObserver = new ResizeObserver(() => {
+      setMeasureTrigger((prev) => prev + 1);
+    });
+
+    resizeObserver.observe(measurerNode);
+    return () => {
+      resizeObserver.disconnect();
+    };
+  }, [measurerNode]);
 
   useEffect(() => {
     const wrapper = document.getElementById("resume-preview-root-wrapper");
@@ -94,7 +111,6 @@ function ResumePreview({ resume, profession, plan }) {
       }
     };
 
-    // Bind listeners to capture phase (true) for sub-millisecond execution
     window.addEventListener("blur", handleBlur, true);
     window.addEventListener("focus", handleFocus, true);
     document.addEventListener("visibilitychange", handleVisibilityChange, true);
@@ -157,11 +173,9 @@ function ResumePreview({ resume, profession, plan }) {
   function parseDateValue(d) {
     if (!d) return 0;
     const s = String(d).trim();
-    // try parsing whole string first
     let t = Date.parse(s);
     if (!isNaN(t)) return t;
 
-    // if string is a range like 'Aug 2024 - Aug 2025', try the last segment
     const parts = s
       .split(/[-–—]/)
       .map((p) => p.trim())
@@ -171,7 +185,6 @@ function ResumePreview({ resume, profession, plan }) {
       if (!isNaN(tt)) return tt;
     }
 
-    // fallback: find last 4-digit year
     const years = s.match(/\d{4}/g);
     if (years && years.length) {
       const y = years[years.length - 1];
@@ -185,7 +198,6 @@ function ResumePreview({ resume, profession, plan }) {
   function parseFirstDateValue(d) {
     if (!d) return 0;
     const s = String(d).trim();
-    // try the first segment (for ranges)
     const parts = s
       .split(/[-–—]/)
       .map((p) => p.trim())
@@ -201,7 +213,6 @@ function ResumePreview({ resume, profession, plan }) {
     return 0;
   }
 
-  // show latest achievements first
   const sortedAchievements = filledAchievements.slice().sort((a, b) => {
     const taEnd = parseDateValue(a.date);
     const tbEnd = parseDateValue(b.date);
@@ -212,7 +223,6 @@ function ResumePreview({ resume, profession, plan }) {
     return 0;
   });
 
-  // show latest experience first (current roles first)
   const sortedExperience = filledExperience.slice().sort((a, b) => {
     if (a.current && !b.current) return -1;
     if (!a.current && b.current) return 1;
@@ -225,255 +235,498 @@ function ResumePreview({ resume, profession, plan }) {
     return 0;
   });
 
-  // Define resume section fragments
-  const summarySection = hasContent(summary) && (
-    <section className="preview-section">
-      <h2>Professional Summary</h2>
-      <p className="summary-text">{summary}</p>
-    </section>
-  );
+  // Construct Flat Blocks Array
+  const blocks = [];
 
-  const skillsSection = hasSkills && (
-    <section className="preview-section">
-      <h2>{profession === "it" ? "Technical Skills" : "Key Skills"}</h2>
-      {profession === "it" ? (
-        <>
-          <SkillBlock label="Languages" value={technicalSkills.languages} />
-          <SkillBlock label="Frameworks" value={technicalSkills.frameworks} />
-          <SkillBlock label="Tools" value={technicalSkills.tools} />
-          <SkillBlock label="Databases" value={technicalSkills.databases} />
-          <SkillBlock label="Cloud" value={technicalSkills.cloud} />
-        </>
-      ) : (
-        <>
-          <SkillBlock label="Key Skills" value={resume.skills} />
-          {profession === "healthcare" && (
-            <>
-              <SkillBlock label="License / Registration" value={resume.license} />
-              <SkillBlock label="Clinical Skills" value={resume.clinicalSkills} />
-            </>
-          )}
-          {profession === "education" && (
-            <>
-              <SkillBlock label="Teaching Certificate" value={resume.teacherCert} />
-              <SkillBlock label="Subjects Taught" value={resume.subjects} />
-            </>
-          )}
-          {profession === "management" && (
-            <>
-              <SkillBlock label="Management Certifications" value={resume.managementCert} />
-              <SkillBlock label="Leadership Competencies" value={resume.managementSkills} />
-            </>
-          )}
-          {profession === "engineering" && (
-            <>
-              <SkillBlock label="Engineering Software & Tools" value={resume.engineeringTools} />
-              <SkillBlock label="Methodologies & Standards" value={resume.engineeringMethods} />
-            </>
-          )}
-          {profession === "business" && (
-            <>
-              <SkillBlock label="Accounting Software" value={resume.accountingSoftware} />
-              <SkillBlock label="License / CPA" value={resume.cpaLicense} />
-            </>
-          )}
-          {profession === "customs" && (
-            <>
-              <SkillBlock label="Regulatory Knowledge" value={resume.regulatoryKnowledge} />
-              <SkillBlock label="Compliance & Documentation" value={resume.complianceSkills} />
-            </>
-          )}
-          {profession === "safety" && (
-            <>
-              <SkillBlock label="Safety Certifications" value={resume.safetyCerts} />
-              <SkillBlock label="Safety Protocols & Standards" value={resume.safetyProtocols} />
-            </>
-          )}
-          {profession === "designer" && (
-            <>
-              <SkillBlock label="Design Software" value={resume.designTools} />
-              <SkillBlock label="Design Specialties" value={resume.designSpecialties} />
-            </>
-          )}
-          {profession === "data" && (
-            <>
-              <SkillBlock label="Analytics & Visualization Tools" value={resume.analyticsTools} />
-              <SkillBlock label="Data Techniques" value={resume.dataTechniques} />
-            </>
-          )}
-          {profession === "sales" && (
-            <>
-              <SkillBlock label="CRM & Sales Tools" value={resume.crmTools} />
-              <SkillBlock label="Sales Methodologies" value={resume.salesMethods} />
-            </>
-          )}
-          {profession === "hr" && (
-            <>
-              <SkillBlock label="Clinical Tools & HRIS Systems" value={resume.hrisTools} />
-              <SkillBlock label="Behavioral & Organizational Competencies" value={resume.hrCompetencies} />
-            </>
-          )}
-        </>
-      )}
-    </section>
-  );
+  // 1. Header block
+  blocks.push({
+    id: "header",
+    type: "header",
+    section: "header",
+    render: () => (
+      <header key="header" className="preview-header" data-block-id="header">
+        <h1>{(personal.fullName || "Your Name").toUpperCase()}</h1>
+        {hasContent(headline) && <p className="preview-headline">{headline}</p>}
+        <ContactLine personal={personal} profession={profession} />
+      </header>
+    )
+  });
 
-  const educationSection = filledEducation.length > 0 && (
-    <section className="preview-section">
-      <h2>Education</h2>
-      {filledEducation.map((edu) => (
-        <div key={edu.id} className="preview-entry">
-          <div className="entry-header">
-            <div>
-              <h3>
-                {[edu.degree, edu.field].filter(hasContent).join(" in ") ||
-                  "Degree"}
-                {hasContent(edu.gpa) && ` | GPA: ${edu.gpa}`}
-                {hasContent(edu.latinHonors) && ` | ${edu.latinHonors}`}
-              </h3>
-              <p className="entry-sub">{edu.school}</p>
-              {hasContent(edu.coursework) && (
-                <p className="entry-detail">
-                  <strong>Relevant Coursework:</strong> {edu.coursework}
-                </p>
+  // 2. Summary block
+  if (hasContent(summary)) {
+    blocks.push({
+      id: "summary",
+      type: "summary",
+      section: "summary",
+      render: () => (
+        <div key="summary" data-block-id="summary">
+          <h2>Professional Summary</h2>
+          <p className="summary-text">{summary}</p>
+        </div>
+      )
+    });
+  }
+
+  // 3. Skills blocks
+  if (hasSkills) {
+    blocks.push({
+      id: "skills-header",
+      type: "section-header",
+      section: "skills",
+      render: () => (
+        <div key="skills-header" data-block-id="skills-header" className="preview-section-title-only">
+          <h2>{profession === "it" ? "Technical Skills" : "Key Skills"}</h2>
+        </div>
+      )
+    });
+
+    if (profession === "it") {
+      const skillItems = [
+        { key: "languages", label: "Languages", value: technicalSkills.languages },
+        { key: "frameworks", label: "Frameworks", value: technicalSkills.frameworks },
+        { key: "tools", label: "Tools", value: technicalSkills.tools },
+        { key: "databases", label: "Databases", value: technicalSkills.databases },
+        { key: "cloud", label: "Cloud", value: technicalSkills.cloud },
+      ];
+      skillItems.forEach((item) => {
+        if (hasContent(item.value)) {
+          blocks.push({
+            id: `skills-${item.key}`,
+            type: "skill-line",
+            section: "skills",
+            render: () => <SkillBlock key={`skills-${item.key}`} label={item.label} value={item.value} blockId={`skills-${item.key}`} />
+          });
+        }
+      });
+    } else {
+      const skillItems = [
+        { key: "skills", label: "Key Skills", value: resume.skills },
+        ...(profession === "healthcare" ? [
+          { key: "license", label: "License / Registration", value: resume.license },
+          { key: "clinicalSkills", label: "Clinical Skills", value: resume.clinicalSkills }
+        ] : []),
+        ...(profession === "education" ? [
+          { key: "teacherCert", label: "Teaching Certificate", value: resume.teacherCert },
+          { key: "subjects", label: "Subjects Taught", value: resume.subjects }
+        ] : []),
+        ...(profession === "management" ? [
+          { key: "managementCert", label: "Management Certifications", value: resume.managementCert },
+          { key: "managementSkills", label: "Leadership Competencies", value: resume.managementSkills }
+        ] : []),
+        ...(profession === "engineering" ? [
+          { key: "engineeringTools", label: "Engineering Software & Tools", value: resume.engineeringTools },
+          { key: "engineeringMethods", label: "Methodologies & Standards", value: resume.engineeringMethods }
+        ] : []),
+        ...(profession === "business" ? [
+          { key: "accountingSoftware", label: "Accounting Software", value: resume.accountingSoftware },
+          { key: "cpaLicense", label: "License / CPA", value: resume.cpaLicense }
+        ] : []),
+        ...(profession === "customs" ? [
+          { key: "regulatoryKnowledge", label: "Regulatory Knowledge", value: resume.regulatoryKnowledge },
+          { key: "complianceSkills", label: "Compliance & Documentation", value: resume.complianceSkills }
+        ] : []),
+        ...(profession === "safety" ? [
+          { key: "safetyCerts", label: "Safety Certifications", value: resume.safetyCerts },
+          { key: "safetyProtocols", label: "Safety Protocols & Standards", value: resume.safetyProtocols }
+        ] : []),
+        ...(profession === "designer" ? [
+          { key: "designTools", label: "Design Software", value: resume.designTools },
+          { key: "designSpecialties", label: "Design Specialties", value: resume.designSpecialties }
+        ] : []),
+        ...(profession === "data" ? [
+          { key: "analyticsTools", label: "Analytics & Visualization Tools", value: resume.analyticsTools },
+          { key: "dataTechniques", label: "Data Techniques", value: resume.dataTechniques }
+        ] : []),
+        ...(profession === "sales" ? [
+          { key: "crmTools", label: "CRM & Sales Tools", value: resume.crmTools },
+          { key: "salesMethods", label: "Sales Methodologies", value: resume.salesMethods }
+        ] : []),
+        ...(profession === "hr" ? [
+          { key: "hrisTools", label: "Clinical Tools & HRIS Systems", value: resume.hrisTools },
+          { key: "hrCompetencies", label: "Behavioral & Organizational Competencies", value: resume.hrCompetencies }
+        ] : [])
+      ];
+      skillItems.forEach((item) => {
+        if (hasContent(item.value)) {
+          blocks.push({
+            id: `skills-${item.key}`,
+            type: "skill-line",
+            section: "skills",
+            render: () => <SkillBlock key={`skills-${item.key}`} label={item.label} value={item.value} blockId={`skills-${item.key}`} />
+          });
+        }
+      });
+    }
+  }
+
+  // Helper to build education blocks
+  const buildEducationBlocks = () => {
+    if (filledEducation.length > 0) {
+      blocks.push({
+        id: "education-header",
+        type: "section-header",
+        section: "education",
+        render: () => <h2 key="education-header" data-block-id="education-header">Education</h2>
+      });
+      filledEducation.forEach((edu) => {
+        blocks.push({
+          id: `education-${edu.id}`,
+          type: "entry",
+          section: "education",
+          render: () => (
+            <div key={edu.id} className="preview-entry" data-block-id={`education-${edu.id}`}>
+              <div className="entry-header">
+                <div>
+                  <h3>
+                    {[edu.degree, edu.field].filter(hasContent).join(" in ") || "Degree"}
+                    {hasContent(edu.gpa) && ` | GPA: ${edu.gpa}`}
+                    {hasContent(edu.latinHonors) && ` | ${edu.latinHonors}`}
+                  </h3>
+                  <p className="entry-sub">{edu.school}</p>
+                  {hasContent(edu.coursework) && (
+                    <p className="entry-detail">
+                      <strong>Relevant Coursework:</strong> {edu.coursework}
+                    </p>
+                  )}
+                </div>
+                {hasContent(edu.endDate) && (
+                  <span className="entry-date">{edu.endDate}</span>
+                )}
+              </div>
+            </div>
+          )
+        });
+      });
+    }
+  };
+
+  // Helper to build projects blocks
+  const buildProjectsBlocks = () => {
+    if (filledProjects.length > 0) {
+      const projectSectionTitle =
+        profession === "it"
+          ? "Technical Projects"
+          : profession === "healthcare"
+            ? "Clinical Rotations & Placements"
+            : profession === "education"
+              ? "Teaching Projects"
+              : profession === "hr"
+                ? "Clinical Cases & Programs"
+                : "Project Experience";
+
+      blocks.push({
+        id: "projects-header",
+        type: "section-header",
+        section: "projects",
+        render: () => <h2 key="projects-header" data-block-id="projects-header">{projectSectionTitle}</h2>
+      });
+      filledProjects.forEach((proj) => {
+        blocks.push({
+          id: `projects-${proj.id}`,
+          type: "entry",
+          section: "projects",
+          render: () => (
+            <div key={proj.id} className="preview-entry" data-block-id={`projects-${proj.id}`}>
+              <div className="entry-header">
+                <div>
+                  <h3>
+                    {proj.name || "Project"}
+                    {hasContent(proj.link) && ` | ${proj.link}`}
+                  </h3>
+                  {hasContent(proj.stack) && (
+                    <p className="entry-sub">
+                      <strong>Tech Stack:</strong> {proj.stack}
+                    </p>
+                  )}
+                </div>
+              </div>
+              {proj.bullets.filter(hasContent).length > 0 && (
+                <ul>
+                  {proj.bullets.filter(hasContent).map((bullet, i) => (
+                    <li key={i}>{bullet}</li>
+                  ))}
+                </ul>
               )}
             </div>
-            {hasContent(edu.endDate) && (
-              <span className="entry-date">{edu.endDate}</span>
-            )}
-          </div>
-        </div>
-      ))}
-    </section>
-  );
+          )
+        });
+      });
+    }
+  };
 
-  const projectSectionTitle =
-    profession === "it"
-      ? "Technical Projects"
-      : profession === "healthcare"
-        ? "Clinical Rotations & Placements"
-        : profession === "education"
-          ? "Teaching Projects"
-          : profession === "hr"
-            ? "Clinical Cases & Programs"
-            : "Project Experience";
-
-  const projectsSection = filledProjects.length > 0 && (
-    <section className="preview-section">
-      <h2>{projectSectionTitle}</h2>
-      {filledProjects.map((proj) => (
-        <div key={proj.id} className="preview-entry">
-          <div className="entry-header">
-            <div>
-              <h3>
-                {proj.name || "Project"}
-                {hasContent(proj.link) && ` | ${proj.link}`}
-              </h3>
-              {hasContent(proj.stack) && (
-                <p className="entry-sub">
-                  <strong>Tech Stack:</strong> {proj.stack}
-                </p>
+  // Helper to build achievements blocks
+  const buildAchievementsBlocks = () => {
+    if (userType === "student" && sortedAchievements.length > 0) {
+      blocks.push({
+        id: "achievements-header",
+        type: "section-header",
+        section: "achievements",
+        render: () => <h2 key="achievements-header" data-block-id="achievements-header">Achievements</h2>
+      });
+      sortedAchievements.forEach((ach) => {
+        blocks.push({
+          id: `achievements-${ach.id}`,
+          type: "entry",
+          section: "achievements",
+          render: () => (
+            <div key={ach.id} className="preview-entry" data-block-id={`achievements-${ach.id}`}>
+              <div className="entry-header">
+                <div>
+                  <h3>
+                    {ach.title || "Achievement"}
+                    {hasContent(ach.distinction) && ` — ${ach.distinction}`}
+                  </h3>
+                  {hasContent(ach.organization) && (
+                    <p className="entry-sub">{ach.organization}</p>
+                  )}
+                </div>
+                {hasContent(ach.date) && (
+                  <span className="entry-date">{ach.date}</span>
+                )}
+              </div>
+              {ach.bullets?.filter(hasContent).length > 0 && (
+                <ul>
+                  {ach.bullets.filter(hasContent).map((b, i) => (
+                    <li key={i}>{b}</li>
+                  ))}
+                </ul>
               )}
             </div>
-          </div>
-          {proj.bullets.filter(hasContent).length > 0 && (
-            <ul>
-              {proj.bullets.filter(hasContent).map((bullet, i) => (
-                <li key={i}>{bullet}</li>
-              ))}
-            </ul>
-          )}
-        </div>
-      ))}
-    </section>
-  );
+          )
+        });
+      });
+    }
+  };
 
-  const achievementsSection = userType === "student" && sortedAchievements.length > 0 && (
-    <section className="preview-section">
-      <h2>Achievements</h2>
-      {sortedAchievements.map((ach) => (
-        <div key={ach.id} className="preview-entry">
-          <div className="entry-header">
-            <div>
-              <h3>
-                {ach.title || "Achievement"}
-                {hasContent(ach.distinction) && ` — ${ach.distinction}`}
-              </h3>
-              {hasContent(ach.organization) && (
-                <p className="entry-sub">{ach.organization}</p>
+  // Helper to build experience blocks
+  const buildExperienceBlocks = () => {
+    if (sortedExperience.length > 0) {
+      blocks.push({
+        id: "experience-header",
+        type: "section-header",
+        section: "experience",
+        render: () => <h2 key="experience-header" data-block-id="experience-header">Experience</h2>
+      });
+      sortedExperience.forEach((exp) => {
+        blocks.push({
+          id: `experience-${exp.id}`,
+          type: "entry",
+          section: "experience",
+          render: () => (
+            <div key={exp.id} className="preview-entry" data-block-id={`experience-${exp.id}`}>
+              <div className="entry-header">
+                <div>
+                  <h3>{exp.title || "Job Title"}</h3>
+                  <p className="entry-sub">
+                    {exp.company}
+                    {hasContent(exp.location) && ` | ${exp.location}`}
+                  </p>
+                </div>
+                <span className="entry-date">
+                  {formatDateRange(exp.startDate, exp.endDate, exp.current)}
+                </span>
+              </div>
+              {exp.bullets.filter(hasContent).length > 0 && (
+                <ul>
+                  {exp.bullets.filter(hasContent).map((bullet, i) => (
+                    <li key={i}>{bullet}</li>
+                  ))}
+                </ul>
               )}
             </div>
-            {hasContent(ach.date) && (
-              <span className="entry-date">{ach.date}</span>
-            )}
-          </div>
-          {ach.bullets?.filter(hasContent).length > 0 && (
-            <ul>
-              {ach.bullets.filter(hasContent).map((b, i) => (
-                <li key={i}>{b}</li>
-              ))}
-            </ul>
-          )}
-        </div>
-      ))}
-    </section>
-  );
+          )
+        });
+      });
+    }
+  };
 
-  const experienceSection = sortedExperience.length > 0 && (
-    <section className="preview-section">
-      <h2>Experience</h2>
-      {sortedExperience.map((exp) => (
-        <div key={exp.id} className="preview-entry">
-          <div className="entry-header">
-            <div>
-              <h3>{exp.title || "Job Title"}</h3>
-              <p className="entry-sub">
-                {exp.company}
-                {hasContent(exp.location) && ` | ${exp.location}`}
-              </p>
-            </div>
-            <span className="entry-date">
-              {formatDateRange(exp.startDate, exp.endDate, exp.current)}
-            </span>
-          </div>
-          {exp.bullets.filter(hasContent).length > 0 && (
-            <ul>
-              {exp.bullets.filter(hasContent).map((bullet, i) => (
-                <li key={i}>{bullet}</li>
-              ))}
-            </ul>
-          )}
-        </div>
-      ))}
-    </section>
-  );
+  // Helper to build certifications blocks
+  const buildCertificationsBlocks = () => {
+    if (filledCerts.length > 0) {
+      blocks.push({
+        id: "certifications-header",
+        type: "section-header",
+        section: "certifications",
+        render: () => <h2 key="certifications-header" data-block-id="certifications-header">Certifications</h2>
+      });
+      filledCerts.forEach((cert) => {
+        blocks.push({
+          id: `certifications-${cert.id}`,
+          type: "cert-line",
+          section: "certifications",
+          render: () => (
+            <p key={cert.id} className="cert-line" data-block-id={`certifications-${cert.id}`}>
+              <strong>{cert.name || "Certification"}</strong>
+              {hasContent(cert.issuer) && ` — ${cert.issuer}`}
+              {hasContent(cert.date) && ` (${cert.date})`}
+            </p>
+          )
+        });
+      });
+    }
+  };
 
-  const certificationsSection = filledCerts.length > 0 && (
-    <section className="preview-section">
-      <h2>Certifications</h2>
-      {filledCerts.map((cert) => (
-        <p key={cert.id} className="cert-line">
-          <strong>{cert.name || "Certification"}</strong>
-          {hasContent(cert.issuer) && ` — ${cert.issuer}`}
-          {hasContent(cert.date) && ` (${cert.date})`}
-        </p>
-      ))}
-    </section>
-  );
+  // Helper to build licenses blocks
+  const buildLicensesBlocks = () => {
+    if (filledLicenses.length > 0) {
+      blocks.push({
+        id: "licenses-header",
+        type: "section-header",
+        section: "licenses",
+        render: () => <h2 key="licenses-header" data-block-id="licenses-header">Licenses</h2>
+      });
+      filledLicenses.forEach((lic) => {
+        blocks.push({
+          id: `licenses-${lic.id}`,
+          type: "cert-line",
+          section: "licenses",
+          render: () => (
+            <p key={lic.id} className="cert-line" data-block-id={`licenses-${lic.id}`}>
+              <strong>{lic.name || "License"}</strong>
+              {hasContent(lic.issuer) && ` — ${lic.issuer}`}
+              {hasContent(lic.number) && ` | Lic No. ${lic.number}`}
+              {hasContent(lic.date) && ` (${lic.date})`}
+            </p>
+          )
+        });
+      });
+    }
+  };
 
-  const licensesSection = filledLicenses.length > 0 && (
-    <section className="preview-section">
-      <h2>Licenses</h2>
-      {filledLicenses.map((lic) => (
-        <p key={lic.id} className="cert-line">
-          <strong>{lic.name || "License"}</strong>
-          {hasContent(lic.issuer) && ` — ${lic.issuer}`}
-          {hasContent(lic.number) && ` | Lic No. ${lic.number}`}
-          {hasContent(lic.date) && ` (${lic.date})`}
-        </p>
-      ))}
-    </section>
-  );
+  // Construct blocks in order
+  if (userType === "student") {
+    buildEducationBlocks();
+    buildProjectsBlocks();
+    buildAchievementsBlocks();
+    buildExperienceBlocks();
+    buildCertificationsBlocks();
+    buildLicensesBlocks();
+  } else {
+    buildExperienceBlocks();
+    buildProjectsBlocks();
+    buildEducationBlocks();
+    buildCertificationsBlocks();
+    buildLicensesBlocks();
+  }
+
+  // Render Page Blocks & Group sections for consistent style cascades
+  const renderPageBlocks = (pageBlocks) => {
+    const rendered = [];
+    let currentSection = null;
+    let currentSectionBlocks = [];
+
+    const flushSection = (secKey) => {
+      if (currentSectionBlocks.length > 0) {
+        if (currentSection === "header") {
+          rendered.push(...currentSectionBlocks.map((b) => b.render()));
+        } else {
+          rendered.push(
+            <section className="preview-section" key={secKey}>
+              {currentSectionBlocks.map((b) => b.render())}
+            </section>
+          );
+        }
+        currentSectionBlocks = [];
+      }
+    };
+
+    pageBlocks.forEach((block, idx) => {
+      const blockSection = block.section || "header";
+      if (blockSection !== currentSection) {
+        flushSection(`${currentSection}-${idx}`);
+        currentSection = blockSection;
+      }
+      currentSectionBlocks.push(block);
+    });
+    flushSection(`last-${currentSection}`);
+
+    return rendered;
+  };
+
+  // Dynamic Layout measurement in useLayoutEffect
+  useLayoutEffect(() => {
+    if (!measurerNode) return;
+
+    const blockElements = measurerNode.querySelectorAll("[data-block-id]");
+    const heights = {};
+    let totalMeasuredHeight = 0;
+    
+    blockElements.forEach((el) => {
+      const blockId = el.getAttribute("data-block-id");
+      
+      const styles = window.getComputedStyle(el);
+      const marginTop = parseFloat(styles.marginTop) || 0;
+      const marginBottom = parseFloat(styles.marginBottom) || 0;
+      const h = el.offsetHeight + marginTop + marginBottom;
+      
+      heights[blockId] = h;
+      totalMeasuredHeight += h;
+    });
+
+    // If total measured height is 0, the elements might not be laid out or painted yet.
+    if (totalMeasuredHeight === 0) {
+      return;
+    }
+
+    const PAGE_MAX_CONTENT_HEIGHT = 950; // Safety content threshold
+    const newPages = [];
+    let currentPageBlocks = [];
+    let currentPageHeight = 0;
+    let currentSectionName = null;
+
+    blocks.forEach((block) => {
+      const blockHeight = heights[block.id] || 0;
+      
+      let extraHeight = 0;
+      const blockSection = block.section || "header";
+      if (blockSection !== currentSectionName) {
+        if (blockSection !== "header") {
+          extraHeight += 6; // Section margin spacing
+        }
+      }
+
+      // fitting with orphan block protection
+      let canFit = true;
+      if (block.type === "section-header") {
+        const nextBlock = blocks.find(b => b.section === block.section && b.type !== "section-header");
+        const nextBlockHeight = nextBlock ? (heights[nextBlock.id] || 0) : 0;
+        if (currentPageHeight + blockHeight + nextBlockHeight + extraHeight > PAGE_MAX_CONTENT_HEIGHT) {
+          canFit = false;
+        }
+      } else {
+        if (currentPageHeight + blockHeight + extraHeight > PAGE_MAX_CONTENT_HEIGHT) {
+          canFit = false;
+        }
+      }
+
+      if (canFit && currentPageBlocks.length > 0) {
+        currentPageBlocks.push(block);
+        currentPageHeight += blockHeight + extraHeight;
+        currentSectionName = blockSection;
+      } else {
+        if (currentPageBlocks.length > 0) {
+          newPages.push(currentPageBlocks);
+        }
+        currentPageBlocks = [block];
+        currentPageHeight = blockHeight;
+        currentSectionName = blockSection;
+      }
+    });
+
+    if (currentPageBlocks.length > 0) {
+      newPages.push(currentPageBlocks);
+    }
+
+    const pagesSerialized = JSON.stringify(newPages.map(p => p.map(b => b.id)));
+    const currentSerialized = JSON.stringify(pages.map(p => p.map(b => b.id)));
+    
+    if (pagesSerialized !== currentSerialized) {
+      setPages(newPages);
+      if (onPageCountChange) {
+        onPageCountChange(newPages.length);
+      }
+    }
+  }, [resume, profession, pages, onPageCountChange, measureTrigger, measurerNode]);
 
   const handleDismissUnblur = () => {
     setIsBlurred(false);
@@ -483,6 +736,8 @@ function ResumePreview({ resume, profession, plan }) {
     }
   };
 
+  const displayPages = pages.length > 0 ? pages : [blocks];
+
   return (
     <div 
       id="resume-preview-root-wrapper"
@@ -490,46 +745,34 @@ function ResumePreview({ resume, profession, plan }) {
       onContextMenu={(e) => e.preventDefault()}
       onCopy={(e) => e.preventDefault()}
       onDragStart={(e) => e.preventDefault()}
-      style={{ position: "relative", width: "100%", height: "100%" }}
+      style={{ position: "relative", width: "100%" }}
     >
-      <article className="resume-preview resume-ats">
-        <header className="preview-header">
-          <h1>{(personal.fullName || "Your Name").toUpperCase()}</h1>
-          {hasContent(headline) && <p className="preview-headline">{headline}</p>}
-          <ContactLine personal={personal} profession={profession} />
-        </header>
+      {/* Hidden Measurer */}
+      <div 
+        ref={setMeasurerNode}
+        id="resume-measurer" 
+        className="resume-preview resume-ats" 
+        style={{ position: "absolute", left: "-9999px", top: "-9999px", width: "816px", height: "auto", minHeight: "0", visibility: "hidden" }}
+      >
+        {renderPageBlocks(blocks)}
+      </div>
 
-        {summarySection}
-        {skillsSection}
-
-        {userType === "student" ? (
-          <>
-            {educationSection}
-            {projectsSection}
-            {achievementsSection}
-            {experienceSection}
-            {certificationsSection}
-            {licensesSection}
-          </>
-        ) : (
-          <>
-            {experienceSection}
-            {projectsSection}
-            {educationSection}
-            {certificationsSection}
-            {licensesSection}
-          </>
-        )}
-      </article>
-
-      {plan && plan.hasWatermark && (
-        <div className="trial-watermark-overlay" aria-hidden="true">
-          <div className="watermark-diagonal-text">RESORA TRIAL - PREMIUM PRO</div>
-          <div className="watermark-diagonal-text">RESORA TRIAL - PREMIUM PRO</div>
-          <div className="watermark-diagonal-text">RESORA TRIAL - PREMIUM PRO</div>
-          <div className="watermark-diagonal-text">RESORA TRIAL - PREMIUM PRO</div>
-        </div>
-      )}
+      {/* Visible Pages */}
+      <div className="preview-pages-container">
+        {displayPages.map((pageBlocks, index) => (
+          <article key={index} className="resume-page-sheet resume-ats">
+            {renderPageBlocks(pageBlocks)}
+            {plan && plan.hasWatermark && (
+              <div className="trial-watermark-overlay" aria-hidden="true">
+                <div className="watermark-diagonal-text">RESORA TRIAL - PREMIUM PRO</div>
+                <div className="watermark-diagonal-text">RESORA TRIAL - PREMIUM PRO</div>
+                <div className="watermark-diagonal-text">RESORA TRIAL - PREMIUM PRO</div>
+                <div className="watermark-diagonal-text">RESORA TRIAL - PREMIUM PRO</div>
+              </div>
+            )}
+          </article>
+        ))}
+      </div>
 
       {isBlurred && (
         <div className="screenshot-blur-overlay">
