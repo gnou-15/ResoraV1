@@ -1,0 +1,7 @@
+User-agent: *
+Allow: /
+
+# Block private app routes (like the resume builder dashboard/editor)
+Disallow: /dashboard/
+Disallow: /editor/
+Sitemap: https://nezer-resora.com/sitemap.xml

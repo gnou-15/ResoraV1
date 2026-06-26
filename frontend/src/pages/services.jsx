@@ -79,9 +79,9 @@ export default function Services({ onNavigate, isEmbedded, onMascotMoodChange })
               <circle cx="20.5" cy="19" r="3.6" stroke="#f59e0b" strokeWidth="0.9" fill="none" />
               <path d="M 17 23.5 C 13.5 21, 7.5 23.5, 5.5 27 C 7.5 27, 13 25.5, 17 24.5 C 21 25.5, 26.5 27, 28.5 27 C 26.5 23.5, 20.5 21, 17 23.5 Z" fill="#ffffff" />
             </svg>
-            <h1 className="logo-brand">
-              Resora <div className="logo-subtext">by Nezer</div>
-            </h1>
+            <span className="logo-brand">
+              Resora <span className="logo-subtext">by Nezer</span>
+            </span>
           </a>
         </header>
       )}

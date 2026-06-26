@@ -276,9 +276,9 @@ function App() {
               {/* Mustache */}
               <path d="M 17 23.5 C 13.5 21, 7.5 23.5, 5.5 27 C 7.5 27, 13 25.5, 17 24.5 C 21 25.5, 26.5 27, 28.5 27 C 26.5 23.5, 20.5 21, 17 23.5 Z" fill="#ffffff" />
             </svg>
-            <h1 className="logo-brand">
-              Resora <div className="logo-subtext" onClick={(e) => { e.stopPropagation(); e.preventDefault(); setRoute({ page: "about", profession: null }); }}>by Nezer</div>
-            </h1>
+            <span className="logo-brand">
+              Resora <span className="logo-subtext" onClick={(e) => { e.stopPropagation(); e.preventDefault(); setRoute({ page: "about", profession: null }); }}>by Nezer</span>
+            </span>
           </a>
           <nav className="nav-menu">
             <a href="#" className={`nav-link ${route.page === "landing" ? "active" : ""}`} onClick={(e) => { e.preventDefault(); transitionToPage("landing"); }}>

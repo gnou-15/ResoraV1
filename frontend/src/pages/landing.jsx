@@ -243,9 +243,9 @@ export default function Landing({ onSelect, onNavigate, isEmbedded, user, mascot
               {/* Mustache */}
               <path d="M 17 23.5 C 13.5 21, 7.5 23.5, 5.5 27 C 7.5 27, 13 25.5, 17 24.5 C 21 25.5, 26.5 27, 28.5 27 C 26.5 23.5, 20.5 21, 17 23.5 Z" fill="#ffffff" />
             </svg>
-            <h1 className="logo-brand">
-              Resora <div className="logo-subtext" onClick={(e) => { e.stopPropagation(); e.preventDefault(); onNavigate && onNavigate("about"); }}>by Nezer</div>
-            </h1>
+            <span className="logo-brand">
+              Resora <span className="logo-subtext" onClick={(e) => { e.stopPropagation(); e.preventDefault(); onNavigate && onNavigate("about"); }}>by Nezer</span>
+            </span>
           </a>
           <nav className="nav-menu">
             <a href="#" className="nav-link active" onClick={(e) => { e.preventDefault(); onNavigate && onNavigate("landing"); }}>
@@ -265,6 +265,7 @@ export default function Landing({ onSelect, onNavigate, isEmbedded, user, mascot
       )}
 
       <main className="landing-hero">
+        <h1 className="sr-only">Build a Professional, ATS-Friendly Resume with Resora</h1>
         <PeekingMonster mood={mascotMood || localMood} isPremium={plan && plan.isActive && (plan.type === "premium_plus" || plan.type === "premium_pro")} />
         <div className="hero-title-container">
           <h2 className="hero-title-line">What is your</h2>
