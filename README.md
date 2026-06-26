@@ -110,3 +110,9 @@ Developing Resora advanced my skills from traditional full-stack web development
     npm install
     npm run dev
     ```
+---
+## 🍿Video
+https://github.com/user-attachments/assets/e39611a4-899b-480a-aa76-3e0512889d87
+
+
+
