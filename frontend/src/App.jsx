@@ -305,9 +305,11 @@ function App() {
                     👑 Admin Panel
                   </button>
                 )}
-                <span className="user-greeting">
-                  Hi, {(decryptName(user.user_metadata?.full_name, user.id) || user.email.split('@')[0]).trim().split(/\s+/)[0]}
-                </span>
+                {route.page === "landing" && (
+                  <span className="user-greeting">
+                    Hi, {(decryptName(user.user_metadata?.full_name, user.id) || user.email.split('@')[0]).trim().split(/\s+/)[0]}!
+                  </span>
+                )}
                 <button
                   className="nav-btn-signin signout-btn"
                   onClick={async (e) => {
@@ -323,8 +325,13 @@ function App() {
                       setMascotMood("normal");
                     }
                   }}
+                  aria-label="Sign Out"
                 >
-                  Sign Out
+                  <span className="signout-text">Sign Out</span>
+                  <svg className="signout-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M18.36 6.64a9 9 0 1 1-12.73 0" />
+                    <line x1="12" y1="2" x2="12" y2="12" />
+                  </svg>
                 </button>
               </div>
             ) : (

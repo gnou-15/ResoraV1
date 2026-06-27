@@ -611,6 +611,52 @@
     width: auto !important;
   }
 
+  .user-profile-header {
+    display: contents !important;
+  }
+
+  .user-greeting {
+    flex: 0 0 100% !important;
+    text-align: center !important;
+    margin-top: 0.6rem !important;
+    margin-bottom: 0.1rem !important;
+    order: 3 !important;
+    font-size: 0.95rem !important;
+    color: #1f2937 !important;
+    border-top: 1.5px solid rgba(0, 0, 0, 0.05) !important;
+    padding-top: 0.6rem !important;
+  }
+
+  .admin-nav-btn {
+    order: 1 !important;
+  }
+
+  .signout-btn {
+    order: 2 !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    width: 32px !important;
+    height: 32px !important;
+    min-width: 32px !important;
+    padding: 0 !important;
+    border-radius: 50% !important;
+    background-color: #475569 !important;
+    box-shadow: 0 3px 8px rgba(71, 85, 105, 0.2) !important;
+    margin-left: 0.6rem !important;
+  }
+
+  .signout-text {
+    display: none !important;
+  }
+
+  .signout-icon {
+    display: block !important;
+    width: 17px !important;
+    height: 17px !important;
+    stroke-width: 2.8 !important;
+  }
+
   .landing-hero {
     padding-top: 180px !important;
   }
@@ -3219,6 +3265,14 @@ select.input-error {
 .signout-btn:hover {
   background-color: #334155 !important;
   box-shadow: 0 6px 16px rgba(71, 85, 105, 0.4) !important;
+}
+
+.signout-icon {
+  display: none;
+}
+
+.signout-text {
+  display: inline;
 }
 
 /* Auth Gate Modal styling */
@@ -6395,8 +6449,16 @@ select.input-error {
    Pricing Page Mobile Responsiveness
    ========================================================================== */
 @media (max-width: 900px) {
+  .pricing-modal-overlay {
+    align-items: flex-start !important;
+    padding: 1.5rem 0 !important;
+    overflow-y: auto !important;
+  }
+
   .pricing-modal-box {
     padding: 2rem 1.5rem;
+    max-height: none !important;
+    margin: 0 auto !important;
   }
 
   .pricing-cards-wrapper {
@@ -6416,6 +6478,24 @@ select.input-error {
 
   .gcash-info-container {
     width: 100%;
+  }
+}
+
+@media (max-width: 480px) {
+  .pricing-modal-box {
+    padding: 1.5rem 1rem !important;
+    width: 94% !important;
+    border-radius: 20px !important;
+  }
+  
+  .pricing-card-inner {
+    padding: 1.5rem 1rem !important;
+    border-radius: 16px !important;
+  }
+
+  .card-features-list {
+    margin-bottom: 1.5rem !important;
+    gap: 0.6rem !important;
   }
 }
 
