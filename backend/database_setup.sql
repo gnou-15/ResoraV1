@@ -41,8 +41,8 @@ CREATE POLICY "Allow selecting status by reference number" ON public.gcash_payme
 -- 5. Admin users can update any payment submission (to approve or reject)
 DROP POLICY IF EXISTS "Admins can update payments" ON public.gcash_payments;
 CREATE POLICY "Admins can update payments" ON public.gcash_payments
-    FOR UPDATE USING (auth.jwt() ->> 'email' = 'nezer.resora@gmail.com')
-    WITH CHECK (auth.jwt() ->> 'email' = 'nezer.resora@gmail.com');
+    FOR UPDATE USING (auth.jwt() ->> 'email' = 'mapano.isidore@gmail.com')
+    WITH CHECK (auth.jwt() ->> 'email' = 'mapano.isidore@gmail.com');
 
 
 -- =========================================================================
