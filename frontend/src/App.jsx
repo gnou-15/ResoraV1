@@ -61,7 +61,7 @@ function App() {
     setPricingModalOpen(true);
   };
 
-  const isAdmin = user && user.email === (import.meta.env.VITE_ADMIN_EMAIL || "mapano.isidore@gmail.com");
+  const isAdmin = user && user.email === (import.meta.env.VITE_ADMIN_EMAIL || "nezer.resora@gmail.com");
   const [plan, setPlan] = useState({
     type: "none",
     name: "No Plan",
