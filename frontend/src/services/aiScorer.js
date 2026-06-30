@@ -86,7 +86,7 @@ export function getMetricSuggestions(bulletText, profession = 'it') {
 }
 
 // Mock job postings corresponding to professions
-const MOCK_JOBS = {
+cconst MOCK_JOBS = {
   it: [
     { id: 'it-1', company: 'Google', title: 'Software Engineer', location: 'Mountain View, CA (Hybrid)', matchScore: 94, salary: '$135k - $175k', logoColor: '#4285F4' },
     { id: 'it-2', company: 'Canva', title: 'React Frontend Developer', location: 'Remote (US)', matchScore: 88, salary: '$100k - $130k', logoColor: '#7D2AE8' },
@@ -107,6 +107,46 @@ const MOCK_JOBS = {
     { id: 'mgt-1', company: 'Microsoft', title: 'Technical Project Manager', location: 'Redmond, WA (Hybrid)', matchScore: 93, salary: '$125k - $160k', logoColor: '#F25022' },
     { id: 'mgt-2', company: 'Salesforce', title: 'Agile Product Owner', location: 'San Francisco, CA', matchScore: 86, salary: '$110k - $145k', logoColor: '#00A1E0' },
     { id: 'mgt-3', company: 'Global Logistics Co.', title: 'Operations Lead Manager', location: 'Chicago, IL', matchScore: 74, salary: '$95k - $125k', logoColor: '#37474F' }
+  ],
+  engineering: [
+    { id: 'eng-1', company: 'Boeing', title: 'Mechanical Engineer', location: 'Seattle, WA (Hybrid)', matchScore: 92, salary: '$95k - $120k', logoColor: '#0033A0' },
+    { id: 'eng-2', company: 'AECOM', title: 'Civil Engineer', location: 'Los Angeles, CA', matchScore: 86, salary: '$85k - $115k', logoColor: '#004B87' },
+    { id: 'eng-3', company: 'Tesla', title: 'Electrical Design Engineer', location: 'Austin, TX', matchScore: 78, salary: '$110k - $145k', logoColor: '#CC0000' }
+  ],
+  safety: [
+    { id: 'safe-1', company: 'Chevron', title: 'EHS Manager / Safety Officer', location: 'Houston, TX (On-site)', matchScore: 93, salary: '$105k - $135k', logoColor: '#005C8F' },
+    { id: 'safe-2', company: 'Turner Construction', title: 'Construction Safety Coordinator', location: 'New York, NY', matchScore: 87, salary: '$80k - $100k', logoColor: '#1A365D' },
+    { id: 'safe-3', company: 'OSHA Solutions', title: 'Occupational Health Specialist', location: 'Chicago, IL', matchScore: 75, salary: '$75k - $95k', logoColor: '#4A5568' }
+  ],
+  customs: [
+    { id: 'cust-1', company: 'DHL Express', title: 'Customs Broker', location: 'Miami, FL (Hybrid)', matchScore: 91, salary: '$70k - $90k', logoColor: '#FFCC00' },
+    { id: 'cust-2', company: 'FedEx Trade Networks', title: 'Import/Export Compliance Specialist', location: 'Memphis, TN', matchScore: 85, salary: '$75k - $95k', logoColor: '#4D148C' },
+    { id: 'cust-3', company: 'Flexport', title: 'Trade Operations Coordinator', location: 'San Francisco, CA', matchScore: 79, salary: '$65k - $80k', logoColor: '#2D3748' }
+  ],
+  business: [
+    { id: 'biz-1', company: 'Deloitte', title: 'Staff Accountant / Auditor', location: 'Chicago, IL (Hybrid)', matchScore: 94, salary: '$75k - $95k', logoColor: '#86BC25' },
+    { id: 'biz-2', company: 'Goldman Sachs', title: 'Senior Financial Analyst', location: 'New York, NY', matchScore: 88, salary: '$110k - $140k', logoColor: '#002E6E' },
+    { id: 'biz-3', company: 'H&R Block', title: 'Tax Consultant Specialist', location: 'Remote (US)', matchScore: 77, salary: '$60k - $80k', logoColor: '#00A859' }
+  ],
+  designer: [
+    { id: 'dsgn-1', company: 'Figma', title: 'UI/UX Product Designer', location: 'San Francisco, CA (Hybrid)', matchScore: 93, salary: '$120k - $160k', logoColor: '#F24E1E' },
+    { id: 'dsgn-2', company: 'Adobe', title: 'Senior Graphic Designer', location: 'San Jose, CA', matchScore: 89, salary: '$100k - $135k', logoColor: '#FF0000' },
+    { id: 'dsgn-3', company: 'Mailchimp', title: 'Creative Specialist Intern', location: 'Atlanta, GA (Hybrid)', matchScore: 76, salary: '$35 - $45/hr', logoColor: '#FFE01B' }
+  ],
+  data: [
+    { id: 'data-1', company: 'Netflix', title: 'Data Scientist', location: 'Los Gatos, CA (Hybrid)', matchScore: 95, salary: '$160k - $210k', logoColor: '#E50914' },
+    { id: 'data-2', company: 'Amazon', title: 'Business Intelligence Analyst', location: 'Seattle, WA', matchScore: 88, salary: '$95k - $130k', logoColor: '#FF9900' },
+    { id: 'data-3', company: 'Uber', title: 'Data Analyst Intern', location: 'San Francisco, CA', matchScore: 80, salary: '$40 - $55/hr', logoColor: '#000000' }
+  ],
+  sales: [
+    { id: 'sales-1', company: 'Salesforce', title: 'Sales Account Executive', location: 'Chicago, IL (Hybrid)', matchScore: 92, salary: '$90k - $120k + Commission', logoColor: '#00A1E0' },
+    { id: 'sales-2', company: 'HubSpot', title: 'Business Development Representative', location: 'Boston, MA', matchScore: 86, salary: '$65k - $85k base', logoColor: '#FF7A59' },
+    { id: 'sales-3', company: 'ZoomInfo', title: 'Inside Sales Specialist', location: 'Vancouver, WA', matchScore: 78, salary: '$70k - $90k base', logoColor: '#1E3A8A' }
+  ],
+  hr: [
+    { id: 'hr-1', company: 'Meta', title: 'HR Business Partner (HRBP)', location: 'Menlo Park, CA (Hybrid)', matchScore: 91, salary: '$120k - $155k', logoColor: '#0668E1' },
+    { id: 'hr-2', company: 'LinkedIn', title: 'Recruiting Coordinator', location: 'Sunnyvale, CA', matchScore: 87, salary: '$75k - $95k', logoColor: '#0A66C2' },
+    { id: 'hr-3', company: 'Workday', title: 'Human Resources Generalist', location: 'Pleasanton, CA', matchScore: 79, salary: '$85k - $110k', logoColor: '#E28743' }
   ]
 };
 
@@ -324,8 +364,8 @@ export function analyzeResume(resume, profession = 'it') {
     if (personal.portfolio?.trim()) contactPoints += 3;
     else {
       const label = profession === 'designer' ? 'Behance/Dribbble portfolio' :
-                    profession === 'education' ? 'teaching portfolio' :
-                    profession === 'sales' ? 'personal website' : 'portfolio';
+        profession === 'education' ? 'teaching portfolio' :
+          profession === 'sales' ? 'personal website' : 'portfolio';
       tips.push({ id: 'portfolio', text: `Add a link to your ${label} to showcase work`, impact: 3, category: 'contact', type: 'add' });
     }
   } else if (needsLicenseOnly) {
@@ -466,7 +506,7 @@ export function analyzeResume(resume, profession = 'it') {
   // 5. WORK EXPERIENCE BULLETS & QUALITY (Max 25 points)
   let expPoints = 0;
   const filledExp = experience.filter(e => e.company || e.title);
-  
+
   // Collect metrics statistics and list of bullets that need metrics
   let totalBullets = 0;
   let bulletsWithMetrics = 0;
@@ -475,7 +515,7 @@ export function analyzeResume(resume, profession = 'it') {
   filledExp.forEach(job => {
     const jobBullets = (job.bullets || []).filter(b => b && b.trim());
     totalBullets += jobBullets.length;
-    
+
     jobBullets.forEach((bullet, idx) => {
       if (hasMetrics(bullet)) {
         bulletsWithMetrics++;
@@ -509,22 +549,22 @@ export function analyzeResume(resume, profession = 'it') {
         expPoints += 10;
       } else if (metricPercentage >= 0.2) {
         expPoints += 6;
-        tips.push({ 
-          id: 'exp_metrics_low', 
-          text: 'Add quantifiable metrics to your work or student Org bullets to prove impact!', 
-          impact: 4, 
-          category: 'experience', 
+        tips.push({
+          id: 'exp_metrics_low',
+          text: 'Add quantifiable metrics to your work or student Org bullets to prove impact!',
+          impact: 4,
+          category: 'experience',
           type: 'improve',
           fixable: true,
           bulletsToFix: bulletsNoMetricsList
         });
       } else {
         expPoints += 2;
-        tips.push({ 
-          id: 'exp_metrics_missing', 
-          text: 'Incorporate quantifiable results (percentages, sizes, frequencies) in experience bullets.', 
-          impact: 8, 
-          category: 'experience', 
+        tips.push({
+          id: 'exp_metrics_missing',
+          text: 'Incorporate quantifiable results (percentages, sizes, frequencies) in experience bullets.',
+          impact: 8,
+          category: 'experience',
           type: 'improve',
           fixable: true,
           bulletsToFix: bulletsNoMetricsList
@@ -533,12 +573,12 @@ export function analyzeResume(resume, profession = 'it') {
     } else {
       // Students get a default 12 points floor so lack of formal work history doesn't tank their score
       expPoints = 12;
-      tips.push({ 
-        id: 'experience', 
-        text: 'Add internships, part-time jobs, or school Org leadership roles to demonstrate initial experience.', 
-        impact: 13, 
-        category: 'experience', 
-        type: 'add' 
+      tips.push({
+        id: 'experience',
+        text: 'Add internships, part-time jobs, or school Org leadership roles to demonstrate initial experience.',
+        impact: 13,
+        category: 'experience',
+        type: 'add'
       });
     }
   } else {
@@ -565,22 +605,22 @@ export function analyzeResume(resume, profession = 'it') {
         expPoints += 5;
       } else if (metricPercentage >= 0.2) {
         expPoints += 3;
-        tips.push({ 
-          id: 'exp_metrics_low', 
-          text: 'Fewer than 50% of your experience bullets contain quantifiable results (%, numbers). Add metrics to prove impact!', 
-          impact: 2, 
-          category: 'experience', 
+        tips.push({
+          id: 'exp_metrics_low',
+          text: 'Fewer than 50% of your experience bullets contain quantifiable results (%, numbers). Add metrics to prove impact!',
+          impact: 2,
+          category: 'experience',
           type: 'improve',
           fixable: true,
           bulletsToFix: bulletsNoMetricsList
         });
       } else {
         expPoints += 1;
-        tips.push({ 
-          id: 'exp_metrics_missing', 
-          text: 'Incorporate quantifiable results (percentages, revenue, savings, team scale) into your work experience bullets.', 
-          impact: 4, 
-          category: 'experience', 
+        tips.push({
+          id: 'exp_metrics_missing',
+          text: 'Incorporate quantifiable results (percentages, revenue, savings, team scale) into your work experience bullets.',
+          impact: 4,
+          category: 'experience',
           type: 'improve',
           fixable: true,
           bulletsToFix: bulletsNoMetricsList
@@ -589,12 +629,12 @@ export function analyzeResume(resume, profession = 'it') {
     } else {
       // Professionals get no floor points if experience is empty
       expPoints = 0;
-      tips.push({ 
-        id: 'experience', 
-        text: 'Add your work experience history to demonstrate your career track record.', 
-        impact: 25, 
-        category: 'experience', 
-        type: 'add' 
+      tips.push({
+        id: 'experience',
+        text: 'Add your work experience history to demonstrate your career track record.',
+        impact: 25,
+        category: 'experience',
+        type: 'add'
       });
     }
   }
@@ -682,18 +722,18 @@ export function analyzeResume(resume, profession = 'it') {
     } else {
       const certTipText =
         profession === 'it' ? 'Add industry-standard certifications (e.g. AWS, Azure, CompTIA) to prove technical expertise.' :
-        profession === 'healthcare' ? 'Add clinical licenses or certifications (e.g. BLS, ACLS, nursing license) to verify compliance.' :
-        profession === 'education' ? 'Add state teaching licenses, certifications, or endorsements.' :
-        profession === 'management' ? 'Add professional certifications (e.g. PMP, Certified Scrum Master) to demonstrate leadership credentials.' :
-        profession === 'engineering' ? 'Add engineering certifications or licenses (e.g. PE, SolidWorks Professional) to show specialized capability.' :
-        profession === 'business' ? 'Add financial or accounting certifications (e.g. CPA, CMA, QuickBooks User) to highlight credentials.' :
-        profession === 'customs' ? 'Add trade compliance certifications or a Customs Broker License to show credentials.' :
-        profession === 'safety' ? 'Add professional safety certifications (e.g. OSHA 30-Hour, NEBOSH, CSP) to verify compliance.' :
-        profession === 'designer' ? 'Add design tool certifications or credentials (e.g. Figma Certified Professional) to showcase expertise.' :
-        profession === 'data' ? 'Add analytics, cloud, or machine learning certifications to demonstrate technical skills.' :
-        profession === 'sales' ? 'Add sales training or CRM platform certifications (e.g. Salesforce Administrator) to prove ability.' :
-        profession === 'hr' ? 'Add HR professional certifications (e.g. SHRM-CP, PHR) to establish domain expertise.' :
-        'Add industry-standard certifications to prove expertise.';
+          profession === 'healthcare' ? 'Add clinical licenses or certifications (e.g. BLS, ACLS, nursing license) to verify compliance.' :
+            profession === 'education' ? 'Add state teaching licenses, certifications, or endorsements.' :
+              profession === 'management' ? 'Add professional certifications (e.g. PMP, Certified Scrum Master) to demonstrate leadership credentials.' :
+                profession === 'engineering' ? 'Add engineering certifications or licenses (e.g. PE, SolidWorks Professional) to show specialized capability.' :
+                  profession === 'business' ? 'Add financial or accounting certifications (e.g. CPA, CMA, QuickBooks User) to highlight credentials.' :
+                    profession === 'customs' ? 'Add trade compliance certifications or a Customs Broker License to show credentials.' :
+                      profession === 'safety' ? 'Add professional safety certifications (e.g. OSHA 30-Hour, NEBOSH, CSP) to verify compliance.' :
+                        profession === 'designer' ? 'Add design tool certifications or credentials (e.g. Figma Certified Professional) to showcase expertise.' :
+                          profession === 'data' ? 'Add analytics, cloud, or machine learning certifications to demonstrate technical skills.' :
+                            profession === 'sales' ? 'Add sales training or CRM platform certifications (e.g. Salesforce Administrator) to prove ability.' :
+                              profession === 'hr' ? 'Add HR professional certifications (e.g. SHRM-CP, PHR) to establish domain expertise.' :
+                                'Add industry-standard certifications to prove expertise.';
       tips.push({ id: 'certifications', text: certTipText, impact: 10, category: 'projects', type: 'add' });
     }
 
@@ -703,7 +743,7 @@ export function analyzeResume(resume, profession = 'it') {
   scoreBreakdown.projects = projectsBreakdownPoints;
 
   // Calculate final score as the sum of all scaled scoreBreakdown values
-  const scoreSum = 
+  const scoreSum =
     scoreBreakdown.contact +
     scoreBreakdown.headline +
     scoreBreakdown.summary +
@@ -784,7 +824,7 @@ export async function fetchAPIAnalysis(resume, profession = 'it') {
       },
       body: JSON.stringify({ resume, profession }),
     });
-    
+
     if (response.ok) {
       return await response.json();
     }
