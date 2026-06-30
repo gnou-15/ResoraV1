@@ -86,7 +86,7 @@ export function getMetricSuggestions(bulletText, profession = 'it') {
 }
 
 // Mock job postings corresponding to professions
-cconst MOCK_JOBS = {
+const MOCK_JOBS = {
   it: [
     { id: 'it-1', company: 'Google', title: 'Software Engineer', location: 'Mountain View, CA (Hybrid)', matchScore: 94, salary: '$135k - $175k', logoColor: '#4285F4' },
     { id: 'it-2', company: 'Canva', title: 'React Frontend Developer', location: 'Remote (US)', matchScore: 88, salary: '$100k - $130k', logoColor: '#7D2AE8' },

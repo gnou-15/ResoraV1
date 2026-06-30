@@ -146,6 +146,46 @@ MOCK_JOBS = {
         { 'id': 'mgt-1', 'company': 'Microsoft', 'title': 'Technical Project Manager', 'location': 'Redmond, WA (Hybrid)', 'matchScore': 93, 'salary': '$125k - $160k', 'logoColor': '#F25022' },
         { 'id': 'mgt-2', 'company': 'Salesforce', 'title': 'Agile Product Owner', 'location': 'San Francisco, CA', 'matchScore': 86, 'salary': '$110k - $145k', 'logoColor': '#00A1E0' },
         { 'id': 'mgt-3', 'company': 'Global Logistics Co.', 'title': 'Operations Lead Manager', 'location': 'Chicago, IL', 'matchScore': 74, 'salary': '$95k - $125k', 'logoColor': '#37474F' }
+    ],
+    'engineering': [
+        { 'id': 'eng-1', 'company': 'Boeing', 'title': 'Mechanical Engineer', 'location': 'Seattle, WA (Hybrid)', 'matchScore': 92, 'salary': '$95k - $120k', 'logoColor': '#0033a0' },
+        { 'id': 'eng-2', 'company': 'AECOM', 'title': 'Civil Engineer', 'location': 'Los Angeles, CA', 'matchScore': 86, 'salary': '$85k - $115k', 'logoColor': '#004B87' },
+        { 'id': 'eng-3', 'company': 'Tesla', 'title': 'Electrical Design Engineer', 'location': 'Austin, TX', 'matchScore': 78, 'salary': '$110k - $145k', 'logoColor': '#CC0000' }
+    ],
+    'safety': [
+        { 'id': 'safe-1', 'company': 'Chevron', 'title': 'EHS Manager / Safety Officer', 'location': 'Houston, TX (On-site)', 'matchScore': 93, 'salary': '$105k - $135k', 'logoColor': '#005C8F' },
+        { 'id': 'safe-2', 'company': 'Turner Construction', 'title': 'Construction Safety Coordinator', 'location': 'New York, NY', 'matchScore': 87, 'salary': '$80k - $100k', 'logoColor': '#1A365D' },
+        { 'id': 'safe-3', 'company': 'OSHA Solutions', 'title': 'Occupational Health Specialist', 'location': 'Chicago, IL', 'matchScore': 75, 'salary': '$75k - $95k', 'logoColor': '#4A5568' }
+    ],
+    'customs': [
+        { 'id': 'cust-1', 'company': 'DHL Express', 'title': 'Customs Broker', 'location': 'Miami, FL (Hybrid)', 'matchScore': 91, 'salary': '$70k - $90k', 'logoColor': '#FFCC00' },
+        { 'id': 'cust-2', 'company': 'FedEx Trade Networks', 'title': 'Import/Export Compliance Specialist', 'location': 'Memphis, TN', 'matchScore': 85, 'salary': '$75k - $95k', 'logoColor': '#4D148C' },
+        { 'id': 'cust-3', 'company': 'Flexport', 'title': 'Trade Operations Coordinator', 'location': 'San Francisco, CA', 'matchScore': 79, 'salary': '$65k - $80k', 'logoColor': '#2D3748' }
+    ],
+    'business': [
+        { 'id': 'biz-1', 'company': 'Deloitte', 'title': 'Staff Accountant / Auditor', 'location': 'Chicago, IL (Hybrid)', 'matchScore': 94, 'salary': '$75k - $95k', 'logoColor': '#86BC25' },
+        { 'id': 'biz-2', 'company': 'Goldman Sachs', 'title': 'Senior Financial Analyst', 'location': 'New York, NY', 'matchScore': 88, 'salary': '$110k - $140k', 'logoColor': '#002E6E' },
+        { 'id': 'biz-3', 'company': 'H&R Block', 'title': 'Tax Consultant Specialist', 'location': 'Remote (US)', 'matchScore': 77, 'salary': '$60k - $80k', 'logoColor': '#00A859' }
+    ],
+    'designer': [
+        { 'id': 'dsgn-1', 'company': 'Figma', 'title': 'UI/UX Product Designer', 'location': 'San Francisco, CA (Hybrid)', 'matchScore': 93, 'salary': '$120k - $160k', 'logoColor': '#F24E1E' },
+        { 'id': 'dsgn-2', 'company': 'Adobe', 'title': 'Senior Graphic Designer', 'location': 'San Jose, CA', 'matchScore': 89, 'salary': '$100k - $135k', 'logoColor': '#FF0000' },
+        { 'id': 'dsgn-3', 'company': 'Mailchimp', 'title': 'Creative Specialist Intern', 'location': 'Atlanta, GA (Hybrid)', 'matchScore': 76, 'salary': '$35 - $45/hr', 'logoColor': '#FFE01B' }
+    ],
+    'data': [
+        { 'id': 'data-1', 'company': 'Netflix', 'title': 'Data Scientist', 'location': 'Los Gatos, CA (Hybrid)', 'matchScore': 95, 'salary': '$160k - $210k', 'logoColor': '#E50914' },
+        { 'id': 'data-2', 'company': 'Amazon', 'title': 'Business Intelligence Analyst', 'location': 'Seattle, WA', 'matchScore': 88, 'salary': '$95k - $130k', 'logoColor': '#FF9900' },
+        { 'id': 'data-3', 'company': 'Uber', 'title': 'Data Analyst Intern', 'location': 'San Francisco, CA', 'matchScore': 80, 'salary': '$40 - $55/hr', 'logoColor': '#000000' }
+    ],
+    'sales': [
+        { 'id': 'sales-1', 'company': 'Salesforce', 'title': 'Sales Account Executive', 'location': 'Chicago, IL (Hybrid)', 'matchScore': 92, 'salary': '$90k - $120k + Commission', 'logoColor': '#00A1E0' },
+        { 'id': 'sales-2', 'company': 'HubSpot', 'title': 'Business Development Representative', 'location': 'Boston, MA', 'matchScore': 86, 'salary': '$65k - $85k base', 'logoColor': '#FF7A59' },
+        { 'id': 'sales-3', 'company': 'ZoomInfo', 'title': 'Inside Sales Specialist', 'location': 'Vancouver, WA', 'matchScore': 78, 'salary': '$70k - $90k base', 'logoColor': '#1E3A8A' }
+    ],
+    'hr': [
+        { 'id': 'hr-1', 'company': 'Meta', 'title': 'HR Business Partner (HRBP)', 'location': 'Menlo Park, CA (Hybrid)', 'matchScore': 91, 'salary': '$120k - $155k', 'logoColor': '#0668E1' },
+        { 'id': 'hr-2', 'company': 'LinkedIn', 'title': 'Recruiting Coordinator', 'location': 'Sunnyvale, CA', 'matchScore': 87, 'salary': '$75k - $95k', 'logoColor': '#0A66C2' },
+        { 'id': 'hr-3', 'company': 'Workday', 'title': 'Human Resources Generalist', 'location': 'Pleasanton, CA', 'matchScore': 79, 'salary': '$85k - $110k', 'logoColor': '#E28743' }
     ]
 }
 
