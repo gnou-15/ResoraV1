@@ -816,6 +816,12 @@ export function analyzeResume(resume, profession = 'it') {
  * Falls back to the client-side JavaScript engine if the backend is offline.
  */
 export async function fetchAPIAnalysis(resume, profession = 'it') {
+  // First run the local evaluation to check if the content is sufficient
+  const localResult = analyzeResume(resume, profession);
+  if (localResult.insufficientData) {
+    return localResult;
+  }
+
   try {
     const response = await fetch("http://localhost:8000/analyze", {
       method: "POST",
@@ -832,7 +838,7 @@ export async function fetchAPIAnalysis(resume, profession = 'it') {
   } catch (error) {
     console.warn("Python backend offline. Falling back to local JS scorer.", error);
     // Graceful fallback: run the local JS evaluation
-    return analyzeResume(resume, profession);
+    return localResult;
   }
 }
 
