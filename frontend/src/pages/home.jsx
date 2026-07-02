@@ -40,16 +40,7 @@ function Home({ profession, user, onBack, plan, onOpenPricing }) {
   } = useResume(profession, user);
 
   const [mobileTab, setMobileTab] = useState("edit");
-  const [analysisResult, setAnalysisResult] = useState(() => {
-    try {
-      const userType = resume?.userType || "professional";
-      const cached = localStorage.getItem(`resume-analysis-${profession}-${userType}`);
-      if (cached) return JSON.parse(cached);
-    } catch (e) {
-      console.warn("Failed to load cached analysis on initial state setup:", e);
-    }
-    return analyzeResume(resume || defaultResume, profession);
-  });
+  const [analysisResult, setAnalysisResult] = useState(() => analyzeResume(resume || defaultResume, profession));
   const [syncing, setSyncing] = useState(false);
   const [mascotMoodOverride, setMascotMoodOverride] = useState(null);
   const [previewScale, setPreviewScale] = useState(1);
@@ -57,22 +48,12 @@ function Home({ profession, user, onBack, plan, onOpenPricing }) {
   const [pageCount, setPageCount] = useState(1);
 
   const hasSyncedInitially = useRef(false);
+  const lastSyncedResumeRef = useRef(null);
 
-  // Load cached analysis and reset sync check flag when profession or userType changes
+  // Reset sync check flag and load local analysis when profession or userType changes
   useEffect(() => {
     hasSyncedInitially.current = false;
-    try {
-      const userType = resume?.userType || "professional";
-      const cached = localStorage.getItem(`resume-analysis-${profession}-${userType}`);
-      if (cached) {
-        setAnalysisResult(JSON.parse(cached));
-      } else {
-        setAnalysisResult(analyzeResume(resume || defaultResume, profession));
-      }
-    } catch (e) {
-      console.warn("Failed to load cached analysis on userType/profession change:", e);
-      setAnalysisResult(analyzeResume(resume || defaultResume, profession));
-    }
+    setAnalysisResult(analyzeResume(resume || defaultResume, profession));
   }, [profession, resume?.userType]);
 
   useEffect(() => {
@@ -130,26 +111,14 @@ function Home({ profession, user, onBack, plan, onOpenPricing }) {
   useEffect(() => {
     if (!isInitialized) return;
 
-    const userType = resume?.userType || "professional";
-    let lastAnalyzedResume = null;
-    try {
-      const cachedResume = localStorage.getItem(`last-analyzed-resume-${profession}-${userType}`);
-      if (cachedResume) {
-        lastAnalyzedResume = JSON.parse(cachedResume);
-      }
-    } catch (e) {
-      console.warn("Failed to load last analyzed resume:", e);
-    }
-
-    const resumeChanged = JSON.stringify(resume) !== JSON.stringify(lastAnalyzedResume);
+    const resumeChanged = JSON.stringify(resume) !== JSON.stringify(lastSyncedResumeRef.current);
 
     const runSync = async () => {
       setSyncing(true);
       try {
         const res = await fetchAPIAnalysis(resume, profession);
         setAnalysisResult(res);
-        localStorage.setItem(`resume-analysis-${profession}-${userType}`, JSON.stringify(res));
-        localStorage.setItem(`last-analyzed-resume-${profession}-${userType}`, JSON.stringify(resume));
+        lastSyncedResumeRef.current = resume;
       } catch (e) {
         console.error("Failed syncing analysis with backend:", e);
       } finally {
@@ -157,12 +126,10 @@ function Home({ profession, user, onBack, plan, onOpenPricing }) {
       }
     };
 
-    // On initial load of the resume for this session/profession/userType
+    // On initial load or when switching profession/form type
     if (!hasSyncedInitially.current) {
       hasSyncedInitially.current = true;
-      if (resumeChanged) {
-        runSync();
-      }
+      runSync();
       return;
     }
 
