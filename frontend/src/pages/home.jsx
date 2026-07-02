@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import "../css/App.css";
 import ResumeEditor from "../components/ResumeEditor";
 import ResumePreview from "../components/ResumePreview";
@@ -29,6 +29,7 @@ function Home({ profession, user, onBack, plan, onOpenPricing }) {
     resume,
     setResume,
     saved,
+    isInitialized,
     updatePersonal,
     updateLocation,
     updateHeadline,
@@ -39,12 +40,38 @@ function Home({ profession, user, onBack, plan, onOpenPricing }) {
   } = useResume(profession, user);
 
   const [mobileTab, setMobileTab] = useState("edit");
-  const [analysisResult, setAnalysisResult] = useState(() => analyzeResume(defaultResume, profession));
+  const [analysisResult, setAnalysisResult] = useState(() => {
+    try {
+      const cached = localStorage.getItem(`resume-analysis-${profession}`);
+      if (cached) return JSON.parse(cached);
+    } catch (e) {
+      console.warn("Failed to load cached analysis on initial state setup:", e);
+    }
+    return analyzeResume(defaultResume, profession);
+  });
   const [syncing, setSyncing] = useState(false);
   const [mascotMoodOverride, setMascotMoodOverride] = useState(null);
   const [previewScale, setPreviewScale] = useState(1);
   const [headerCollapsed, setHeaderCollapsed] = useState(false);
   const [pageCount, setPageCount] = useState(1);
+
+  const hasSyncedInitially = useRef(false);
+
+  // Load cached analysis and reset sync check flag when profession changes
+  useEffect(() => {
+    hasSyncedInitially.current = false;
+    try {
+      const cached = localStorage.getItem(`resume-analysis-${profession}`);
+      if (cached) {
+        setAnalysisResult(JSON.parse(cached));
+      } else {
+        setAnalysisResult(analyzeResume(defaultResume, profession));
+      }
+    } catch (e) {
+      console.warn("Failed to load cached analysis on profession change:", e);
+      setAnalysisResult(analyzeResume(defaultResume, profession));
+    }
+  }, [profession]);
 
   useEffect(() => {
     const handleResize = () => {
@@ -99,21 +126,48 @@ function Home({ profession, user, onBack, plan, onOpenPricing }) {
 
   // Debounced real-time analysis sync whenever resume changes
   useEffect(() => {
-    const timer = setTimeout(async () => {
+    if (!isInitialized) return;
+
+    let lastAnalyzedResume = null;
+    try {
+      const cachedResume = localStorage.getItem(`last-analyzed-resume-${profession}`);
+      if (cachedResume) {
+        lastAnalyzedResume = JSON.parse(cachedResume);
+      }
+    } catch (e) {
+      console.warn("Failed to load last analyzed resume:", e);
+    }
+
+    const runSync = async () => {
       setSyncing(true);
       try {
         const res = await fetchAPIAnalysis(resume, profession);
         setAnalysisResult(res);
+        localStorage.setItem(`resume-analysis-${profession}`, JSON.stringify(res));
+        localStorage.setItem(`last-analyzed-resume-${profession}`, JSON.stringify(resume));
       } catch (e) {
-        // Fallback already handled inside fetchAPIAnalysis, but logged here
         console.error("Failed syncing analysis with backend:", e);
       } finally {
         setSyncing(false);
       }
-    }, 10000); // 10-second debounce to avoid constant AI calls during editing
+    };
+
+    // On initial load of the resume for this session/profession
+    if (!hasSyncedInitially.current) {
+      hasSyncedInitially.current = true;
+      const resumeChanged = JSON.stringify(resume) !== JSON.stringify(lastAnalyzedResume);
+      if (resumeChanged) {
+        runSync();
+        return;
+      }
+      return;
+    }
+
+    // Subsequent edits are debounced by 10 seconds
+    const timer = setTimeout(runSync, 10000);
 
     return () => clearTimeout(timer);
-  }, [resume, profession]);
+  }, [resume, profession, isInitialized]);
 
 
   const handleExport = async () => {

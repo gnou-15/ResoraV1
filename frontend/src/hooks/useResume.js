@@ -198,6 +198,7 @@ export function useResume(profession, user) {
     resume,
     setResume,
     saved,
+    isInitialized,
     updatePersonal,
     updateLocation,
     updateHeadline,
