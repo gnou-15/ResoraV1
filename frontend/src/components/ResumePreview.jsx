@@ -88,11 +88,13 @@ function ResumePreview({ resume, profession, plan, onPageCountChange }) {
       setIsBlurred(true);
     };
 
-    const handleBlur = () => {
+    const handleBlur = (e) => {
+      if (e.target !== window && e.target !== document) return;
       applyBlur();
     };
 
-    const handleFocus = () => {
+    const handleFocus = (e) => {
+      if (e.target !== window && e.target !== document) return;
       if (wrapper) {
         wrapper.classList.remove("blurred-preview");
       }
