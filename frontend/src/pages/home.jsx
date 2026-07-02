@@ -99,8 +99,8 @@ function Home({ profession, user, onBack, plan, onOpenPricing }) {
 
   // Debounced real-time analysis sync whenever resume changes
   useEffect(() => {
-    setSyncing(true);
     const timer = setTimeout(async () => {
+      setSyncing(true);
       try {
         const res = await fetchAPIAnalysis(resume, profession);
         setAnalysisResult(res);
@@ -110,7 +110,7 @@ function Home({ profession, user, onBack, plan, onOpenPricing }) {
       } finally {
         setSyncing(false);
       }
-    }, 600); // 600ms debounce to simulate scan and avoid network lag
+    }, 10000); // 10-second debounce to avoid constant AI calls during editing
 
     return () => clearTimeout(timer);
   }, [resume, profession]);
