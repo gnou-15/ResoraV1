@@ -138,6 +138,8 @@ function Home({ profession, user, onBack, plan, onOpenPricing }) {
       console.warn("Failed to load last analyzed resume:", e);
     }
 
+    const resumeChanged = JSON.stringify(resume) !== JSON.stringify(lastAnalyzedResume);
+
     const runSync = async () => {
       setSyncing(true);
       try {
@@ -155,11 +157,14 @@ function Home({ profession, user, onBack, plan, onOpenPricing }) {
     // On initial load of the resume for this session/profession
     if (!hasSyncedInitially.current) {
       hasSyncedInitially.current = true;
-      const resumeChanged = JSON.stringify(resume) !== JSON.stringify(lastAnalyzedResume);
       if (resumeChanged) {
         runSync();
-        return;
       }
+      return;
+    }
+
+    // If there are no literal changes to the resume data, skip everything
+    if (!resumeChanged) {
       return;
     }
 
