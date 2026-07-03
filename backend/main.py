@@ -189,6 +189,61 @@ MOCK_JOBS = {
     ]
 }
 
+def calculate_job_suitability(resume: Resume, job_title: str, profession: str) -> float:
+    text_content = []
+    
+    if resume.headline: text_content.append(resume.headline.lower())
+    if resume.summary: text_content.append(resume.summary.lower())
+    if resume.skills: text_content.append(resume.skills.lower())
+    
+    if resume.technicalSkills:
+        for val in resume.technicalSkills.values():
+            if isinstance(val, list):
+                text_content.extend([str(s).lower() for s in val])
+            elif val:
+                text_content.append(str(val).lower())
+                
+    for exp in (resume.experience or []):
+        if exp.title: text_content.append(exp.title.lower())
+        if exp.company: text_content.append(exp.company.lower())
+        for b in (exp.bullets or []):
+            if b: text_content.append(b.lower())
+            
+    for proj in (resume.projects or []):
+        if proj.name: text_content.append(proj.name.lower())
+        if proj.stack: text_content.append(proj.stack.lower())
+        for b in (proj.bullets or []):
+            if b: text_content.append(b.lower())
+            
+    for cert in (resume.certifications or []):
+        if cert.name: text_content.append(cert.name.lower())
+        
+    for edu in (resume.education or []):
+        if edu.school: text_content.append(edu.school.lower())
+        if edu.degree: text_content.append(edu.degree.lower())
+        if edu.field: text_content.append(edu.field.lower())
+        if edu.coursework: text_content.append(edu.coursework.lower())
+        
+    full_text = " ".join(text_content)
+    title_lower = job_title.lower()
+    
+    if "cloud" in title_lower or "architect" in title_lower:
+        keywords = ["aws", "azure", "gcp", "cloud", "devops", "kubernetes", "docker", "terraform"]
+        if not any(kw in full_text for kw in keywords):
+            return 0.25
+            
+    if "react" in title_lower or "frontend" in title_lower:
+        keywords = ["react", "vue", "angular", "javascript", "typescript", "html", "css", "frontend"]
+        if not any(kw in full_text for kw in keywords):
+            return 0.35
+            
+    if "software engineer" in title_lower or "developer" in title_lower:
+        keywords = ["developer", "engineer", "programming", "software", "code", "coding", "java", "python", "javascript", "c++", "c#", "php", "ruby", "go", "sql"]
+        if not any(kw in full_text for kw in keywords):
+            return 0.45
+            
+    return 1.0
+
 # --- Core Analyzer Logic ---
 
 def analyze_resume(resume: Resume, profession: str = "it") -> Dict[str, Any]:
@@ -554,7 +609,13 @@ def analyze_resume(resume: Resume, profession: str = "it") -> Dict[str, Any]:
     calibrated_jobs = []
     for job in jobs:
         user_offset = round((final_score - 50) * 0.4)
-        dynamic_match = min(99, max(35, job['matchScore'] + user_offset))
+        base_match = job['matchScore'] + user_offset
+        
+        # Calculate suitability based on resume keywords
+        suitability = calculate_job_suitability(resume, job['title'], profession)
+        final_match = round(base_match * suitability)
+        
+        dynamic_match = min(99, max(15, final_match))
         calibrated_jobs.append({**job, "matchScore": dynamic_match})
 
     return {

@@ -150,6 +150,87 @@ const MOCK_JOBS = {
   ]
 };
 
+function calculateJobSuitability(resume, jobTitle, profession) {
+  const textContent = [];
+  const {
+    personal = {},
+    headline = '',
+    summary = '',
+    technicalSkills = {},
+    education = [],
+    projects = [],
+    experience = [],
+    certifications = [],
+  } = resume;
+
+  if (headline) textContent.push(headline.toLowerCase());
+  if (summary) textContent.push(summary.toLowerCase());
+  if (resume.skills) textContent.push(resume.skills.toLowerCase());
+
+  if (technicalSkills) {
+    Object.values(technicalSkills).forEach(val => {
+      if (Array.isArray(val)) {
+        textContent.push(...val.map(s => String(s).toLowerCase()));
+      } else if (val) {
+        textContent.push(String(val).toLowerCase());
+      }
+    });
+  }
+
+  experience.forEach(exp => {
+    if (exp.title) textContent.push(exp.title.toLowerCase());
+    if (exp.company) textContent.push(exp.company.toLowerCase());
+    if (Array.isArray(exp.bullets)) {
+      exp.bullets.forEach(b => b && textContent.push(b.toLowerCase()));
+    }
+  });
+
+  projects.forEach(proj => {
+    if (proj.name) textContent.push(proj.name.toLowerCase());
+    if (proj.stack) textContent.push(proj.stack.toLowerCase());
+    if (Array.isArray(proj.bullets)) {
+      proj.bullets.forEach(b => b && textContent.push(b.toLowerCase()));
+    }
+  });
+
+  certifications.forEach(cert => {
+    if (cert.name) textContent.push(cert.name.toLowerCase());
+  });
+
+  education.forEach(edu => {
+    if (edu.school) textContent.push(edu.school.toLowerCase());
+    if (edu.degree) textContent.push(edu.degree.toLowerCase());
+    if (edu.field) textContent.push(edu.field.toLowerCase());
+    if (edu.coursework) textContent.push(edu.coursework.toLowerCase());
+  });
+
+  const fullText = textContent.join(" ");
+  const titleLower = jobTitle.toLowerCase();
+
+  if (titleLower.includes("cloud") || titleLower.includes("architect")) {
+    const keywords = ["aws", "azure", "gcp", "cloud", "devops", "kubernetes", "docker", "terraform"];
+    if (!keywords.some(kw => fullText.includes(kw))) {
+      return 0.25;
+    }
+  }
+
+  if (titleLower.includes("react") || titleLower.includes("frontend")) {
+    const keywords = ["react", "vue", "angular", "javascript", "typescript", "html", "css", "frontend"];
+    if (!keywords.some(kw => fullText.includes(kw))) {
+      return 0.35;
+    }
+  }
+
+  if (titleLower.includes("software engineer") || titleLower.includes("developer")) {
+    const keywords = ["developer", "engineer", "programming", "software", "code", "coding", "java", "python", "javascript", "c++", "c#", "php", "ruby", "go", "sql"];
+    if (!keywords.some(kw => fullText.includes(kw))) {
+      return 0.45;
+    }
+  }
+
+  return 1.0;
+}
+
 /**
  * Evaluates the resume object and returns a detailed report
  * simulating calculations from LinkedIn / ATS APIs
@@ -790,9 +871,13 @@ export function analyzeResume(resume, profession = 'it') {
   const jobs = MOCK_JOBS[profession] || MOCK_JOBS.it;
   // Calculate relative match scores dynamically based on user score
   const calibratedJobs = jobs.map(job => {
-    // Map job match score relative to user's overall resume score
     const userOffset = Math.round((finalScore - 50) * 0.4);
-    const dynamicMatch = Math.min(99, Math.max(35, job.matchScore + userOffset));
+    const baseMatch = job.matchScore + userOffset;
+    
+    const suitability = calculateJobSuitability(resume, job.title, profession);
+    const finalMatch = Math.round(baseMatch * suitability);
+    
+    const dynamicMatch = Math.min(99, Math.max(15, finalMatch));
     return {
       ...job,
       matchScore: dynamicMatch
