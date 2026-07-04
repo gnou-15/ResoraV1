@@ -55,7 +55,7 @@ function ContactLine({ personal, profession }) {
   return <p className="preview-contact">{items.join(" | ")}</p>;
 }
 
-function ResumePreview({ resume, profession, plan, onPageCountChange }) {
+function ResumePreview({ resume, profession, plan, onPageCountChange, isMobilePreviewActive = false }) {
   const [pages, setPages] = useState([]);
   const [isBlurred, setIsBlurred] = useState(false);
   const [measureTrigger, setMeasureTrigger] = useState(0);
@@ -75,12 +75,26 @@ function ResumePreview({ resume, profession, plan, onPageCountChange }) {
     };
   }, [measurerNode]);
 
+  // If we switch away from the mobile preview tab, remove the blur overlay automatically
+  useEffect(() => {
+    if (!isMobilePreviewActive) {
+      const timer = setTimeout(() => {
+        setIsBlurred(false);
+        const wrapper = document.getElementById("resume-preview-root-wrapper");
+        if (wrapper) {
+          wrapper.classList.remove("blurred-preview");
+        }
+      }, 0);
+      return () => clearTimeout(timer);
+    }
+  }, [isMobilePreviewActive]);
+
   useEffect(() => {
     const wrapper = document.getElementById("resume-preview-root-wrapper");
 
     const applyBlur = () => {
       const isMobileDevice = /Mobi|Android|iPhone|iPad/i.test(navigator.userAgent) || window.innerWidth <= 768;
-      if (isMobileDevice) return;
+      if (isMobileDevice && !isMobilePreviewActive) return;
 
       if (wrapper) {
         wrapper.classList.add("blurred-preview");
@@ -129,7 +143,7 @@ function ResumePreview({ resume, profession, plan, onPageCountChange }) {
       window.removeEventListener("keydown", handleKeyDown, true);
       window.removeEventListener("keyup", handleKeyDown, true);
     };
-  }, []);
+  }, [isMobilePreviewActive]);
 
   const {
     personal,

@@ -338,7 +338,13 @@ function Home({ profession, user, onBack, plan, onOpenPricing }) {
           </div>
           <div className="preview-container" style={{ height: `${((pageCount * 1056) + (pageCount - 1) * 20) * previewScale}px`, overflow: "hidden", width: "100%", position: "relative" }}>
             <div className="preview-wrapper" style={{ transform: `scale(${previewScale})`, transformOrigin: "top center" }}>
-              <ResumePreview resume={resume} profession={profession} plan={plan} onPageCountChange={setPageCount} />
+              <ResumePreview 
+                resume={resume} 
+                profession={profession} 
+                plan={plan} 
+                onPageCountChange={setPageCount} 
+                isMobilePreviewActive={mobileTab === "preview"} 
+              />
             </div>
           </div>
 
