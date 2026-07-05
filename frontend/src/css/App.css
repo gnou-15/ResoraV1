@@ -6414,6 +6414,53 @@ select.input-error {
   background-color: #000000;
 }
 
+/* Mobile Press & Hold Indicator */
+.hold-indicator {
+  position: relative;
+  display: inline-flex;
+  justify-content: center;
+  align-items: center;
+  width: 60px;
+  height: 60px;
+  margin-top: 1.5rem;
+}
+
+.hold-finger-icon {
+  font-size: 1.75rem;
+  z-index: 2;
+  animation: fingerTap 1.5s ease-in-out infinite;
+}
+
+.hold-pulse-ring {
+  position: absolute;
+  width: 40px;
+  height: 40px;
+  border: 3px solid rgba(59, 130, 246, 0.5); /* Blue-500 */
+  border-radius: 50%;
+  z-index: 1;
+  animation: pulseRing 1.5s cubic-bezier(0.215, 0.61, 0.355, 1) infinite;
+}
+
+@keyframes pulseRing {
+  0% {
+    transform: scale(0.6);
+    opacity: 1;
+  }
+  100% {
+    transform: scale(1.6);
+    opacity: 0;
+  }
+}
+
+@keyframes fingerTap {
+  0%, 100% {
+    transform: translateY(0) scale(1);
+  }
+  50% {
+    transform: translateY(4px) scale(0.9);
+  }
+}
+
 /* Keyframes */
 @keyframes modalFadeIn {
   from {

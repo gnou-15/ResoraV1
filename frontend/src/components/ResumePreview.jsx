@@ -58,6 +58,7 @@ function ContactLine({ personal, profession }) {
 function ResumePreview({ resume, profession, plan, onPageCountChange, isMobilePreviewActive = false }) {
   const [pages, setPages] = useState([]);
   const [isBlurred, setIsBlurred] = useState(false);
+  const [isHolding, setIsHolding] = useState(false);
   const [measureTrigger, setMeasureTrigger] = useState(0);
   const [measurerNode, setMeasurerNode] = useState(null);
 
@@ -79,6 +80,7 @@ function ResumePreview({ resume, profession, plan, onPageCountChange, isMobilePr
   useEffect(() => {
     if (!isMobilePreviewActive) {
       const timer = setTimeout(() => {
+        setIsHolding(false);
         setIsBlurred(false);
         const wrapper = document.getElementById("resume-preview-root-wrapper");
         if (wrapper) {
@@ -755,15 +757,27 @@ function ResumePreview({ resume, profession, plan, onPageCountChange, isMobilePr
     }
   };
 
+  const isMobileDevice = /Mobi|Android|iPhone|iPad/i.test(navigator.userAgent) || window.innerWidth <= 768;
+  const isMobileLocked = isMobileDevice && isMobilePreviewActive && !isHolding;
+  const shouldBlur = isMobileLocked || isBlurred;
+
   const displayPages = pages.length > 0 ? pages : [blocks];
 
   return (
     <div 
       id="resume-preview-root-wrapper"
-      className={`resume-preview-outer-wrapper ${isBlurred ? "blurred-preview" : ""}`}
+      className={`resume-preview-outer-wrapper ${shouldBlur ? "blurred-preview" : ""}`}
       onContextMenu={(e) => e.preventDefault()}
       onCopy={(e) => e.preventDefault()}
       onDragStart={(e) => e.preventDefault()}
+      onPointerDown={() => {
+        if (isMobileDevice && isMobilePreviewActive) {
+          setIsHolding(true);
+        }
+      }}
+      onPointerUp={() => setIsHolding(false)}
+      onPointerCancel={() => setIsHolding(false)}
+      onPointerLeave={() => setIsHolding(false)}
       style={{ position: "relative", width: "100%" }}
     >
       {/* Hidden Measurer */}
@@ -802,6 +816,20 @@ function ResumePreview({ resume, profession, plan, onPageCountChange, isMobilePr
             <button type="button" className="unblur-btn" onClick={handleDismissUnblur}>
               Dismiss & Unblur
             </button>
+          </div>
+        </div>
+      )}
+
+      {isMobileLocked && (
+        <div className="screenshot-blur-overlay mobile-press-hold-overlay" style={{ pointerEvents: "none" }}>
+          <div className="blur-alert-box mobile-lock-box" style={{ pointerEvents: "auto" }}>
+            <span className="blur-lock-icon">🛡️</span>
+            <h4>Protected Preview</h4>
+            <p>Press and hold anywhere on the preview to reveal the design.</p>
+            <div className="hold-indicator">
+              <span className="hold-pulse-ring"></span>
+              <span className="hold-finger-icon">👇</span>
+            </div>
           </div>
         </div>
       )}
