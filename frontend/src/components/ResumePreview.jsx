@@ -96,7 +96,7 @@ function ResumePreview({ resume, profession, plan, onPageCountChange, isMobilePr
 
     const applyBlur = () => {
       const isMobileDevice = /Mobi|Android|iPhone|iPad/i.test(navigator.userAgent) || window.innerWidth <= 768;
-      if (isMobileDevice && !isMobilePreviewActive) return;
+      if (isMobileDevice) return;
 
       if (wrapper) {
         wrapper.classList.add("blurred-preview");
