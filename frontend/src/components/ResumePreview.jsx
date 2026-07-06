@@ -1,4 +1,4 @@
-import { useState, useEffect, useLayoutEffect } from "react";
+import { useState, useEffect, useLayoutEffect, useRef } from "react";
 import { formatPhone, formatLocationShort } from "../utils/contactFormat";
 
 function formatDateRange(start, end, current) {
@@ -58,9 +58,9 @@ function ContactLine({ personal, profession }) {
 function ResumePreview({ resume, profession, plan, onPageCountChange, isMobilePreviewActive = false }) {
   const [pages, setPages] = useState([]);
   const [isBlurred, setIsBlurred] = useState(false);
-  const [isHolding, setIsHolding] = useState(false);
   const [measureTrigger, setMeasureTrigger] = useState(0);
   const [measurerNode, setMeasurerNode] = useState(null);
+  const lastResizeTimeRef = useRef(0);
 
   // Monitor size / visibility changes on the hidden measurer
   useEffect(() => {
@@ -76,11 +76,21 @@ function ResumePreview({ resume, profession, plan, onPageCountChange, isMobilePr
     };
   }, [measurerNode]);
 
+  // Track window resize events to detect address bar changes on mobile
+  useEffect(() => {
+    const handleResize = () => {
+      lastResizeTimeRef.current = Date.now();
+    };
+    window.addEventListener("resize", handleResize);
+    return () => {
+      window.removeEventListener("resize", handleResize);
+    };
+  }, []);
+
   // If we switch away from the mobile preview tab, remove the blur overlay automatically
   useEffect(() => {
     if (!isMobilePreviewActive) {
       const timer = setTimeout(() => {
-        setIsHolding(false);
         setIsBlurred(false);
         const wrapper = document.getElementById("resume-preview-root-wrapper");
         if (wrapper) {
@@ -96,7 +106,14 @@ function ResumePreview({ resume, profession, plan, onPageCountChange, isMobilePr
 
     const applyBlur = () => {
       const isMobileDevice = /Mobi|Android|iPhone|iPad/i.test(navigator.userAgent) || window.innerWidth <= 768;
-      if (isMobileDevice) return;
+      
+      // On mobile, only run blur if the preview tab is active
+      if (isMobileDevice && !isMobilePreviewActive) return;
+
+      // Ignore blur triggers caused by dynamic browser UI resize events (like address bar scrolling)
+      if (isMobileDevice && (Date.now() - lastResizeTimeRef.current < 500)) {
+        return;
+      }
 
       if (wrapper) {
         wrapper.classList.add("blurred-preview");
@@ -757,27 +774,15 @@ function ResumePreview({ resume, profession, plan, onPageCountChange, isMobilePr
     }
   };
 
-  const isMobileDevice = /Mobi|Android|iPhone|iPad/i.test(navigator.userAgent) || window.innerWidth <= 768;
-  const isMobileLocked = isMobileDevice && isMobilePreviewActive && !isHolding;
-  const shouldBlur = isMobileLocked || isBlurred;
-
   const displayPages = pages.length > 0 ? pages : [blocks];
 
   return (
     <div 
       id="resume-preview-root-wrapper"
-      className={`resume-preview-outer-wrapper ${shouldBlur ? "blurred-preview" : ""}`}
+      className={`resume-preview-outer-wrapper ${isBlurred ? "blurred-preview" : ""}`}
       onContextMenu={(e) => e.preventDefault()}
       onCopy={(e) => e.preventDefault()}
       onDragStart={(e) => e.preventDefault()}
-      onPointerDown={() => {
-        if (isMobileDevice && isMobilePreviewActive) {
-          setIsHolding(true);
-        }
-      }}
-      onPointerUp={() => setIsHolding(false)}
-      onPointerCancel={() => setIsHolding(false)}
-      onPointerLeave={() => setIsHolding(false)}
       style={{ position: "relative", width: "100%" }}
     >
       {/* Hidden Measurer */}
@@ -816,20 +821,6 @@ function ResumePreview({ resume, profession, plan, onPageCountChange, isMobilePr
             <button type="button" className="unblur-btn" onClick={handleDismissUnblur}>
               Dismiss & Unblur
             </button>
-          </div>
-        </div>
-      )}
-
-      {isMobileLocked && (
-        <div className="screenshot-blur-overlay mobile-press-hold-overlay" style={{ pointerEvents: "none" }}>
-          <div className="blur-alert-box mobile-lock-box" style={{ pointerEvents: "auto" }}>
-            <span className="blur-lock-icon">🛡️</span>
-            <h4>Protected Preview</h4>
-            <p>Press and hold anywhere on the preview to reveal the design.</p>
-            <div className="hold-indicator">
-              <span className="hold-pulse-ring"></span>
-              <span className="hold-finger-icon">👇</span>
-            </div>
           </div>
         </div>
       )}
