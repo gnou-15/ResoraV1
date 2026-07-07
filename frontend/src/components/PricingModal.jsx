@@ -306,9 +306,9 @@ export default function PricingModal({ isOpen, triggerRect, onClose, currentPlan
     }
   };
 
-  const planPrice = selectedPlan === "premium_pro" ? 199 : 179;
-  const planName = selectedPlan === "premium_pro" ? "Premium Pro" : "Premium Plus";
-  const planQR = selectedPlan === "premium_pro" ? "/gcash-pro.png" : "/gcash-plus.png";
+  const planPrice = 119;
+  const planName = "Premium Pro";
+  const planQR = "/gcash-pro.png";
 
   const handleCloseSuccess = () => {
     onClose();
@@ -339,7 +339,7 @@ export default function PricingModal({ isOpen, triggerRect, onClose, currentPlan
             <div className="pricing-header-section">
               <h2 className="pricing-main-title">Choose the perfect plan for your journey</h2>
               <p className="pricing-subtitle">
-                All plans are active for <strong>3 years</strong> upon purchase. No hidden recurring charges.
+                One-time payment for <strong>lifetime access</strong>. No hidden recurring charges.
               </p>
             </div>
 
@@ -404,72 +404,7 @@ export default function PricingModal({ isOpen, triggerRect, onClose, currentPlan
                 </div>
               </div>
 
-              {/* Card 2: Premium Plus */}
-              <div className={`pricing-card-col plus-pricing-card ${currentPlan.type === "premium_plus" ? "current-active-card" : ""}`}>
-                <div className="pricing-card-inner">
-                  <div className="card-visual-header">
-                    <div className="glass-shield-outer">
-                      <div className="glass-shine"></div>
-                      <svg className="shield-icon" viewBox="0 0 24 24" width="32" height="32" fill="none">
-                        <defs>
-                          <linearGradient id="plusGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-                            <stop offset="0%" stopColor="#fdba74" />
-                            <stop offset="100%" stopColor="#f97316" />
-                          </linearGradient>
-                        </defs>
-                        <path d="M20.24 12.24a6 6 0 0 0-8.49-8.49L5 10.5V19h8.5z" stroke="url(#plusGrad)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-                        <path d="M9 15c2.5-2.5 5.5-3.5 8-3" stroke="url(#plusGrad)" strokeWidth="1.5" strokeLinecap="round" />
-                      </svg>
-                    </div>
-                  </div>
-                  <div className="card-badge-row">
-                    <span className="card-badge badge-blue">Generally Available</span>
-                  </div>
-                  <h3 className="card-title">Premium Plus</h3>
-                  <div className="card-price-row">
-                    <span className="card-price-amount">₱179</span>
-                    <span className="card-price-duration">/ 3 years</span>
-                  </div>
-                  <p className="card-desc">
-                    Perfect for users who have finalized their content and want high-quality exports with zero watermarks.
-                  </p>
-                  <ul className="card-features-list">
-                    <li>
-                      <span className="feature-icon check">✓</span>
-                      <strong>High-Fidelity PDF Export</strong>
-                    </li>
-                    <li>
-                      <span className="feature-icon check">✓</span>
-                      <strong>Zero Watermarks on Output</strong>
-                    </li>
-                    <li>
-                      <span className="feature-icon lock">✕</span>
-                      <span className="text-muted">AI Resume Scorer Locked</span>
-                    </li>
-                    <li>
-                      <span className="feature-icon lock">✕</span>
-                      <span className="text-muted">Interactive Rewrite Engine Locked</span>
-                    </li>
-                  </ul>
-                  <div className="card-button-row">
-                    {currentPlan.type === "premium_plus" ? (
-                      <button type="button" className="pricing-card-btn active-plan-btn" disabled>
-                        Current Plan
-                      </button>
-                    ) : (
-                      <button
-                        type="button"
-                        className="pricing-card-btn primary-plan-btn"
-                        onClick={() => handleSelectUpgrade("premium_plus")}
-                      >
-                        {currentPlan.type === "premium_pro" ? "Downgrade to Plus" : "Upgrade to Plus"}
-                      </button>
-                    )}
-                  </div>
-                </div>
-              </div>
-
-              {/* Card 3: Premium Pro */}
+              {/* Card 2: Premium Pro (Lifetime) */}
               <div className={`pricing-card-col featured-pricing-card ${currentPlan.type === "premium_pro" ? "current-active-card" : ""}`}>
                 <div className="pricing-card-inner">
                   <div className="card-visual-header">
@@ -492,8 +427,8 @@ export default function PricingModal({ isOpen, triggerRect, onClose, currentPlan
                   </div>
                   <h3 className="card-title">Premium Pro</h3>
                   <div className="card-price-row">
-                    <span className="card-price-amount">₱199</span>
-                    <span className="card-price-duration">/ 3 years</span>
+                    <span className="card-price-amount">₱119</span>
+                    <span className="card-price-duration">One-time Payment</span>
                   </div>
                   <p className="card-desc">
                     Unleash the full power of real-time AI scoring, optimization suggestions, and job matching.
@@ -561,7 +496,7 @@ export default function PricingModal({ isOpen, triggerRect, onClose, currentPlan
                 <h3 className="success-title">Payment Verified!</h3>
                 <p className="success-message">
                   Thank you! Your account has been upgraded to <strong>{planName}</strong>.
-                  Your premium access is valid for 3 years (expires {new Date(new Date().setFullYear(new Date().getFullYear() + 3)).toLocaleDateString()}).
+                  Your premium access is lifetime (one-time payment).
                 </p>
                 <button type="button" className="success-btn" onClick={handleCloseSuccess}>
                   Start Building
@@ -649,7 +584,7 @@ export default function PricingModal({ isOpen, triggerRect, onClose, currentPlan
                       </div>
                       <div className="billing-row">
                         <span className="b-label">Validity Period</span>
-                        <span className="b-value">3 Years</span>
+                        <span className="b-value">Lifetime Access</span>
                       </div>
                     </div>
 

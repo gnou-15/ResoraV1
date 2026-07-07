@@ -80,7 +80,7 @@ function App() {
     if (!user) return false;
     try {
       const expiry = new Date();
-      expiry.setFullYear(expiry.getFullYear() + 3);
+      expiry.setFullYear(expiry.getFullYear() + 100);
 
       const { data, error } = await supabase.auth.updateUser({
         data: {

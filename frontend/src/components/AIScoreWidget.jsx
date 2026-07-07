@@ -97,7 +97,7 @@ function AIScoreWidget({ resume, profession, analysisResult, loading, onUpdateRe
             className="locked-upgrade-btn"
             onClick={onOpenPricing}
           >
-            Upgrade to Premium Pro (₱199)
+            Upgrade to Premium Pro (₱119)
           </button>
         </div>
       ) : loading ? (

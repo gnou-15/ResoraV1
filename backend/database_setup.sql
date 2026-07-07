@@ -86,10 +86,8 @@ BEGIN
     END IF;
 
     -- Map GCash amount to corresponding plans
-    IF v_amount >= 199.00 THEN
+    IF v_amount >= 119.00 THEN
         v_plan_name := 'premium_pro';
-    ELSIF v_amount >= 179.00 THEN
-        v_plan_name := 'premium_plus';
     ELSE
         RETURN json_build_object('success', false, 'error', 'Insufficient amount: ₱' || v_amount);
     END IF;

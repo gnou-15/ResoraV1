@@ -167,7 +167,7 @@ export default function AdminPanel({ isOpen, onClose, user }) {
                       <span className={`plan-badge badge-${payment.plan_name}`}>
                         {payment.plan_name === "premium_pro" ? "Pro" : "Plus"}
                       </span>
-                      <strong style={{ marginLeft: "6px" }}>₱{payment.amount || (payment.plan_name === "premium_pro" ? 199 : 179)}</strong>
+                      <strong style={{ marginLeft: "6px" }}>₱{payment.amount || (payment.plan_name === "premium_pro" ? 119 : 179)}</strong>
                     </td>
                     <td>
                       <span className={`status-pill status-${payment.status === "rejected_notified" ? "rejected" : payment.status}`}>
