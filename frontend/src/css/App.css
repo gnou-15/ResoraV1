@@ -5282,11 +5282,11 @@ select.input-error {
   box-shadow: 0 25px 50px -12px rgba(15, 23, 42, 0.15), 0 0 1px rgba(0, 0, 0, 0.05);
   border-radius: 28px;
   width: 92%;
-  max-width: 960px;
-  max-height: 90vh;
+  max-width: 800px;
+  max-height: 92vh;
   overflow-y: auto;
   position: relative;
-  padding: 2.5rem;
+  padding: 2.25rem 2rem;
   box-sizing: border-box;
   color: #0f172a;
   
@@ -5391,9 +5391,11 @@ select.input-error {
 
 .pricing-cards-wrapper {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
+  grid-template-columns: repeat(2, 1fr);
   gap: 1.5rem;
   align-items: stretch;
+  max-width: 720px;
+  margin: 0 auto;
 }
 
 .pricing-card-col {
@@ -5596,14 +5598,14 @@ select.input-error {
   font-size: 0.88rem;
   line-height: 1.5;
   color: #475569;
-  margin: 0 0 1.5rem 0;
-  min-height: 68px;
+  margin: 0 0 1.25rem 0;
+  min-height: 48px;
 }
 
 .card-features-list {
   list-style: none;
   padding: 0;
-  margin: 0 0 2rem 0;
+  margin: 0 0 1.25rem 0;
   flex-grow: 1;
 }
 
@@ -5613,7 +5615,7 @@ select.input-error {
   gap: 0.5rem;
   font-size: 0.85rem;
   line-height: 1.4;
-  margin-bottom: 0.75rem;
+  margin-bottom: 0.5rem;
   color: #334155;
   transition: transform 0.2s ease, color 0.2s ease;
 }
@@ -5732,7 +5734,7 @@ select.input-error {
 .pricing-card-inner {
   background: #ffffff;
   border-radius: 21px;
-  padding: 2rem 1.75rem;
+  padding: 1.5rem 1.25rem;
   display: flex;
   flex-direction: column;
   flex-grow: 1;
@@ -5765,11 +5767,11 @@ select.input-error {
 
 .card-visual-header {
   width: 100%;
-  height: 120px;
+  height: 80px;
   display: flex;
   justify-content: center;
   align-items: center;
-  margin-bottom: 1.5rem;
+  margin-bottom: 1rem;
   position: relative;
   border-radius: 16px;
   background: linear-gradient(135deg, rgba(248, 250, 252, 0.8) 0%, rgba(241, 245, 249, 0.6) 100%);
@@ -5807,8 +5809,8 @@ select.input-error {
 
 .glass-shield-outer {
   position: relative;
-  width: 76px;
-  height: 76px;
+  width: 56px;
+  height: 56px;
   background: rgba(255, 255, 255, 0.8);
   border: 1.5px solid rgba(255, 255, 255, 0.6);
   backdrop-filter: blur(8px);
