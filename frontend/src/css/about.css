@@ -1,0 +1,141 @@
+/* About Us Page Styling & Interactive Branding */
+.logo-subtext {
+  cursor: pointer;
+  font-size: 0.85rem;
+  color: #64748b;
+  font-weight: 500;
+  transition: color 0.2s ease, opacity 0.2s ease;
+  margin-left: 4px;
+}
+
+.logo-subtext:hover {
+  color: #ea580c;
+  opacity: 0.8;
+}
+
+.about-container {
+  min-height: 100vh;
+  height: auto;
+  background-color: transparent;
+  display: flex;
+  flex-direction: column;
+  position: relative;
+  overflow: visible;
+}
+
+.about-main {
+  flex: 1;
+  display: flex;
+  align-items: stretch;
+  justify-content: center;
+  padding: 100px 2rem 0;
+  max-width: 1200px;
+  margin: 0 auto;
+  width: 100%;
+  position: relative;
+  z-index: 1;
+}
+
+.about-split-container {
+  display: grid;
+  grid-template-columns: 1.1fr 1.2fr;
+  gap: 4rem;
+  align-items: end;
+  width: 100%;
+}
+
+.about-text-column {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  text-align: left;
+  padding-bottom: 6rem;
+}
+
+.about-title {
+  font-family: 'Outfit', sans-serif;
+  font-weight: 700;
+  font-size: 5rem;
+  color: #000000;
+  margin: 0 0 1rem 0;
+  line-height: 1.1;
+  letter-spacing: -0.02em;
+}
+
+.about-subtitle {
+  font-family: 'Outfit', sans-serif;
+  font-weight: 500;
+  font-size: 2.2rem;
+  color: #0f172a;
+  margin: 0 0 2rem 0;
+  line-height: 1.2;
+}
+
+.about-description {
+  font-family: 'Inter', sans-serif;
+  font-size: 1.15rem;
+  line-height: 1.75;
+  color: #334155;
+  margin: 0;
+  font-weight: 400;
+}
+
+.about-image-column {
+  display: flex;
+  justify-content: center;
+  align-items: flex-end;
+  height: 100%;
+}
+
+.about-image-wrapper {
+  width: 100%;
+  max-width: 750px;
+  background: transparent;
+  display: flex;
+  align-items: flex-end;
+}
+
+.about-portrait-img {
+  width: 100%;
+  height: auto;
+  max-height: 95vh;
+  display: block;
+  object-fit: contain;
+}
+
+/* Responsive adjustments */
+@media (max-width: 900px) {
+  .about-main {
+    padding: 180px 1.5rem 0 !important;
+  }
+
+  .about-split-container {
+    grid-template-columns: 1fr;
+    gap: 2rem;
+    align-items: center;
+  }
+
+  .about-text-column {
+    text-align: center;
+    align-items: center;
+    padding-bottom: 0;
+  }
+
+  .about-title {
+    font-size: 3.5rem;
+    text-align: center;
+  }
+
+  .about-subtitle {
+    font-size: 1.8rem;
+    text-align: center;
+  }
+
+  .about-image-column {
+    align-items: flex-end;
+  }
+
+  .about-image-wrapper {
+    max-width: 320px;
+  }
+}

@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import PeekingMonster from "./PeekingMonster";
 import { getMetricSuggestions } from "../services/aiScorer";
+import "../css/AIScoreWidget.css";
 
 function AIScoreWidget({ resume, profession, analysisResult, loading, onUpdateResume, moodOverride, plan, onOpenPricing }) {
   const [expanded, setExpanded] = useState(false);

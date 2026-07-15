@@ -1,5 +1,5 @@
 import React from "react";
-import "../css/App.css";
+import "../css/about.css";
 import InteractiveBackground from "../components/InteractiveBackground";
 
 export default function About({ onNavigate, isEmbedded }) {

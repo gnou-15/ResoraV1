@@ -14,6 +14,7 @@ import { getUserPlan } from "./utils/subscription";
 import PricingModal from "./components/PricingModal";
 import AdminPanel from "./components/AdminPanel";
 import { useDialog } from "./context/DialogContext";
+import "./css/App.css";
 
 function App() {
   const { showAlert } = useDialog();

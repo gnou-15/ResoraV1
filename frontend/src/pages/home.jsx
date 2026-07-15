@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from "react";
-import "../css/App.css";
+import "../css/home.css";
 import ResumeEditor from "../components/ResumeEditor";
 import ResumePreview from "../components/ResumePreview";
 import { useResume } from "../hooks/useResume";

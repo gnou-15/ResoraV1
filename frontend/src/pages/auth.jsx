@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import InteractiveAuthPattern from "../components/InteractiveAuthPattern";
-import "../css/App.css";
+import "../css/auth.css";
 import { supabase } from "../services/supabase";
 import { encryptName, decryptName } from "../services/encryption";
 

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import "../css/App.css";
+import "../css/PricingModal.css";
 import { supabase } from "../services/supabase";
 
 const ENCODED_GCASH_NUMBER = "MDkyOTIyMzI4MDA="; // base64 obfuscation of '09292232800'

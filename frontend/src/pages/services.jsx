@@ -1,5 +1,5 @@
 import React from "react";
-import "../css/App.css";
+import "../css/services.css";
 import InteractiveBackground from "../components/InteractiveBackground";
 
 export default function Services({ onNavigate, isEmbedded, onMascotMoodChange }) {

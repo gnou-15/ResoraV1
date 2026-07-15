@@ -1,0 +1,60 @@
+/* AUTH BUFFER TRANSITION OVERLAY */
+.auth-transition-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background-color: #0f172a;
+  /* Slate 900 background */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 5000;
+  /* Covers everything, including editor */
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.auth-transition-overlay.active {
+  opacity: 1;
+  pointer-events: all;
+}
+
+.auth-transition-box {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 1.5rem;
+  transform: translateY(10px);
+  transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.auth-transition-overlay.active .auth-transition-box {
+  transform: translateY(0);
+}
+
+.auth-transition-text {
+  font-family: 'Outfit', sans-serif;
+  color: #f8fafc;
+  font-size: 1.15rem;
+  font-weight: 700;
+  margin: 0;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  animation: pulseText 1.5s ease-in-out infinite;
+}
+
+@keyframes pulseText {
+
+  0%,
+  100% {
+    opacity: 0.5;
+  }
+
+  50% {
+    opacity: 1;
+  }
+}

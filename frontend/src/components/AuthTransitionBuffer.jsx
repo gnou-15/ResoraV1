@@ -1,5 +1,5 @@
 import React from "react";
-import "../css/App.css";
+import "../css/AuthTransitionBuffer.css";
 
 export default function AuthTransitionBuffer({ active, message }) {
   return (

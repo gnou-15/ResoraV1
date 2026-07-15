@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import "../css/App.css";
+import "../css/AdminPanel.css";
 import { supabase } from "../services/supabase";
 import { useDialog } from "../context/DialogContext";
 

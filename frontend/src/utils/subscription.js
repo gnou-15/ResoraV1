@@ -15,20 +15,17 @@ export function getUserPlan(user) {
   const plan = metadata.plan; // 'premium_plus' | 'premium_pro'
   const expiryStr = metadata.plan_expiry;
 
-  if (plan && expiryStr) {
-    const expiry = new Date(expiryStr).getTime();
-    if (Date.now() < expiry) {
-      return {
-        type: plan,
-        name: plan === "premium_pro" ? "Premium Pro" : "Premium Plus",
-        isActive: true,
-        hasAI: plan === "premium_pro",
-        hasExport: true,
-        hasWatermark: false,
-        expiryDate: expiryStr,
-        daysLeft: Math.max(0, Math.ceil((expiry - Date.now()) / (24 * 60 * 60 * 1000))),
-      };
-    }
+  if (plan === "premium_pro" || plan === "premium_plus") {
+    return {
+      type: plan,
+      name: plan === "premium_pro" ? "Premium Pro" : "Premium Plus",
+      isActive: true,
+      hasAI: plan === "premium_pro",
+      hasExport: true,
+      hasWatermark: false,
+      expiryDate: null,
+      daysLeft: 999999,
+    };
   }
 
   // Fallback to 30-day automatic premium trial for new users

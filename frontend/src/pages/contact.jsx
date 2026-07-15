@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import "../css/App.css";
+import "../css/contact.css";
 import InteractiveBackground from "../components/InteractiveBackground";
 
 export default function Contact({ onNavigate, isEmbedded, onMascotMoodChange }) {
