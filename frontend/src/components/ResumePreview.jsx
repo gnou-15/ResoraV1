@@ -800,14 +800,6 @@ function ResumePreview({ resume, profession, plan, onPageCountChange, isMobilePr
         {displayPages.map((pageBlocks, index) => (
           <article key={index} className="resume-page-sheet resume-ats">
             {renderPageBlocks(pageBlocks.map((pb) => blocks.find((b) => b.id === pb.id) || pb))}
-            {plan && plan.hasWatermark && (
-              <div className="trial-watermark-overlay" aria-hidden="true">
-                <div className="watermark-diagonal-text">RESORA TRIAL - PREMIUM PRO</div>
-                <div className="watermark-diagonal-text">RESORA TRIAL - PREMIUM PRO</div>
-                <div className="watermark-diagonal-text">RESORA TRIAL - PREMIUM PRO</div>
-                <div className="watermark-diagonal-text">RESORA TRIAL - PREMIUM PRO</div>
-              </div>
-            )}
           </article>
         ))}
       </div>

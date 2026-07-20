@@ -11,7 +11,6 @@ import AuthTransitionBuffer from "./components/AuthTransitionBuffer";
 import { supabase } from "./services/supabase";
 import { decryptName } from "./services/encryption";
 import { getUserPlan } from "./utils/subscription";
-import PricingModal from "./components/PricingModal";
 import AdminPanel from "./components/AdminPanel";
 import { useDialog } from "./context/DialogContext";
 import "./css/App.css";
@@ -37,74 +36,15 @@ function App() {
   const [isExitingBuilder, setIsExitingBuilder] = useState(false);
   const [showLoader, setShowLoader] = useState(false);
   const [user, setUser] = useState(null);
-  const [pricingModalOpen, setPricingModalOpen] = useState(false);
-  const [pricingTriggerRect, setPricingTriggerRect] = useState(null);
   const [adminPanelOpen, setAdminPanelOpen] = useState(false);
 
-  const handleOpenPricing = (e) => {
-    if (e && typeof e === "object" && "currentTarget" in e && e.currentTarget) {
-      const rect = e.currentTarget.getBoundingClientRect();
-      setPricingTriggerRect({
-        x: rect.left + rect.width / 2,
-        y: rect.top + rect.height / 2
-      });
-    } else if (e && typeof e === "object" && "clientX" in e && "clientY" in e) {
-      setPricingTriggerRect({
-        x: e.clientX,
-        y: e.clientY
-      });
-    } else {
-      setPricingTriggerRect({
-        x: window.innerWidth / 2,
-        y: window.innerHeight * 0.8
-      });
-    }
-    setPricingModalOpen(true);
-  };
-
   const isAdmin = user && user.email === (import.meta.env.VITE_ADMIN_EMAIL || "nezer.resora@gmail.com");
-  const [plan, setPlan] = useState({
-    type: "none",
-    name: "No Plan",
-    isActive: false,
-    hasAI: false,
-    hasExport: false,
-    hasWatermark: false,
-    daysLeft: 0,
-  });
+  const [plan, setPlan] = useState(() => getUserPlan(null));
 
   useEffect(() => {
     setPlan(getUserPlan(user));
   }, [user]);
 
-  const handlePurchase = async (selectedPlan) => {
-    if (!user) return false;
-    try {
-      const expiry = new Date();
-      expiry.setFullYear(expiry.getFullYear() + 100);
-
-      const { data, error } = await supabase.auth.updateUser({
-        data: {
-          plan: selectedPlan,
-          plan_expiry: expiry.toISOString()
-        }
-      });
-
-      if (error) {
-        console.error("Error upgrading plan:", error);
-        return false;
-      }
-
-      if (data?.user) {
-        setUser(data.user);
-        setPlan(getUserPlan(data.user));
-      }
-      return true;
-    } catch (e) {
-      console.error("Catch error upgrading plan:", e);
-      return false;
-    }
-  };
 
   const [showAuthTransition, setShowAuthTransition] = useState(false);
   const [transitionMessage, setTransitionMessage] = useState("Preparing your space...");
@@ -140,59 +80,6 @@ function App() {
     return () => subscription.unsubscribe();
   }, []);
 
-  // Background polling checker for approved or rejected payments
-  useEffect(() => {
-    if (!user) return;
-
-    const checkPayments = async () => {
-      try {
-        const { data, error } = await supabase
-          .from("gcash_payments")
-          .select("*")
-          .eq("user_id", user.id)
-          .in("status", ["approved", "rejected"]);
-
-        if (error || !data || data.length === 0) return;
-
-        for (const payment of data) {
-          if (payment.status === "approved") {
-            const success = await handlePurchase(payment.plan_name);
-            if (success) {
-              await supabase
-                .from("gcash_payments")
-                .update({ status: "completed" })
-                .eq("reference_number", payment.reference_number);
-
-              await showAlert(
-                `🎉 Congratulations! Your payment for ${payment.plan_name === 'premium_pro' ? 'Premium Pro' : 'Premium Plus'} (Ref: ${payment.reference_number}) has been verified. Welcome to Premium!`,
-                "Payment Verified"
-              );
-            }
-          } else if (payment.status === "rejected") {
-            // Acknowledge the rejection so the user is only prompted once
-            const { error: updateError } = await supabase
-              .from("gcash_payments")
-              .update({ status: "rejected_notified" })
-              .eq("reference_number", payment.reference_number);
-
-            if (!updateError) {
-              const friendlyPlanName = payment.plan_name === "premium_pro" ? "Premium Pro" : "Premium Plus";
-              await showAlert(
-                `❌ Your payment verification request for ${friendlyPlanName} (Ref: ${payment.reference_number}) was rejected. Please double-check your GCash receipt reference number or contact support.`,
-                "Payment Rejected"
-              );
-            }
-          }
-        }
-      } catch (e) {
-        // ignore
-      }
-    };
-
-    checkPayments();
-    const interval = setInterval(checkPayments, 30000);
-    return () => clearInterval(interval);
-  }, [user]);
 
   const handleBackToLanding = () => {
     setIsExitingBuilder(true);
@@ -371,7 +258,6 @@ function App() {
               mascotMood={mascotMood}
               onMascotMoodChange={setMascotMood}
               plan={plan}
-              onOpenPricing={handleOpenPricing}
             />
           </div>
           <div className="slide-item about-slide-item" onScroll={handleScroll}>
@@ -411,7 +297,6 @@ function App() {
             user={user}
             onBack={handleBackToLanding}
             plan={plan}
-            onOpenPricing={handleOpenPricing}
           />
         </div>
       )}
@@ -423,16 +308,6 @@ function App() {
       )}
 
       <AuthTransitionBuffer active={showAuthTransition} message={transitionMessage} />
-
-      <PricingModal
-        isOpen={pricingModalOpen}
-        triggerRect={pricingTriggerRect}
-        onClose={() => setPricingModalOpen(false)}
-        currentPlan={plan}
-        onPurchase={handlePurchase}
-        user={user}
-        onNavigate={transitionToPage}
-      />
 
       <AdminPanel
         isOpen={adminPanelOpen}

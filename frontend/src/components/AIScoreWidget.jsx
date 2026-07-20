@@ -3,7 +3,7 @@ import PeekingMonster from "./PeekingMonster";
 import { getMetricSuggestions } from "../services/aiScorer";
 import "../css/AIScoreWidget.css";
 
-function AIScoreWidget({ resume, profession, analysisResult, loading, onUpdateResume, moodOverride, plan, onOpenPricing }) {
+function AIScoreWidget({ resume, profession, analysisResult, loading, onUpdateResume, moodOverride }) {
   const [expanded, setExpanded] = useState(false);
   const [activeOptimizerBulletId, setActiveOptimizerBulletId] = useState(null);
 
@@ -81,30 +81,10 @@ function AIScoreWidget({ resume, profession, analysisResult, loading, onUpdateRe
         <div className="sync-badge">{badgeText}</div>
       </div>
 
-      {plan && !plan.hasAI ? (
-        <div className="ai-widget-locked-body">
-          <div className="lock-icon-wrapper">
-            <svg viewBox="0 0 24 24" width="48" height="48" stroke="#ea580c" strokeWidth="2.5" fill="none" strokeLinecap="round" strokeLinejoin="round">
-              <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
-              <path d="M7 11V7a5 5 0 0 1 10 0v4" />
-            </svg>
-          </div>
-          <h3 className="locked-title">AI Resume Scorer Locked</h3>
-          <p className="locked-desc">
-            Upgrade to <strong>Premium Pro</strong> to unlock the real-time AI scoring engine, interactive bullet rewrite suggestions, and verified LinkedIn job matching.
-          </p>
-          <button
-            type="button"
-            className="locked-upgrade-btn"
-            onClick={onOpenPricing}
-          >
-            Upgrade to Premium Pro (₱119)
-          </button>
-        </div>
-      ) : loading ? (
+      {loading ? (
         <div className="ai-widget-loading-body animate-fade-in">
           <div className="sync-dance-wrapper">
-            <PeekingMonster mood={moodOverride || "excited"} isPremium={plan && plan.isActive && (plan.type === "premium_plus" || plan.type === "premium_pro")} />
+            <PeekingMonster mood={moodOverride || "excited"} />
           </div>
           <div className="sync-blinking-text">Synchronizing...</div>
         </div>
@@ -113,7 +93,7 @@ function AIScoreWidget({ resume, profession, analysisResult, loading, onUpdateRe
           {/* ── Insufficient Data Body (shown when not enough content) ── */}
           <div className="insufficient-data-body animate-fade-in">
             <div className="insufficient-mascot">
-              <PeekingMonster mood="normal" isPremium={plan && plan.isActive && (plan.type === "premium_plus" || plan.type === "premium_pro")} />
+              <PeekingMonster mood="normal" />
             </div>
 
         <div className="insufficient-content">
@@ -187,7 +167,7 @@ function AIScoreWidget({ resume, profession, analysisResult, loading, onUpdateRe
 
           <div className="mascot-panel">
             <div className="sync-dance-wrapper">
-              <PeekingMonster mood={moodOverride || (loading ? "excited" : mascotMood)} isPremium={plan && plan.isActive && (plan.type === "premium_plus" || plan.type === "premium_pro")} />
+              <PeekingMonster mood={moodOverride || (loading ? "excited" : mascotMood)} />
             </div>
             <div className="mascot-bubble">
               {score >= 85 ? (

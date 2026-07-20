@@ -54,7 +54,7 @@ const PREDICTABLE_PROFESSIONS = [
   "Behavioral Health Specialist",
 ];
 
-export default function Landing({ onSelect, onNavigate, isEmbedded, user, mascotMood, onMascotMoodChange, plan, onOpenPricing }) {
+export default function Landing({ onSelect, onNavigate, isEmbedded, user, mascotMood, onMascotMoodChange, plan }) {
   const [input, setInput] = useState("");
   const [placeholder, setPlaceholder] = useState("");
   const [searchError, setSearchError] = useState("");
@@ -266,7 +266,7 @@ export default function Landing({ onSelect, onNavigate, isEmbedded, user, mascot
 
       <main className="landing-hero">
         <h1 className="sr-only">Build a Professional, ATS-Friendly Resume with Resora</h1>
-        <PeekingMonster mood={mascotMood || localMood} isPremium={plan && plan.isActive && (plan.type === "premium_plus" || plan.type === "premium_pro")} />
+        <PeekingMonster mood={mascotMood || localMood} />
         <div className="hero-title-container">
           <h2 className="hero-title-line">What is your</h2>
           <h2 className="hero-title-line">Profession?</h2>
@@ -344,25 +344,6 @@ export default function Landing({ onSelect, onNavigate, isEmbedded, user, mascot
           </button>
         </div>
 
-        <div className="landing-premium-cta-wrapper">
-          {plan && plan.isActive && (plan.type === "premium_plus" || plan.type === "premium_pro") ? (
-            <div className="flashy-premium-status-container">
-              <div className={`flashy-premium-badge ${plan.type === "premium_pro" ? "pro-gold-glow" : "plus-gold-glow"}`}>
-                <span className="flashy-plan-name">{plan.name}</span>
-                <span className="flashy-shimmer-sweep"></span>
-              </div>
-              <span className="flashy-see-plans-link" onClick={onOpenPricing}>See plans</span>
-            </div>
-          ) : (
-            <button
-              type="button"
-              className="get-premium-cta-btn"
-              onClick={onOpenPricing}
-            >
-              Get Premium
-            </button>
-          )}
-        </div>
 
         <p className="hero-description-new">
           Resora creates single-page, ATS-friendly resumes tailored to your chosen profession in seconds.

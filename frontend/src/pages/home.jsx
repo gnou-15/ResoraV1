@@ -23,7 +23,7 @@ const PROFESSION_TITLES = {
   hr: "Behavioral Health & Social Services Resume Builder",
 };
 
-function Home({ profession, user, onBack, plan, onOpenPricing }) {
+function Home({ profession, user, onBack, plan }) {
   const { showAlert, showConfirm } = useDialog();
   const {
     resume,
@@ -146,15 +146,6 @@ function Home({ profession, user, onBack, plan, onOpenPricing }) {
 
 
   const handleExport = async () => {
-    if (plan && !plan.hasExport) {
-      await showAlert(
-        "PDF Export is locked. Please upgrade to a Premium plan to unlock high-fidelity exports.",
-        "Premium Required"
-      );
-      onOpenPricing();
-      return;
-    }
-
     // ensure preview is visible
     setMobileTab("preview");
 
@@ -330,8 +321,6 @@ function Home({ profession, user, onBack, plan, onOpenPricing }) {
             loading={syncing}
             onUpdateResume={setResume}
             moodOverride={mascotMoodOverride}
-            plan={plan}
-            onOpenPricing={onOpenPricing}
           />
           <div className="preview-toolbar">
             <span>Live preview — multi-page pagination enabled</span>
