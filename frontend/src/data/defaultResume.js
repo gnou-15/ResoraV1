@@ -132,9 +132,8 @@ function migratePersonal(personal) {
 export function migrateResume(data) {
   if (!data) return defaultResume
 
-  if (data.technicalSkills) {
-    const tech = { ...data.technicalSkills };
-    // Normalize any string fields into arrays for consistency
+  const tech = data.technicalSkills ? { ...data.technicalSkills } : null;
+  if (tech) {
     ['languages', 'frameworks', 'tools', 'databases', 'cloud'].forEach(
       (k) => {
         if (typeof tech[k] === 'string') {
@@ -147,16 +146,7 @@ export function migrateResume(data) {
         }
       },
     );
-
-    return {
-      ...defaultResume,
-      ...data,
-      skills: data.skills || (tech.languages && Array.isArray(tech.languages) ? tech.languages.join(', ') : ''),
-      technicalSkills: { ...defaultResume.technicalSkills, ...tech },
-      personal: migratePersonal(data.personal),
-    };
   }
-
 
   const skills = Array.isArray(data.skills)
     ? data.skills.filter(Boolean)
@@ -166,17 +156,21 @@ export function migrateResume(data) {
 
   return {
     ...defaultResume,
+    ...data,
     personal: migratePersonal(data.personal),
     headline: data.headline ?? '',
     summary: data.summary ?? '',
-    technicalSkills: {
-      languages: skills,
-      frameworks: [],
-      tools: [],
-      databases: [],
-      cloud: [],
-    },
-    education: (data.education ?? defaultResume.education).map((edu) => ({
+    skills: data.skills || (tech && tech.languages ? tech.languages.join(', ') : ''),
+    technicalSkills: tech
+      ? { ...defaultResume.technicalSkills, ...tech }
+      : {
+          languages: skills,
+          frameworks: [],
+          tools: [],
+          databases: [],
+          cloud: [],
+        },
+    education: (data.education && data.education.length > 0 ? data.education : defaultResume.education).map((edu) => ({
       id: edu.id ?? createId(),
       school: edu.school ?? '',
       degree: edu.degree ?? '',
@@ -186,21 +180,30 @@ export function migrateResume(data) {
       latinHonors: edu.latinHonors ?? '',
       coursework: edu.coursework ?? '',
     })),
-    projects: (data.projects ?? defaultResume.projects).map((proj) => ({
+    projects: (data.projects && data.projects.length > 0 ? data.projects : defaultResume.projects).map((proj) => ({
       id: proj.id ?? createId(),
       name: proj.name ?? '',
       link: proj.link ?? '',
       stack: proj.stack ?? proj.technologies ?? '',
-      bullets: proj.bullets ?? (proj.description ? [proj.description] : ['']),
+      bullets: Array.isArray(proj.bullets) ? proj.bullets : (proj.description ? [proj.description] : ['']),
     })),
-    experience: data.experience ?? defaultResume.experience,
-    achievements: (data.achievements ?? defaultResume.achievements).map((a) => ({
+    experience: (data.experience && data.experience.length > 0 ? data.experience : defaultResume.experience).map((exp) => ({
+      id: exp.id ?? createId(),
+      company: exp.company ?? '',
+      title: exp.title ?? '',
+      location: exp.location ?? '',
+      startDate: exp.startDate ?? '',
+      endDate: exp.endDate ?? '',
+      current: exp.current ?? false,
+      bullets: Array.isArray(exp.bullets) ? exp.bullets : (exp.description ? [exp.description] : ['']),
+    })),
+    achievements: (data.achievements && data.achievements.length > 0 ? data.achievements : defaultResume.achievements).map((a) => ({
       id: a.id ?? createId(),
       title: a.title ?? '',
       organization: a.organization ?? '',
       date: a.date ?? '',
       distinction: a.distinction ?? '',
-      bullets: a.bullets ?? [''],
+      bullets: Array.isArray(a.bullets) ? a.bullets : [''],
     })),
     userType: data.userType ?? defaultResume.userType,
     certifications: data.certifications ?? defaultResume.certifications,

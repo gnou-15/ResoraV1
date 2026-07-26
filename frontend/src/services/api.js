@@ -27,6 +27,16 @@ function getGuestSessionId() {
 
 export function loadResume(profession) {
   try {
+    const uploadedRaw = sessionStorage.getItem('resora-uploaded-resume') || localStorage.getItem('resora-uploaded-resume');
+    if (uploadedRaw) {
+      const uploadedData = JSON.parse(uploadedRaw);
+      if (uploadedData && uploadedData.resume) {
+        if (!profession || uploadedData.profession === profession) {
+          return uploadedData.resume;
+        }
+      }
+    }
+
     const sid = getGuestSessionId();
     const key = profession ? `${STORAGE_KEY}-${sid}-${profession}` : `${STORAGE_KEY}-${sid}`;
     const raw = localStorage.getItem(key);

@@ -4,3 +4,5 @@ pydantic
 pypdf
 python-docx
 python-multipart
+groq
+python-dotenv

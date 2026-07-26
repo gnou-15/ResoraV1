@@ -1,13 +1,17 @@
 import re
 import io
+import os
 import json
+from dotenv import load_dotenv
 # pyrefly: ignore [missing-import]
-from fastapi import FastAPI, File, UploadFile, HTTPException
+from fastapi import FastAPI, File, UploadFile, HTTPException, Header
 # pyrefly: ignore [missing-import]
 from fastapi.middleware.cors import CORSMiddleware
 # pyrefly: ignore [missing-import]
 from pydantic import BaseModel
 from typing import List, Dict, Any, Optional
+
+load_dotenv()
 
 app = FastAPI()
 
@@ -675,159 +679,278 @@ def detect_profession_from_text(text: str) -> str:
     if not t.strip():
         return "general"
 
-    has_engineering = bool(re.search(r'(civil engineer|mechanical engineer|electrical engineer|chemical engineer|industrial engineer|safety engineer|\bengineering\b)', t))
-    has_safety = bool(re.search(r'(safety officer|safety coordinator|ehs|occupational safety|safety inspector)', t))
-    has_customs = bool(re.search(r'(customs|import|export|tariff|declarant)', t))
-    has_business = bool(re.search(r'(accountant|accountancy|cpa|bookkeeper|financial analyst|business admin|finance|auditor)', t))
-    has_designer = bool(re.search(r'(designer|graphic|illustrator|artist|ui/ux|ux designer|ui designer)', t))
-    has_data = bool(re.search(r'(data analyst|data scientist|business intelligence|bi analyst|analyst)', t))
-    has_sales = bool(re.search(r'(sales|account executive|representative|seller|telemarketing)', t))
-    has_hr = bool(re.search(r'(hr|human resources|recruiter|onboarding|recruitment|psychology|psychologist|psychiatrist|counselor|social worker|therapist|behavioral)', t))
+    CATEGORY_PATTERNS = {
+        "it": [
+            r'\b(developer|software|programmer|full[- ]stack|web|frontend|backend|react|node|coding|programming|tech|technology|computer|\bit\b|\bbsit\b|\bcs\b|software engineer|it engineer|systems engineer|devops|it consultant|information technology|sql|python|javascript|php|java|c\+\+|c#|git|docker|vite|aws|database)\b'
+        ],
+        "healthcare": [
+            r'\b(nurse|doctor|clinic|health|patient|rn|lpn|clinical|medical|hospital|physician|phlebotomist|nursing|emr|medication)\b'
+        ],
+        "education": [
+            r'\b(teacher|instructor|professor|tutor|education|school|teaching|classroom|curriculum|pedagogy|lesson plan|academic)\b'
+        ],
+        "management": [
+            r'\b(project manager|product manager|operations manager|scrum master|agile|pmp|program manager|general manager|operations lead)\b'
+        ],
+        "engineering": [
+            r'\b(civil engineer|mechanical engineer|electrical engineer|chemical engineer|industrial engineer|safety engineer|cad|autocad|structural engineer)\b'
+        ],
+        "safety": [
+            r'\b(safety officer|safety coordinator|ehs|occupational safety|safety inspector|osha|site safety)\b'
+        ],
+        "customs": [
+            r'\b(customs broker|tariff|declarant|import/export|customs compliance|trade compliance|customs clearance)\b'
+        ],
+        "business": [
+            r'\b(accountant|accountancy|cpa|bookkeeper|financial analyst|business admin|finance|auditor|accounting|tax consultant)\b'
+        ],
+        "designer": [
+            r'\b(graphic designer|ui/ux|ux designer|ui designer|illustrator|creative director|art director|photoshop|figma|adobe)\b'
+        ],
+        "data": [
+            r'\b(data analyst|data scientist|business intelligence|bi analyst|machine learning|data engineer|data mining|tableau|power bi)\b'
+        ],
+        "sales": [
+            r'\b(sales representative|account executive|business development|inside sales|telemarketing|sales manager|consultative selling)\b'
+        ],
+        "hr": [
+            r'\b(human resources|hrbp|recruiter|onboarding|recruitment|psychology|psychologist|counselor|social worker|therapist|behavioral health)\b'
+        ]
+    }
 
-    has_it = bool(re.search(r'(developer|software|programmer|full[- ]stack|web|frontend|backend|react|node|coding|programming|tech|technology|computer|\bit\b|\bbsit\b|\bcs\b|software engineer|it engineer|systems engineer|devops)', t))
-    has_healthcare = bool(re.search(r'(nurse|doctor|clinic|health|patient|rn|lpn|clinical|medical|hospital)', t))
-    has_education = bool(re.search(r'(teacher|instructor|professor|tutor|education|school|teaching|classroom)', t))
-    has_management = bool(re.search(r'(manager|project|product|operations|pm|lead|supervisor|management)', t))
+    scores = {cat: 0 for cat in CATEGORY_PATTERNS}
 
-    if has_engineering: return "engineering"
-    if has_safety: return "safety"
-    if has_customs: return "customs"
-    if has_business: return "business"
-    if has_designer: return "designer"
-    if has_data: return "data"
-    if has_sales: return "sales"
-    if has_hr: return "hr"
-    
-    if has_it: return "it"
-    if has_healthcare: return "healthcare"
-    if has_education: return "education"
-    if has_management: return "management"
+    for cat, patterns in CATEGORY_PATTERNS.items():
+        for pat in patterns:
+            matches = re.findall(pat, t)
+            scores[cat] += len(matches)
 
+    best_cat, best_score = max(scores.items(), key=lambda item: item[1])
+
+    if best_score > 0:
+        return best_cat
     return "general"
 
 
 def parse_resume_fields(text: str) -> Dict[str, Any]:
     lines = [line.strip() for line in text.splitlines() if line.strip()]
-    
-    # 1. Full name
-    full_name = ""
-    for line in lines[:8]:
-        if len(line) < 40 and not re.search(r'[@\d:]', line) and not any(kw in line.lower() for kw in ['resume', 'curriculum', 'page', 'email', 'phone', 'address', 'contact']):
-            full_name = line
-            break
+    if not lines:
+        return {"profession": "general", "resume": {}}
 
-    # 2. Email
-    email_match = re.search(r'[\w\.-]+@[\w\.-]+\.\w+', text)
-    email = email_match.group(0) if email_match else ""
+    full_name = lines[0].strip()
 
-    # 3. Phone
-    phone_match = re.search(r'\(?\+?\d{1,4}\)?[\s\.-]?\d{3,4}[\s\.-]?\d{3,4}', text)
-    phone = phone_match.group(0) if phone_match else ""
-
-    # 4. Social links
-    github_match = re.search(r'(?:https?://)?(?:www\.)?github\.com/([\w-]+)', text, re.IGNORECASE)
-    github = f"github.com/{github_match.group(1)}" if github_match else ""
-
-    linkedin_match = re.search(r'(?:https?://)?(?:www\.)?linkedin\.com/in/([\w-]+)', text, re.IGNORECASE)
-    linkedin = f"linkedin.com/in/{linkedin_match.group(1)}" if linkedin_match else ""
-
-    portfolio_match = re.search(r'(?:https?://)?([\w-]+\.(?:dev|me|io|com|org|net))', text, re.IGNORECASE)
-    portfolio = portfolio_match.group(1) if (portfolio_match and 'github' not in portfolio_match.group(1) and 'linkedin' not in portfolio_match.group(1)) else ""
-
-    # 5. Extract Headline & Summary
     headline = ""
-    summary = ""
-    for line in lines[1:8]:
-        if len(line) < 60 and not re.search(r'[@\d]', line) and line != full_name:
-            headline = line
-            break
+    if len(lines) > 1 and not re.search(r'[@\+0-9]', lines[1]) and not any(kw in lines[1].upper() for kw in ['SUMMARY', 'EXPERIENCE', 'EDUCATION', 'SKILLS']):
+        headline = lines[1].strip()
 
-    summary_idx = -1
-    for i, l in enumerate(lines):
-        if re.search(r'^(summary|about me|profile|professional summary|objective)', l, re.IGNORECASE):
-            summary_idx = i
-            break
-    if summary_idx != -1 and summary_idx + 1 < len(lines):
-        summary_lines = []
-        for l in lines[summary_idx+1:summary_idx+6]:
-            if re.search(r'^(experience|education|skills|projects|certifications|work)', l, re.IGNORECASE):
-                break
-            summary_lines.append(l)
-        summary = " ".join(summary_lines)
+    email = ""
+    phone = ""
+    location_str = ""
+    github = ""
+    linkedin = ""
+    portfolio = ""
 
-    # 6. Extract Skills
-    skills_list = []
-    skills_idx = -1
-    for i, l in enumerate(lines):
-        if re.search(r'^(skills|technical skills|core competencies)', l, re.IGNORECASE):
-            skills_idx = i
-            break
-    if skills_idx != -1:
-        for l in lines[skills_idx+1:skills_idx+6]:
-            if re.search(r'^(experience|education|projects|certifications|work|summary)', l, re.IGNORECASE):
-                break
-            items = re.split(r'[,•|·]', l)
-            for item in items:
-                clean_item = item.strip()
-                if clean_item and len(clean_item) < 35:
-                    skills_list.append(clean_item)
+    for l in lines[1:8]:
+        em = re.search(r'[\w\.-]+@[\w\.-]+\.\w+', l)
+        if em and not email:
+            email = em.group(0)
+        ph = re.search(r'(\+?\d{1,3}[\s\.-]?)?\(?\d{2,4}\)?[\s\.-]?\d{3,4}[\s\.-]?\d{3,4}', l)
+        if ph and not phone:
+            phone = ph.group(0).strip()
+        gh = re.search(r'github\.com/([\w-]+)', l, re.IGNORECASE)
+        if gh and not github:
+            github = f"github.com/{gh.group(1)}"
+        li = re.search(r'linkedin\.com/in/([\w-]+)', l, re.IGNORECASE)
+        if li and not linkedin:
+            linkedin = f"linkedin.com/{li.group(1)}" if not li.group(1).startswith('linkedin.com') else li.group(1)
+        loc = re.search(r'([A-Za-z\s-]+,\s*[A-Za-z\s-]+,\s*[A-Za-z\s-]+)', l)
+        if loc and not location_str:
+            location_str = loc.group(0)
 
-    # 7. Extract Experience
-    experience_list = []
-    exp_idx = -1
-    for i, l in enumerate(lines):
-        if re.search(r'^(experience|work experience|employment history|work history)', l, re.IGNORECASE):
-            exp_idx = i
-            break
-    if exp_idx != -1:
-        current_exp = None
-        for l in lines[exp_idx+1:]:
-            if re.search(r'^(education|projects|certifications|skills|achievements)', l, re.IGNORECASE):
-                break
-            if len(l) < 65 and not l.startswith('•') and not l.startswith('-') and not l.startswith('*'):
-                if current_exp and (current_exp['title'] or current_exp['bullets']):
-                    experience_list.append(current_exp)
-                current_exp = {
-                    "id": f"exp-{len(experience_list)+1}",
-                    "company": "Company / Organization",
-                    "title": l,
+    city, state, country = "", "", ""
+    if location_str:
+        parts = [p.strip() for p in location_str.split(',')]
+        if len(parts) >= 3:
+            city, state, country = parts[0], parts[1], parts[2]
+        elif len(parts) == 2:
+            city, country = parts[0], parts[1]
+
+    SECTION_HEADERS = {
+        'SUMMARY': ['PROFESSIONAL SUMMARY', 'SUMMARY', 'ABOUT ME', 'PROFILE', 'OBJECTIVE'],
+        'SKILLS': ['TECHNICAL SKILLS', 'SKILLS', 'CORE COMPETENCIES', 'COMPETENCIES'],
+        'EDUCATION': ['EDUCATION', 'ACADEMIC BACKGROUND'],
+        'PROJECTS': ['TECHNICAL PROJECTS', 'PROJECTS', 'KEY PROJECTS'],
+        'ACHIEVEMENTS': ['ACHIEVEMENTS', 'HONORS & AWARDS', 'AWARDS & ACHIEVEMENTS', 'HONORS'],
+        'EXPERIENCE': ['EXPERIENCE', 'WORK EXPERIENCE', 'EMPLOYMENT HISTORY', 'WORK HISTORY']
+    }
+
+    def match_header(line):
+        upper_line = line.upper().strip()
+        for sec_key, keywords in SECTION_HEADERS.items():
+            if upper_line in keywords or any(upper_line == kw for kw in keywords):
+                return sec_key
+        return None
+
+    sections = {}
+    current_section = "HEADER"
+    sections[current_section] = []
+
+    for line in lines:
+        matched = match_header(line)
+        if matched:
+            current_section = matched
+            if current_section not in sections:
+                sections[current_section] = []
+        else:
+            sections.setdefault(current_section, []).append(line)
+
+    summary = " ".join(sections.get('SUMMARY', []))
+
+    skills_lines = sections.get('SKILLS', [])
+    technical_skills = {}
+    general_skills = []
+
+    for sl in skills_lines:
+        if ':' in sl:
+            cat, val = sl.split(':', 1)
+            cat_key = cat.strip().lower()
+            technical_skills[cat_key] = val.strip()
+            general_skills.append(val.strip())
+        else:
+            general_skills.append(sl.strip())
+
+    edu_lines = sections.get('EDUCATION', [])
+    education_entries = []
+    if edu_lines:
+        school = ""
+        degree = ""
+        gpa = ""
+        end_date = ""
+        for el in edu_lines:
+            if re.search(r'GPA|Grade|Honors', el, re.IGNORECASE):
+                parts = [p.strip() for p in el.split('|')]
+                degree = parts[0]
+                for p in parts[1:]:
+                    if 'GPA' in p.upper():
+                        gpa = p.split(':')[-1].strip()
+            elif any(w in el.lower() for w in ['university', 'college', 'school', 'academy', 'institute']):
+                school = el
+            elif re.search(r'(Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec|\d{4})', el):
+                end_date = el
+            elif not degree:
+                degree = el
+
+        if school or degree:
+            education_entries.append({
+                "id": "edu-1",
+                "school": school,
+                "degree": degree,
+                "field": "",
+                "endDate": end_date,
+                "gpa": gpa,
+                "coursework": ""
+            })
+
+    proj_lines = sections.get('PROJECTS', [])
+    project_entries = []
+    if proj_lines:
+        curr_proj = None
+        for pl in proj_lines:
+            if '|' in pl or ('http' in pl or '.com' in pl or '.dev' in pl):
+                if curr_proj:
+                    project_entries.append(curr_proj)
+                parts = [p.strip() for p in pl.split('|')]
+                name = parts[0]
+                link = parts[1] if len(parts) > 1 else ""
+                curr_proj = {"id": f"proj-{len(project_entries)+1}", "name": name, "link": link, "stack": "", "bullets": []}
+            elif pl.lower().startswith('tech stack:'):
+                if curr_proj:
+                    curr_proj['stack'] = pl.split(':', 1)[1].strip()
+            elif pl.startswith('•') or pl.startswith('-') or pl.startswith('*'):
+                if curr_proj:
+                    curr_proj['bullets'].append(re.sub(r'^[•\-\*\s]+', '', pl))
+            elif curr_proj:
+                if curr_proj['bullets']:
+                    curr_proj['bullets'][-1] += " " + pl
+                else:
+                    curr_proj['bullets'].append(pl)
+
+        if curr_proj:
+            project_entries.append(curr_proj)
+
+    achieve_lines = sections.get('ACHIEVEMENTS', [])
+    achievement_entries = []
+    if achieve_lines:
+        curr_ach = None
+        for al in achieve_lines:
+            date_match = re.search(r'((?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec|\d{4})[\s\w-]*\d{4}|\w+\s+\d{4})', al, re.IGNORECASE)
+            is_bullet = al.startswith('•') or al.startswith('-') or al.startswith('*')
+            
+            if is_bullet:
+                if curr_ach:
+                    curr_ach['bullets'].append(re.sub(r'^[•\-\*\s]+', '', al))
+            elif date_match and len(al) < 35:
+                if curr_ach:
+                    curr_ach['date'] = al.strip()
+            elif len(al) < 65 and not re.search(r'[@\d]', al) and not date_match:
+                if not curr_ach or curr_ach['bullets']:
+                    if curr_ach and (curr_ach['title'] or curr_ach['bullets']):
+                        achievement_entries.append(curr_ach)
+                    curr_ach = {"id": f"ach-{len(achievement_entries)+1}", "title": al, "organization": "", "date": "", "bullets": []}
+                elif curr_ach and not curr_ach['organization']:
+                    curr_ach['organization'] = al
+            elif curr_ach:
+                if curr_ach['bullets']:
+                    curr_ach['bullets'][-1] += " " + al
+                else:
+                    curr_ach['bullets'].append(al)
+
+        if curr_ach and (curr_ach['title'] or curr_ach['bullets']):
+            achievement_entries.append(curr_ach)
+
+    exp_lines = sections.get('EXPERIENCE', [])
+    experience_entries = []
+    if exp_lines:
+        curr_exp = None
+        for el in exp_lines:
+            date_match = re.search(r'((?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec|\d{4})[\s\w-]*\d{4})', el, re.IGNORECASE)
+            is_bullet = el.startswith('•') or el.startswith('-') or el.startswith('*')
+            
+            if is_bullet:
+                if curr_exp:
+                    curr_exp['bullets'].append(re.sub(r'^[•\-\*\s]+', '', el))
+            elif date_match:
+                if curr_exp:
+                    curr_exp['startDate'] = date_match.group(0).split('-')[0].strip()
+                    curr_exp['endDate'] = date_match.group(0).split('-')[-1].strip() if '-' in date_match.group(0) else date_match.group(0)
+            elif '|' in el and curr_exp:
+                parts = [p.strip() for p in el.split('|')]
+                curr_exp['company'] = parts[0]
+                if len(parts) > 1:
+                    curr_exp['location'] = parts[1]
+            elif len(el) < 60 and not curr_exp:
+                curr_exp = {
+                    "id": "exp-1",
+                    "company": "",
+                    "title": el,
                     "location": "",
                     "startDate": "",
-                    "endDate": "Present",
-                    "current": True,
+                    "endDate": "",
+                    "current": False,
                     "bullets": []
                 }
-            elif current_exp:
-                clean_bullet = re.sub(r'^[•\-\*\s]+', '', l).strip()
-                if clean_bullet:
-                    current_exp['bullets'].append(clean_bullet)
-        if current_exp and (current_exp['title'] or current_exp['bullets']):
-            experience_list.append(current_exp)
+            elif curr_exp:
+                if curr_exp['bullets']:
+                    curr_exp['bullets'][-1] += " " + el
+                else:
+                    curr_exp['bullets'].append(el)
 
-    # 8. Extract Education
-    education_list = []
-    edu_idx = -1
-    for i, l in enumerate(lines):
-        if re.search(r'^(education|academic background)', l, re.IGNORECASE):
-            edu_idx = i
-            break
-    if edu_idx != -1:
-        for l in lines[edu_idx+1:]:
-            if re.search(r'^(experience|projects|certifications|skills|achievements|work)', l, re.IGNORECASE):
-                break
-            if len(l) < 80 and any(w in l.lower() for w in ['university', 'college', 'bachelor', 'master', 'bs', 'ba', 'degree', 'high school', 'school', 'academy']):
-                education_list.append({
-                    "id": f"edu-{len(education_list)+1}",
-                    "school": l,
-                    "degree": "Degree Program",
-                    "field": "General",
-                    "endDate": "2024",
-                    "gpa": "",
-                    "coursework": ""
-                })
+        if curr_exp:
+            experience_entries.append(curr_exp)
 
     detected_prof = detect_profession_from_text(text)
 
+    is_ph = "+63" in phone or "Philippines" in text
     return {
         "profession": detected_prof,
         "rawText": text,
@@ -835,33 +958,173 @@ def parse_resume_fields(text: str) -> Dict[str, Any]:
             "personal": {
                 "fullName": full_name,
                 "email": email,
-                "phoneCountry": "+1",
-                "phoneNumber": phone,
-                "location": { "country": "", "state": "", "city": "", "barangay": "", "street": "" },
+                "phoneCountry": "+63" if is_ph else "+1",
+                "phoneNumber": re.sub(r'^\+(?:63|1)\s*', '', phone) if phone else "",
+                "location": {
+                    "country": country or ("Philippines" if is_ph else "USA"),
+                    "state": state,
+                    "city": city,
+                    "barangay": "",
+                    "street": ""
+                },
                 "github": github,
                 "linkedin": linkedin,
                 "portfolio": portfolio
             },
             "headline": headline,
             "summary": summary,
-            "skills": ", ".join(skills_list[:15]) if skills_list else "",
-            "technicalSkills": { "languages": ", ".join(skills_list[:8]) } if skills_list else {},
-            "experience": experience_list if experience_list else [],
-            "education": education_list if education_list else [],
+            "skills": ", ".join(general_skills),
+            "technicalSkills": technical_skills,
+            "education": education_entries,
+            "projects": project_entries,
+            "achievements": achievement_entries,
+            "experience": experience_entries,
             "userType": "professional"
         }
     }
 
 
-@app.post("/api/parse-resume")
-async def parse_resume_endpoint(file: UploadFile = File(...)):
+GROQ_SYSTEM_PROMPT = """
+You are an expert AI Resume Parser. Your task is to extract structured JSON data from raw resume text.
+
+Return ONLY a valid JSON object matching the exact schema below.
+
+JSON SCHEMA:
+{
+  "profession": "<one of: 'it', 'healthcare', 'education', 'management', 'engineering', 'safety', 'customs', 'business', 'designer', 'data', 'sales', 'hr', 'general'>",
+  "resume": {
+    "personal": {
+      "fullName": "<string>",
+      "email": "<string>",
+      "phoneCountry": "<country code, e.g. +1 or +63>",
+      "phoneNumber": "<string without country code>",
+      "location": {
+        "country": "<string, e.g. USA>",
+        "state": "<string, e.g. New York>",
+        "city": "<string, e.g. New York>",
+        "barangay": "",
+        "street": "<string, e.g. 9 Wall St>"
+      },
+      "github": "<string>",
+      "linkedin": "<string>",
+      "portfolio": "<string>"
+    },
+    "headline": "<string, short job title e.g. Personal Trainer>",
+    "summary": "<string, profile summary paragraph>",
+    "skills": "<comma-separated list of skills>",
+    "technicalSkills": {
+      "languages": "<comma separated>",
+      "frameworks": "<comma separated>",
+      "tools": "<comma separated>",
+      "databases": "<comma separated>",
+      "cloud": "<comma separated>"
+    },
+    "education": [
+      {
+        "id": "edu-1",
+        "school": "<string>",
+        "degree": "<string>",
+        "field": "<string>",
+        "endDate": "<string>",
+        "gpa": "<string>",
+        "coursework": "<string>"
+      }
+    ],
+    "projects": [
+      {
+        "id": "proj-1",
+        "name": "<string>",
+        "link": "<string>",
+        "stack": "<string>",
+        "bullets": ["<bullet 1>", "<bullet 2>"]
+      }
+    ],
+    "achievements": [
+      {
+        "id": "ach-1",
+        "title": "<string>",
+        "organization": "<string>",
+        "date": "<string>",
+        "bullets": ["<bullet 1>"]
+      }
+    ],
+    "certifications": [
+      {
+        "id": "cert-1",
+        "name": "<string, e.g. ACE Certified Personal Trainer>",
+        "issuer": "<string>",
+        "date": "<string>"
+      }
+    ],
+    "experience": [
+      {
+        "id": "exp-1",
+        "company": "<string>",
+        "title": "<string>",
+        "location": "<string>",
+        "startDate": "<string>",
+        "endDate": "<string>",
+        "current": false,
+        "bullets": ["<bullet 1>", "<bullet 2>"]
+      }
+    ],
+    "userType": "professional"
+  }
+}
+
+RULES:
+1. Detect profession accurately from: 'it', 'healthcare', 'education', 'management', 'engineering', 'safety', 'customs', 'business', 'designer', 'data', 'sales', 'hr', or 'general'. Note: Personal Trainers, Fitness Instructors, Chefs, Coaches are 'general'.
+2. Extract all contact details (Full Name, Email, Phone, City, State/Province, Country, GitHub, LinkedIn).
+3. Split ALL work experiences into distinct entries in the 'experience' array.
+4. Extract certifications into the 'certifications' or 'achievements' array.
+5. Return pure JSON without markdown codeblocks or extra text.
+"""
+
+def parse_with_groq_ai(text: str, api_key: str) -> Dict[str, Any]:
     try:
+        from groq import Groq
+        client = Groq(api_key=api_key)
+        chat_completion = client.chat.completions.create(
+            messages=[
+                {"role": "system", "content": GROQ_SYSTEM_PROMPT},
+                {"role": "user", "content": f"Extract resume JSON from this raw text:\n\n{text}"}
+            ],
+            model="llama-3.3-70b-versatile",
+            temperature=0.1,
+            response_format={"type": "json_object"}
+        )
+        res_text = chat_completion.choices[0].message.content
+        return json.loads(res_text)
+    except Exception as e:
+        print(f"❌ Groq AI Parse error: {e}")
+        return {}
+
+
+@app.post("/api/parse-resume")
+async def parse_resume_endpoint(
+    file: UploadFile = File(...),
+    groq_key: Optional[str] = Header(None, alias="X-Groq-Api-Key")
+):
+    try:
+        load_dotenv(override=True)
         content = await file.read()
         extracted_text = extract_text_from_file(file.filename, content)
         if not extracted_text.strip():
             raise HTTPException(status_code=400, detail="Could not extract readable text from uploaded file.")
         
-        parsed = parse_resume_fields(extracted_text)
+        active_groq_key = groq_key or os.getenv("GROQ_API_KEY", "")
+        
+        parsed = {}
+        if active_groq_key and not active_groq_key.startswith("gsk_your"):
+            print(f"🤖 Using Groq AI Llama-3.3 70B for resume parsing (Key: {active_groq_key[:8]}...)...")
+            parsed = parse_with_groq_ai(extracted_text, active_groq_key)
+        else:
+            print("⚠️ No valid GROQ_API_KEY found in .env! Please add your key to backend-python/.env")
+
+        if not parsed or "resume" not in parsed:
+            print("⚡ Falling back to local heuristic parser...")
+            parsed = parse_resume_fields(extracted_text)
+
         return {"success": True, "filename": file.filename, **parsed}
     except Exception as e:
         print(f"Upload parse error: {e}")

@@ -494,7 +494,7 @@ function ResumePreview({ resume, profession, plan, onPageCountChange, isMobilePr
 
   // Helper to build achievements blocks
   const buildAchievementsBlocks = () => {
-    if (userType === "student" && sortedAchievements.length > 0) {
+    if (sortedAchievements.length > 0) {
       blocks.push({
         id: "achievements-header",
         type: "section-header",
