@@ -1,31 +1,34 @@
-# Resora
+# Resora v2.0.0
 
-> **Final Project Release** | Secure, interactive resume builder and benchmarking platform that evaluates resume content across target professions (IT, Healthcare, Education, and Management). It features zero-knowledge client-side encryption, real-time interactive heuristic scoring, automated job suitability matching, and zero-watermark exports.
+> **Major Version 2.0.0 Release** | AI-powered, secure, interactive resume builder and benchmarking platform that evaluates and auto-generates ATS-optimized resumes across 12 target professions and a generic Resume Builder fallback. Features Groq AI (Llama-3.3-70B) document parsing, zero-knowledge client-side encryption, real-time interactive heuristic scoring, anonymous guest mode, and zero-watermark exports.
 
 ---
 
-## ⏱️ Development Time
-> **~40 hours** of active development across 14 coding sessions *(June 16 – July 22, 2026)* — *Final Project Release*
+## ⏱️ Development & Release
+> **Version 2.0.0 Release** — *Updated July 2026*
 
 ---
 
 ## 🛠️ Technologies
 *   **Frontend:** React 19, Vite 8, JavaScript (ES6+), Vanilla CSS
-*   **Backend:** Python 3, FastAPI, Uvicorn, Pydantic
+*   **AI & Parser Microservice:** Python 3, FastAPI, Uvicorn, Groq AI API (`llama-3.3-70b-versatile`), PyPDF, Python-Docx, Pydantic
+*   **Node Service:** Node.js, Express.js
 *   **Database & Auth:** Supabase (PostgreSQL), Row Level Security (RLS) policies, PL/pgSQL
 *   **Security & Encryption:** CryptoJS (AES-256 & SHA-256)
-*   **APIs & Third-Party:** Web3Forms API (Serverless Email Submissions)
+*   **Third-Party Integration:** Web3Forms API (Serverless Email Submissions)
 
 ---
 
-## 🌟 Features
-1.  **Zero-Knowledge Client-Side Encryption:** Auto-encrypts resume data locally using AES-256 before syncing to Supabase, ensuring host servers cannot read personal information.
-2.  **Instant Multi-Industry Scoring & Keywords Audit:** Evaluates resumes based on impact action verbs, quantitative metrics, and industry keywords tailored to 4 target professions (IT, Healthcare, Education, Management) and 2 user career tracks (Student / Professional).
-3.  **Calibrated Job Matching Engine:** Recommends targeted career paths and dynamically computes candidate suitability percentages and match scores based on resume keyword heuristics.
-4.  **Interactive Parallax Mascot (Peeking Monster):** An SVG mascot that tracks cursor movements in real-time with responsive mood shifts and score feedback.
-5.  **Anti-Screenshot & Privacy Protection:** System visibility and focus listeners (`PrintScreen`, `blur`, `visibilitychange`) that automatically obscure the resume canvas to prevent unauthorized layout grabs across mobile and desktop devices.
-6.  **100% Free & Unlocked Tier:** All features—including AI diagnostics, multi-profession templates, and watermark-free downloads—are completely free and unlocked for all registered users.
-7.  **Genie Modal Transitions:** High-fidelity UI animations calculating spatial vectors relative to active buttons dynamically.
+## 🌟 Key Features (v2.0.0)
+
+1.  **Groq AI Document Parser (Llama-3.3-70B):** Upload PDF, DOCX, or TXT resumes and automatically extract 100% structured JSON fields (Name, Phone, Email, Location, GitHub, LinkedIn, Technical Skills, Education, Projects, Achievements, Certifications, and Experience) in ~400ms.
+2.  **Weighted Industry Classifier:** Auto-detects target professions across 12 domains (*IT, Healthcare, Education, Management, Engineering, Safety, Customs, Business, Designer, Data, Sales, HR*) or gracefully falls back to the generic **"Resume Builder"** template.
+3.  **Anonymous Guest Mode & Privacy Lifecycle:** Allows users to build and edit resumes without logging in. Guest edits automatically purge on browser close unless saved into an authenticated account, supported by a discreet bottom warning prompt bubble.
+4.  **Creative Mascot Floating Upload Widget:** Animated bottom-right mascot badge widget featuring Resora's signature mascot emblem, dynamic pulse rings, and direct navigation to uploaded resumes.
+5.  **Zero-Knowledge Client-Side Encryption:** Auto-encrypts resume data locally using AES-256 before syncing to Supabase, ensuring host servers cannot read personal information.
+6.  **Instant Multi-Industry Scoring & Keywords Audit:** Evaluates resumes based on impact action verbs, quantitative metrics, and industry keywords tailored to target professions and user career tracks (Student / Professional).
+7.  **Anti-Screenshot & Privacy Protection:** System visibility and focus listeners (`PrintScreen`, `blur`, `visibilitychange`) automatically obscure the resume canvas to prevent unauthorized layout grabs.
+8.  **100% Free & Unlocked Tier:** All features—including AI diagnostics, multi-profession templates, and watermark-free downloads—are completely free and unlocked.
 
 ---
 
@@ -35,97 +38,71 @@
 
 ---
 
-## 🔄 The Process
-1.  **Architecture & Design:** Established a decoupled full-stack layout using React with Vite for fast UI responses, and FastAPI as a lightweight heuristic scoring microservice.
-2.  **Zero-Knowledge Security:** Implemented cryptographic keys generated by combining individual user IDs and custom salt hashes so client data remains private.
-3.  **Local Analysis & Job Matching Heuristics:** Programmed validation models to measure action verbs, quantitative metrics, and job role suitability without relying on expensive third-party LLM calls.
-4.  **Cross-Platform Screenshot Safeguards:** Built system visibility and blur handlers optimized for mobile and desktop screens to protect preview canvas privacy.
-
----
-
-## 🧠 What I Learned
-
-🔐 **Data Security & Cryptography:**
-*   **Zero-Knowledge Encryption**: I integrated the `crypto-js` library to AES-256 encrypt user resume data on the client side using keys derived from a combined SHA-256 hash of a master pepper and user UUID. This guarantees that user resumes are never stored in cleartext, preventing data leaks at the database level.
-
-⚡ **Modern API Validation & Fast Microservices:**
-*   **FastAPI & Pydantic Data Matching**: I used FastAPI to construct a lightweight REST API server and Pydantic models to mirror frontend JS resume data schemas. This ensures robust type validation, schema enforcement, and rapid backend processing.
-
-📊 **Heuristic Analysis & Job Matching Algorithms:**
-*   **Multi-Tier Resume Scoring**: I built analytical scoring heuristics checking resume sections for key metrics (using regex filters for numbers, percentages, and currencies) and action verbs to grade alignments across IT, Healthcare, Education, and Management tracks.
-*   **Dynamic Job Suitability Matching**: Programmed job role calibration logic that measures skill keyword overlap to dynamically match candidates with relevant job openings.
-
-🎨 **Premium UI Engineering & Motion:**
-*   **Dynamic Coordinate Calculations**: I computed element spatial vectors using React’s `getBoundingClientRect` API to construct smooth "Genie" transitions that scale and travel towards the origin layout on modal actions.
-
-🛡️ **Screenshot Protection & Focus Control:**
-*   **Keyboard & Screen Intercepts**: I implemented system-level visibility and keyboard event listeners (`keydown`, `blur`, `visibilitychange`) to automatically blur the preview canvas when `PrintScreen` or screen snipping hotkeys are detected, securing user content across desktop and mobile devices.
-
----
-
-## 📈 Overall Growth
-Developing Resora advanced my skills from traditional full-stack web development to building secure, event-driven web applications. Integrating zero-knowledge client-side encryption, custom heuristic scoring engines, and cross-platform privacy safeguards taught me how to architect applications with security and user experience as primary design principles.
-
----
-
-## 💡 How Can It Be Improved
-*   **Multi-Format Exporting:** Add PDF/DOCX rendering directly within the client using canvas tools to eliminate print-dialog workarounds.
-*   **State Reducer Middleware:** Migrate standard react states to lightweight global state machines (e.g. Zustand) to simplify synchronization between the editor and live preview.
-*   **Direct ATS Parsing:** Incorporate file upload parsing (PDF/DOCX extraction) so users can auto-populate their resume fields from existing files.
-
----
-
-## 🚀 How to Run the Project
+## 🚀 How to Run Locally
 
 ### Prerequisites
 *   Node.js (v18+)
 *   Python (3.9+)
 *   Supabase Account
+*   Groq API Key *(Free at [console.groq.com](https://console.groq.com/keys))*
 
 ### 1. Database Setup
-1.  Log in to your Supabase Console.
-2.  Open the SQL Editor and execute the schema definitions inside [database_setup.sql](file:///c:/Users/mapan/Documents/School%20Things/Practice%20Webs/ThirdWeb/random-web/backend-python/database_setup.sql) to provision tables and security rules.
+1. Log in to your Supabase Console.
+2. Open the SQL Editor and execute the schema definitions inside [database_setup.sql](file:///c:/Users/mapan/Documents/School%20Things/Practice%20Webs/ThirdWeb/random-web/backend-python/database_setup.sql).
 
 ### 2. Python Backend Installation (`backend-python`)
-1.  Open a terminal inside the `/backend-python` folder.
-2.  Create a virtual environment and install dependencies:
+1. Open a terminal in `/backend-python`.
+2. Create virtual environment and install dependencies:
     ```bash
     python -m venv .venv
     # Windows:
     .venv\Scripts\activate
     pip install -r requirements.txt
     ```
-3.  Launch the API server:
+3. Create a `.env` file inside `/backend-python`:
+    ```env
+    GROQ_API_KEY=gsk_your_groq_api_key_here
+    ```
+4. Launch the API server:
     ```bash
-    uvicorn main:app --reload
+    uvicorn main:app --reload --port 8000
     ```
 
 ### 3. Node.js Backend Installation (`backend-node`)
-1.  Open a terminal inside the `/backend-node` folder.
-2.  Install dependencies and start the Node server:
+1. Open a terminal in `/backend-node`.
+2. Install dependencies and start Node server:
     ```bash
     npm install
     npm run dev
     ```
 
-### 3. Frontend Installation
-1.  Open a terminal inside the `/frontend` folder.
-2.  Create a `.env` file based on `.env.example` and set your variables:
+### 4. Frontend Installation (`frontend`)
+1. Open a terminal in `/frontend`.
+2. Create `.env` based on `.env.example`:
     ```env
     VITE_SUPABASE_URL=https://your-project.supabase.co
     VITE_SUPABASE_ANON_KEY=your-anon-public-key
     VITE_WEB3FORMS_ACCESS_KEY=your-web3forms-key
+    VITE_PYTHON_BACKEND_URL=http://localhost:8000
     ```
-3.  Install dependencies and start the dev server:
+3. Install dependencies and start Vite dev server:
     ```bash
     npm install
     npm run dev
     ```
 
 ---
+
+## 🌐 Production Deployment Guide
+
+*   **Frontend (Vercel)**:
+    Set environment variables in Vercel settings: `VITE_SUPABASE_URL`, `VITE_SUPABASE_ANON_KEY`, and `VITE_PYTHON_BACKEND_URL` pointing to your deployed Python backend (e.g. `https://resorav1-production.up.railway.app`).
+*   **Python Backend (Railway / Render)**:
+    Root Directory: `backend-python`  
+    Start Command: `uvicorn main:app --host 0.0.0.0 --port $PORT`  
+    Environment Variable: `GROQ_API_KEY`
+
+---
+
 ## 🍿 Video
 https://github.com/user-attachments/assets/e39611a4-899b-480a-aa76-3e0512889d87
-
-
-
-
