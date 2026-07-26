@@ -2,6 +2,7 @@ import re
 import io
 import os
 import json
+# pyrefly: ignore [missing-import]
 from dotenv import load_dotenv
 # pyrefly: ignore [missing-import]
 from fastapi import FastAPI, File, UploadFile, HTTPException, Header
@@ -23,11 +24,6 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
-
-@app.get("/")
-@app.get("/health")
-def health_check():
-    return {"status": "online", "service": "Resora Python Backend", "version": "2.0.0"}
 
 # --- Pydantic Data Models matching JS Resume schema ---
 
