@@ -346,7 +346,7 @@ function Home({ profession, user, onBack, plan, onNavigateAuth }) {
           <div className="guest-warning-content">
             <span className="guest-warning-icon">⚠️</span>
             <p className="guest-warning-text">
-              <strong>Guest Session:</strong> Your resume data will be deleted once you close your browser unless you have a logged-in account.
+              <strong>Guest Session:</strong> Edits delete when browser closes.
             </p>
           </div>
           {onNavigateAuth && (
