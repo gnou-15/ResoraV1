@@ -215,7 +215,8 @@ export default function Landing({ onSelect, onNavigate, isEmbedded, user, mascot
       const formData = new FormData();
       formData.append("file", file);
 
-      const res = await fetch("http://localhost:8000/api/parse-resume", {
+      const backendUrl = import.meta.env.VITE_PYTHON_BACKEND_URL || "http://localhost:8000";
+      const res = await fetch(`${backendUrl.replace(/\/$/, "")}/api/parse-resume`, {
         method: "POST",
         body: formData,
       });
