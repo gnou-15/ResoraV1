@@ -24,6 +24,11 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+@app.get("/")
+@app.get("/health")
+def health_check():
+    return {"status": "online", "service": "Resora Python Backend", "version": "2.0.0"}
+
 # --- Pydantic Data Models matching JS Resume schema ---
 
 class Location(BaseModel):

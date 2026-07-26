@@ -216,13 +216,16 @@ export default function Landing({ onSelect, onNavigate, isEmbedded, user, mascot
       formData.append("file", file);
 
       const backendUrl = import.meta.env.VITE_PYTHON_BACKEND_URL || "http://localhost:8000";
-      const res = await fetch(`${backendUrl.replace(/\/$/, "")}/api/parse-resume`, {
+      const targetUrl = `${backendUrl.replace(/\/$/, "")}/api/parse-resume`;
+
+      const res = await fetch(targetUrl, {
         method: "POST",
         body: formData,
       });
 
       if (!res.ok) {
-        throw new Error("Failed to parse uploaded resume file.");
+        const errJson = await res.json().catch(() => ({}));
+        throw new Error(errJson.detail || `HTTP ${res.status}`);
       }
 
       const data = await res.json();
@@ -238,7 +241,12 @@ export default function Landing({ onSelect, onNavigate, isEmbedded, user, mascot
       onSelect(detectedProf);
     } catch (err) {
       console.error("Resume upload error:", err);
-      setSearchError("Failed to parse resume file. Please ensure it is a valid PDF, DOCX, or TXT file.");
+      const isMissingEnvOnProd = !import.meta.env.VITE_PYTHON_BACKEND_URL && window.location.hostname !== 'localhost';
+      if (isMissingEnvOnProd) {
+        setSearchError("Backend URL not configured on Vercel. Please add VITE_PYTHON_BACKEND_URL in Vercel Environment Variables.");
+      } else {
+        setSearchError(`Failed to parse resume (${err.message || "Network Error"}). Please verify backend server and GROQ_API_KEY.`);
+      }
     } finally {
       setIsUploading(false);
       e.target.value = "";
