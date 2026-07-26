@@ -3,11 +3,32 @@ import { encryptData, decryptData } from './encryption';
 
 const STORAGE_KEY = 'resume-builder-data';
 
-// --- Local Storage Fallbacks (Anonymous Users) ---
+function getGuestSessionId() {
+  try {
+    let sid = sessionStorage.getItem('resora_guest_session_token');
+    if (!sid) {
+      // New browser session: purge previous guest resume records
+      for (let i = localStorage.length - 1; i >= 0; i--) {
+        const k = localStorage.key(i);
+        if (k && (k.startsWith(STORAGE_KEY) || k.startsWith('resora-uploaded-resume'))) {
+          localStorage.removeItem(k);
+        }
+      }
+      sid = 'guest_' + Math.random().toString(36).substring(2, 10);
+      sessionStorage.setItem('resora_guest_session_token', sid);
+    }
+    return sid;
+  } catch (e) {
+    return 'temp';
+  }
+}
+
+// --- Browser Session Storage (Anonymous Guest Users) ---
 
 export function loadResume(profession) {
   try {
-    const key = profession ? `${STORAGE_KEY}-${profession}` : STORAGE_KEY;
+    const sid = getGuestSessionId();
+    const key = profession ? `${STORAGE_KEY}-${sid}-${profession}` : `${STORAGE_KEY}-${sid}`;
     const raw = localStorage.getItem(key);
     if (!raw) return null;
     return JSON.parse(raw);
@@ -17,13 +38,37 @@ export function loadResume(profession) {
 }
 
 export function saveResume(data, profession) {
-  const key = profession ? `${STORAGE_KEY}-${profession}` : STORAGE_KEY;
-  localStorage.setItem(key, JSON.stringify(data));
+  try {
+    const sid = getGuestSessionId();
+    const key = profession ? `${STORAGE_KEY}-${sid}-${profession}` : `${STORAGE_KEY}-${sid}`;
+    localStorage.setItem(key, JSON.stringify(data));
+  } catch (e) {
+    // ignore
+  }
 }
 
 export function clearResume(profession) {
-  const key = profession ? `${STORAGE_KEY}-${profession}` : STORAGE_KEY;
-  localStorage.removeItem(key);
+  try {
+    const sid = getGuestSessionId();
+    const key = profession ? `${STORAGE_KEY}-${sid}-${profession}` : `${STORAGE_KEY}-${sid}`;
+    localStorage.removeItem(key);
+  } catch (e) {
+    // ignore
+  }
+}
+
+export function clearAllGuestResumes() {
+  try {
+    for (let i = localStorage.length - 1; i >= 0; i--) {
+      const k = localStorage.key(i);
+      if (k && (k.startsWith(STORAGE_KEY) || k.startsWith('resora-uploaded-resume'))) {
+        localStorage.removeItem(k);
+      }
+    }
+    sessionStorage.removeItem('resora_guest_session_token');
+  } catch (e) {
+    // ignore
+  }
 }
 
 // --- Supabase Persistence (Authenticated Users) ---

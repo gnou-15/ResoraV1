@@ -21,9 +21,10 @@ const PROFESSION_TITLES = {
   data: "Data Analytics Resume Builder",
   sales: "Sales & Account Executive Resume Builder",
   hr: "Behavioral Health & Social Services Resume Builder",
+  general: "Resume Builder",
 };
 
-function Home({ profession, user, onBack, plan }) {
+function Home({ profession, user, onBack, plan, onNavigateAuth }) {
   const { showAlert, showConfirm } = useDialog();
   const {
     resume,
@@ -339,6 +340,26 @@ function Home({ profession, user, onBack, plan }) {
 
         </div>
       </main>
+
+      {!user && (
+        <div className="guest-warning-bubble-prompt">
+          <div className="guest-warning-content">
+            <span className="guest-warning-icon">⚠️</span>
+            <p className="guest-warning-text">
+              <strong>Guest Session:</strong> Your resume data will be deleted once you close your browser unless you have a logged-in account.
+            </p>
+          </div>
+          {onNavigateAuth && (
+            <button
+              type="button"
+              className="guest-warning-signin-btn"
+              onClick={onNavigateAuth}
+            >
+              Sign In to Save
+            </button>
+          )}
+        </div>
+      )}
     </div>
   );
 }

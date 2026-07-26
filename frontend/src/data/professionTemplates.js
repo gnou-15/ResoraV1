@@ -289,6 +289,29 @@ const HR_TEMPLATE = {
   userType: 'professional',
 }
 
+const GENERAL_TEMPLATE = {
+  headline: 'Professional | Experienced & Results-Driven',
+  summary:
+    'Dedicated professional with strong communication, organization, and problem-solving skills. Demonstrated success delivering results and collaborating effectively across teams.',
+  skills: 'Project Management, Communication, Problem Solving, Data Analysis, Leadership, Time Management',
+  experience: [
+    {
+      id: createId(),
+      company: '',
+      title: 'Professional Lead',
+      location: '',
+      startDate: '',
+      endDate: '',
+      current: false,
+      bullets: [
+        'Spearheaded key initiatives to streamline workflows and improve overall operational efficiency.',
+        'Collaborated with cross-functional teams to achieve high-priority goals on time.',
+      ],
+    },
+  ],
+  userType: 'professional',
+}
+
 export function getTemplateForProfession(key) {
   switch (key) {
     case 'it':
@@ -315,7 +338,9 @@ export function getTemplateForProfession(key) {
       return SALES_TEMPLATE
     case 'hr':
       return HR_TEMPLATE
+    case 'general':
+      return GENERAL_TEMPLATE
     default:
-      return IT_TEMPLATE
+      return GENERAL_TEMPLATE
   }
 }

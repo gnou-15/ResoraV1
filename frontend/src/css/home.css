@@ -1159,3 +1159,98 @@ select.input-error {
     transform: rotate(360deg);
   }
 }
+
+/* Guest Session Reminder Bubble Prompt */
+.guest-warning-bubble-prompt {
+  position: fixed;
+  bottom: 24px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 9999;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1.25rem;
+  padding: 0.75rem 1.25rem;
+  background: rgba(15, 23, 42, 0.92);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(245, 158, 11, 0.4);
+  border-radius: 999px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.25), 0 0 15px rgba(245, 158, 11, 0.2);
+  max-width: 90vw;
+  width: auto;
+  animation: slideUpBubble 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes slideUpBubble {
+  from {
+    opacity: 0;
+    transform: translate(-50%, 20px) scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: translate(-50%, 0) scale(1);
+  }
+}
+
+.guest-warning-content {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+}
+
+.guest-warning-icon {
+  font-size: 1.25rem;
+  line-height: 1;
+}
+
+.guest-warning-text {
+  margin: 0;
+  font-size: 0.88rem;
+  color: #f1f5f9;
+  line-height: 1.35;
+}
+
+.guest-warning-text strong {
+  color: #fbbf24;
+  font-weight: 700;
+}
+
+.guest-warning-signin-btn {
+  background: linear-gradient(135deg, #ea580c 0%, #d97706 100%);
+  color: #ffffff;
+  border: none;
+  font-size: 0.82rem;
+  font-weight: 700;
+  padding: 0.45rem 1rem;
+  border-radius: 999px;
+  cursor: pointer;
+  white-space: nowrap;
+  box-shadow: 0 2px 8px rgba(234, 88, 12, 0.35);
+  transition: all 0.2s ease;
+}
+
+.guest-warning-signin-btn:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(234, 88, 12, 0.5);
+  filter: brightness(1.1);
+}
+
+@media (max-width: 640px) {
+  .guest-warning-bubble-prompt {
+    bottom: 16px;
+    flex-direction: column;
+    align-items: stretch;
+    border-radius: 16px;
+    padding: 0.75rem 1rem;
+    gap: 0.6rem;
+    text-align: center;
+  }
+  .guest-warning-content {
+    justify-content: center;
+  }
+  .guest-warning-signin-btn {
+    width: 100%;
+  }
+}

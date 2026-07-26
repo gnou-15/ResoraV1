@@ -184,6 +184,12 @@ export function useResume(profession, user) {
     } else {
       clearStoredResume(profession);
     }
+    try {
+      sessionStorage.removeItem('resora-uploaded-resume');
+      localStorage.removeItem('resora-uploaded-resume');
+    } catch (e) {
+      // ignore
+    }
     const resetData = { ...defaultResume };
     if (user) {
       resetData.personal = {

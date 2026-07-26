@@ -1,6 +1,8 @@
 import re
+import io
+import json
 # pyrefly: ignore [missing-import]
-from fastapi import FastAPI
+from fastapi import FastAPI, File, UploadFile, HTTPException
 # pyrefly: ignore [missing-import]
 from fastapi.middleware.cors import CORSMiddleware
 # pyrefly: ignore [missing-import]
@@ -636,4 +638,233 @@ def read_root():
 @app.post("/analyze")
 def analyze(req: AnalyzeRequest):
     return analyze_resume(req.resume, req.profession)
+
+
+def extract_text_from_file(filename: str, content: bytes) -> str:
+    ext = filename.lower().split('.')[-1]
+    if ext == 'pdf':
+        try:
+            import pypdf
+            reader = pypdf.PdfReader(io.BytesIO(content))
+            pages_text = []
+            for page in reader.pages:
+                txt = page.extract_text()
+                if txt:
+                    pages_text.append(txt)
+            return "\n".join(pages_text)
+        except Exception as e:
+            print(f"Error reading PDF: {e}")
+            return ""
+    elif ext in ['docx', 'doc']:
+        try:
+            import docx
+            doc = docx.Document(io.BytesIO(content))
+            return "\n".join([p.text for p in doc.paragraphs if p.text])
+        except Exception as e:
+            print(f"Error reading DOCX: {e}")
+            return ""
+    else:
+        try:
+            return content.decode('utf-8', errors='ignore')
+        except Exception:
+            return ""
+
+
+def detect_profession_from_text(text: str) -> str:
+    t = (text or "").lower()
+    if not t.strip():
+        return "general"
+
+    has_engineering = bool(re.search(r'(civil engineer|mechanical engineer|electrical engineer|chemical engineer|industrial engineer|safety engineer|\bengineering\b)', t))
+    has_safety = bool(re.search(r'(safety officer|safety coordinator|ehs|occupational safety|safety inspector)', t))
+    has_customs = bool(re.search(r'(customs|import|export|tariff|declarant)', t))
+    has_business = bool(re.search(r'(accountant|accountancy|cpa|bookkeeper|financial analyst|business admin|finance|auditor)', t))
+    has_designer = bool(re.search(r'(designer|graphic|illustrator|artist|ui/ux|ux designer|ui designer)', t))
+    has_data = bool(re.search(r'(data analyst|data scientist|business intelligence|bi analyst|analyst)', t))
+    has_sales = bool(re.search(r'(sales|account executive|representative|seller|telemarketing)', t))
+    has_hr = bool(re.search(r'(hr|human resources|recruiter|onboarding|recruitment|psychology|psychologist|psychiatrist|counselor|social worker|therapist|behavioral)', t))
+
+    has_it = bool(re.search(r'(developer|software|programmer|full[- ]stack|web|frontend|backend|react|node|coding|programming|tech|technology|computer|\bit\b|\bbsit\b|\bcs\b|software engineer|it engineer|systems engineer|devops)', t))
+    has_healthcare = bool(re.search(r'(nurse|doctor|clinic|health|patient|rn|lpn|clinical|medical|hospital)', t))
+    has_education = bool(re.search(r'(teacher|instructor|professor|tutor|education|school|teaching|classroom)', t))
+    has_management = bool(re.search(r'(manager|project|product|operations|pm|lead|supervisor|management)', t))
+
+    if has_engineering: return "engineering"
+    if has_safety: return "safety"
+    if has_customs: return "customs"
+    if has_business: return "business"
+    if has_designer: return "designer"
+    if has_data: return "data"
+    if has_sales: return "sales"
+    if has_hr: return "hr"
+    
+    if has_it: return "it"
+    if has_healthcare: return "healthcare"
+    if has_education: return "education"
+    if has_management: return "management"
+
+    return "general"
+
+
+def parse_resume_fields(text: str) -> Dict[str, Any]:
+    lines = [line.strip() for line in text.splitlines() if line.strip()]
+    
+    # 1. Full name
+    full_name = ""
+    for line in lines[:8]:
+        if len(line) < 40 and not re.search(r'[@\d:]', line) and not any(kw in line.lower() for kw in ['resume', 'curriculum', 'page', 'email', 'phone', 'address', 'contact']):
+            full_name = line
+            break
+
+    # 2. Email
+    email_match = re.search(r'[\w\.-]+@[\w\.-]+\.\w+', text)
+    email = email_match.group(0) if email_match else ""
+
+    # 3. Phone
+    phone_match = re.search(r'\(?\+?\d{1,4}\)?[\s\.-]?\d{3,4}[\s\.-]?\d{3,4}', text)
+    phone = phone_match.group(0) if phone_match else ""
+
+    # 4. Social links
+    github_match = re.search(r'(?:https?://)?(?:www\.)?github\.com/([\w-]+)', text, re.IGNORECASE)
+    github = f"github.com/{github_match.group(1)}" if github_match else ""
+
+    linkedin_match = re.search(r'(?:https?://)?(?:www\.)?linkedin\.com/in/([\w-]+)', text, re.IGNORECASE)
+    linkedin = f"linkedin.com/in/{linkedin_match.group(1)}" if linkedin_match else ""
+
+    portfolio_match = re.search(r'(?:https?://)?([\w-]+\.(?:dev|me|io|com|org|net))', text, re.IGNORECASE)
+    portfolio = portfolio_match.group(1) if (portfolio_match and 'github' not in portfolio_match.group(1) and 'linkedin' not in portfolio_match.group(1)) else ""
+
+    # 5. Extract Headline & Summary
+    headline = ""
+    summary = ""
+    for line in lines[1:8]:
+        if len(line) < 60 and not re.search(r'[@\d]', line) and line != full_name:
+            headline = line
+            break
+
+    summary_idx = -1
+    for i, l in enumerate(lines):
+        if re.search(r'^(summary|about me|profile|professional summary|objective)', l, re.IGNORECASE):
+            summary_idx = i
+            break
+    if summary_idx != -1 and summary_idx + 1 < len(lines):
+        summary_lines = []
+        for l in lines[summary_idx+1:summary_idx+6]:
+            if re.search(r'^(experience|education|skills|projects|certifications|work)', l, re.IGNORECASE):
+                break
+            summary_lines.append(l)
+        summary = " ".join(summary_lines)
+
+    # 6. Extract Skills
+    skills_list = []
+    skills_idx = -1
+    for i, l in enumerate(lines):
+        if re.search(r'^(skills|technical skills|core competencies)', l, re.IGNORECASE):
+            skills_idx = i
+            break
+    if skills_idx != -1:
+        for l in lines[skills_idx+1:skills_idx+6]:
+            if re.search(r'^(experience|education|projects|certifications|work|summary)', l, re.IGNORECASE):
+                break
+            items = re.split(r'[,•|·]', l)
+            for item in items:
+                clean_item = item.strip()
+                if clean_item and len(clean_item) < 35:
+                    skills_list.append(clean_item)
+
+    # 7. Extract Experience
+    experience_list = []
+    exp_idx = -1
+    for i, l in enumerate(lines):
+        if re.search(r'^(experience|work experience|employment history|work history)', l, re.IGNORECASE):
+            exp_idx = i
+            break
+    if exp_idx != -1:
+        current_exp = None
+        for l in lines[exp_idx+1:]:
+            if re.search(r'^(education|projects|certifications|skills|achievements)', l, re.IGNORECASE):
+                break
+            if len(l) < 65 and not l.startswith('•') and not l.startswith('-') and not l.startswith('*'):
+                if current_exp and (current_exp['title'] or current_exp['bullets']):
+                    experience_list.append(current_exp)
+                current_exp = {
+                    "id": f"exp-{len(experience_list)+1}",
+                    "company": "Company / Organization",
+                    "title": l,
+                    "location": "",
+                    "startDate": "",
+                    "endDate": "Present",
+                    "current": True,
+                    "bullets": []
+                }
+            elif current_exp:
+                clean_bullet = re.sub(r'^[•\-\*\s]+', '', l).strip()
+                if clean_bullet:
+                    current_exp['bullets'].append(clean_bullet)
+        if current_exp and (current_exp['title'] or current_exp['bullets']):
+            experience_list.append(current_exp)
+
+    # 8. Extract Education
+    education_list = []
+    edu_idx = -1
+    for i, l in enumerate(lines):
+        if re.search(r'^(education|academic background)', l, re.IGNORECASE):
+            edu_idx = i
+            break
+    if edu_idx != -1:
+        for l in lines[edu_idx+1:]:
+            if re.search(r'^(experience|projects|certifications|skills|achievements|work)', l, re.IGNORECASE):
+                break
+            if len(l) < 80 and any(w in l.lower() for w in ['university', 'college', 'bachelor', 'master', 'bs', 'ba', 'degree', 'high school', 'school', 'academy']):
+                education_list.append({
+                    "id": f"edu-{len(education_list)+1}",
+                    "school": l,
+                    "degree": "Degree Program",
+                    "field": "General",
+                    "endDate": "2024",
+                    "gpa": "",
+                    "coursework": ""
+                })
+
+    detected_prof = detect_profession_from_text(text)
+
+    return {
+        "profession": detected_prof,
+        "rawText": text,
+        "resume": {
+            "personal": {
+                "fullName": full_name,
+                "email": email,
+                "phoneCountry": "+1",
+                "phoneNumber": phone,
+                "location": { "country": "", "state": "", "city": "", "barangay": "", "street": "" },
+                "github": github,
+                "linkedin": linkedin,
+                "portfolio": portfolio
+            },
+            "headline": headline,
+            "summary": summary,
+            "skills": ", ".join(skills_list[:15]) if skills_list else "",
+            "technicalSkills": { "languages": ", ".join(skills_list[:8]) } if skills_list else {},
+            "experience": experience_list if experience_list else [],
+            "education": education_list if education_list else [],
+            "userType": "professional"
+        }
+    }
+
+
+@app.post("/api/parse-resume")
+async def parse_resume_endpoint(file: UploadFile = File(...)):
+    try:
+        content = await file.read()
+        extracted_text = extract_text_from_file(file.filename, content)
+        if not extracted_text.strip():
+            raise HTTPException(status_code=400, detail="Could not extract readable text from uploaded file.")
+        
+        parsed = parse_resume_fields(extracted_text)
+        return {"success": True, "filename": file.filename, **parsed}
+    except Exception as e:
+        print(f"Upload parse error: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
 

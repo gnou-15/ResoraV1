@@ -84,10 +84,10 @@ Developing Resora advanced my skills from traditional full-stack web development
 
 ### 1. Database Setup
 1.  Log in to your Supabase Console.
-2.  Open the SQL Editor and execute the schema definitions inside [database_setup.sql](file:///c:/Users/mapan/Documents/School%20Things/Practice%20Webs/ThirdWeb/random-web/backend/database_setup.sql) to provision tables and security rules.
+2.  Open the SQL Editor and execute the schema definitions inside [database_setup.sql](file:///c:/Users/mapan/Documents/School%20Things/Practice%20Webs/ThirdWeb/random-web/backend-python/database_setup.sql) to provision tables and security rules.
 
-### 2. Backend Installation
-1.  Open a terminal inside the `/backend` folder.
+### 2. Python Backend Installation (`backend-python`)
+1.  Open a terminal inside the `/backend-python` folder.
 2.  Create a virtual environment and install dependencies:
     ```bash
     python -m venv .venv
@@ -98,6 +98,14 @@ Developing Resora advanced my skills from traditional full-stack web development
 3.  Launch the API server:
     ```bash
     uvicorn main:app --reload
+    ```
+
+### 3. Node.js Backend Installation (`backend-node`)
+1.  Open a terminal inside the `/backend-node` folder.
+2.  Install dependencies and start the Node server:
+    ```bash
+    npm install
+    npm run dev
     ```
 
 ### 3. Frontend Installation

@@ -297,6 +297,7 @@ function App() {
             user={user}
             onBack={handleBackToLanding}
             plan={plan}
+            onNavigateAuth={() => transitionToPage("auth", "Sign in to save your resume")}
           />
         </div>
       )}

@@ -64,10 +64,10 @@ export default function Landing({ onSelect, onNavigate, isEmbedded, user, mascot
 
   const suggestions = input.trim()
     ? PREDICTABLE_PROFESSIONS.filter(
-        (p) =>
-          p.toLowerCase().includes(input.toLowerCase()) &&
-          p.toLowerCase() !== input.toLowerCase()
-      ).slice(0, 5)
+      (p) =>
+        p.toLowerCase().includes(input.toLowerCase()) &&
+        p.toLowerCase() !== input.toLowerCase()
+    ).slice(0, 5)
     : [];
 
   function handleSelectSuggestion(suggestion) {
@@ -172,20 +172,96 @@ export default function Landing({ onSelect, onNavigate, isEmbedded, user, mascot
     if (hasData) return "data";
     if (hasSales) return "sales";
     if (hasHR) return "hr";
-    
+
     if (hasIT) return "it";
     if (hasHealthcare) return "healthcare";
     if (hasEducation) return "education";
     if (hasManagement) return "management";
-    
+
     return null;
   }
+
+  const [isUploading, setIsUploading] = useState(false);
+  const [hasUploadedResume, setHasUploadedResume] = useState(() => {
+    try {
+      return !!(sessionStorage.getItem("resora-uploaded-resume") || localStorage.getItem("resora-uploaded-resume"));
+    } catch {
+      return false;
+    }
+  });
+
+  useEffect(() => {
+    const checkUpload = () => {
+      try {
+        const stored = sessionStorage.getItem("resora-uploaded-resume") || localStorage.getItem("resora-uploaded-resume");
+        setHasUploadedResume(!!stored);
+      } catch {
+        setHasUploadedResume(false);
+      }
+    };
+    checkUpload();
+    window.addEventListener("focus", checkUpload);
+    return () => window.removeEventListener("focus", checkUpload);
+  }, []);
+
+  const handleFileUpload = async (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setIsUploading(true);
+    setSearchError("");
+
+    try {
+      const formData = new FormData();
+      formData.append("file", file);
+
+      const res = await fetch("http://localhost:8000/api/parse-resume", {
+        method: "POST",
+        body: formData,
+      });
+
+      if (!res.ok) {
+        throw new Error("Failed to parse uploaded resume file.");
+      }
+
+      const data = await res.json();
+      const detectedProf = data.profession || "general";
+      const parsedResume = data.resume;
+
+      const sid = sessionStorage.getItem('resora_guest_session_token') || 'guest';
+      const storageKey = `resume-builder-data-${sid}-${detectedProf}`;
+      localStorage.setItem(storageKey, JSON.stringify(parsedResume));
+      sessionStorage.setItem("resora-uploaded-resume", JSON.stringify({ profession: detectedProf, resume: parsedResume }));
+      setHasUploadedResume(true);
+
+      onSelect(detectedProf);
+    } catch (err) {
+      console.error("Resume upload error:", err);
+      setSearchError("Failed to parse resume file. Please ensure it is a valid PDF, DOCX, or TXT file.");
+    } finally {
+      setIsUploading(false);
+      e.target.value = "";
+    }
+  };
+
+  const handleGoToUploaded = () => {
+    try {
+      const raw = sessionStorage.getItem("resora-uploaded-resume") || localStorage.getItem("resora-uploaded-resume");
+      if (raw) {
+        const parsed = JSON.parse(raw);
+        onSelect(parsed.profession || "general");
+        return;
+      }
+    } catch (e) {
+      // fallback
+    }
+    onSelect("general");
+  };
 
   function handleSubmit(e) {
     e && e.preventDefault();
     let targetInput = input.trim();
     if (!targetInput && placeholder) {
-      // Clean up placeholder text for matching (remove cursor and prefix)
       targetInput = placeholder.replace(" |", "").replace("I am a ", "");
     }
     if (!targetInput) {
@@ -193,22 +269,13 @@ export default function Landing({ onSelect, onNavigate, isEmbedded, user, mascot
       return;
     }
 
-    // Check if input is only numbers or special characters
     if (/^[0-9\s!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]*$/.test(targetInput)) {
       setSearchError("Please enter a valid profession.");
       return;
     }
-    
-    const prof = detectProfession(targetInput);
-    if (prof) {
-      if (!user) {
-        setShowAuthModal(true);
-      } else {
-        onSelect(prof);
-      }
-    } else {
-      setSearchError("Unsupported profession. Try: Nurse, Developer, Engineer, Accountant, Psychologist");
-    }
+
+    const prof = detectProfession(targetInput) || "general";
+    onSelect(prof);
   }
 
   return (
@@ -294,7 +361,7 @@ export default function Landing({ onSelect, onNavigate, isEmbedded, user, mascot
               <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
             </svg>
           </button>
-          
+
           {searchError && (
             <div className="search-error-bubble">
               {searchError}
@@ -350,9 +417,81 @@ export default function Landing({ onSelect, onNavigate, isEmbedded, user, mascot
         </p>
       </main>
 
+      <div className="floating-upload-resume-widget">
+        <input
+          type="file"
+          id="resume-upload-input"
+          accept=".pdf,.docx,.doc,.txt"
+          style={{ display: "none" }}
+          onChange={handleFileUpload}
+        />
+        <div className="upload-tooltip-bubble">
+          {hasUploadedResume ? "Go to Uploaded Resume" : isUploading ? "Uploading..." : "Upload Resume"}
+        </div>
+        <button
+          type="button"
+          className={`floating-upload-btn ${hasUploadedResume ? "active-uploaded" : ""}`}
+          onClick={() => {
+            if (hasUploadedResume) {
+              handleGoToUploaded();
+            } else {
+              document.getElementById("resume-upload-input")?.click();
+            }
+          }}
+          disabled={isUploading}
+          aria-label={hasUploadedResume ? "Go to Uploaded Resume" : "Upload Resume"}
+        >
+          <div className="floating-btn-pulse-ring"></div>
+          <svg width="34" height="34" viewBox="0 0 36 36" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <defs>
+              <linearGradient id="docGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                <stop offset="0%" stopColor="#ffffff" />
+                <stop offset="100%" stopColor="#ffedd5" />
+              </linearGradient>
+            </defs>
+
+            {/* Background Document Sheet */}
+            <rect x="7" y="9" width="20" height="24" rx="3.5" fill="url(#docGrad)" stroke="#ffffff" strokeWidth="1.2"/>
+            <path d="M 21 9 L 27 15 L 21 15 Z" fill="#fed7aa" />
+
+            {/* Document lines */}
+            <line x1="11" y1="20" x2="23" y2="20" stroke="#ea580c" strokeWidth="1.8" strokeLinecap="round" />
+            <line x1="11" y1="24" x2="19" y2="24" stroke="#fdba74" strokeWidth="1.8" strokeLinecap="round" />
+            <line x1="11" y1="28" x2="21" y2="28" stroke="#fdba74" strokeWidth="1.8" strokeLinecap="round" />
+
+            {/* Resora Mascot Emblem */}
+            <g transform="translate(10, 1) scale(0.62)">
+              {/* Body */}
+              <circle cx="17" cy="18" r="8" fill="#1e293b" />
+              {/* Hat Brim */}
+              <rect x="7" y="8" width="20" height="2.2" rx="0.8" fill="#0f172a" />
+              {/* Hat Ribbon */}
+              <rect x="10" y="6.8" width="14" height="1.4" fill="#ea580c" />
+              {/* Hat Crown */}
+              <rect x="10" y="1" width="14" height="6" rx="1" fill="#0f172a" />
+              {/* Eyes */}
+              <circle cx="14" cy="16.5" r="1.8" fill="#ffffff" />
+              <circle cx="14" cy="16.5" r="0.9" fill="#0f172a" />
+              <circle cx="20" cy="16.5" r="1.8" fill="#ffffff" />
+              <circle cx="20" cy="16.5" r="0.9" fill="#0f172a" />
+              {/* Monocle */}
+              <circle cx="20" cy="16.5" r="2.8" stroke="#f59e0b" strokeWidth="0.9" fill="none" />
+            </g>
+
+            {/* Upload Arrow Badge */}
+            <circle cx="27" cy="27" r="7" fill={hasUploadedResume ? "#059669" : "#ea580c"} stroke="#ffffff" strokeWidth="1.6"/>
+            {hasUploadedResume ? (
+              <path d="M 23.5 27 L 26 29.5 L 30.5 24.5" stroke="#ffffff" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/>
+            ) : (
+              <path d="M 27 23.5 L 27 30.5 M 24.5 26 L 27 23.5 L 29.5 26" stroke="#ffffff" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/>
+            )}
+          </svg>
+        </button>
+      </div>
+
       <footer className="landing-footer">
         <p className="footer-version-text">
-          Resora by Nezer • <span className="footer-version-badge">v1.0.0</span>
+          Resora by Nezer • <span className="footer-version-badge">v2.0.0</span>
         </p>
       </footer>
 
