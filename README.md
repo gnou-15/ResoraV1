@@ -1,6 +1,6 @@
 # Resora v2.0.0
 
-> **Major Version 2.0.0 Release** | AI-powered, secure, interactive resume builder and benchmarking platform that evaluates and auto-generates ATS-optimized resumes across 12 target professions and a generic Resume Builder fallback. Features Groq AI (Llama-3.3-70B) document parsing, zero-knowledge client-side encryption, real-time interactive heuristic scoring, anonymous guest mode, and zero-watermark exports.
+> **Major Version 2.0.0 Release** | Secure, ATS-optimized resume builder featuring Groq AI (Llama-3.3-70B) document parsing, rule-based heuristic ATS analytics & benchmarking across 12 target professions, zero-knowledge AES-256 client-side encryption, anonymous guest mode, and zero-watermark PDF exports.
 
 ---
 
