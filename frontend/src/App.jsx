@@ -6,6 +6,7 @@ import Services from "./pages/services";
 import Contact from "./pages/contact";
 import Auth from "./pages/auth";
 import LoadingScreen from "./components/LoadingScreen";
+import SplashCover from "./components/SplashCover";
 import InteractiveBackground from "./components/InteractiveBackground";
 import AuthTransitionBuffer from "./components/AuthTransitionBuffer";
 import { supabase } from "./services/supabase";
@@ -35,6 +36,7 @@ function App() {
 
   const [isExitingBuilder, setIsExitingBuilder] = useState(false);
   const [showLoader, setShowLoader] = useState(false);
+  const [showInitialSplash, setShowInitialSplash] = useState(true);
   const [user, setUser] = useState(null);
   const [adminPanelOpen, setAdminPanelOpen] = useState(false);
 
@@ -300,6 +302,10 @@ function App() {
             onNavigateAuth={() => transitionToPage("auth", "Sign in to save your resume")}
           />
         </div>
+      )}
+
+      {showInitialSplash && (
+        <SplashCover onComplete={() => setShowInitialSplash(false)} />
       )}
 
       {showLoader && (
