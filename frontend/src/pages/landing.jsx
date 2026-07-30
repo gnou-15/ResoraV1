@@ -320,7 +320,7 @@ export default function Landing({ onSelect, onNavigate, isEmbedded, user, mascot
               <path d="M 17 23.5 C 13.5 21, 7.5 23.5, 5.5 27 C 7.5 27, 13 25.5, 17 24.5 C 21 25.5, 26.5 27, 28.5 27 C 26.5 23.5, 20.5 21, 17 23.5 Z" fill="#ffffff" />
             </svg>
             <span className="logo-brand">
-              Resora <span className="logo-subtext" onClick={(e) => { e.stopPropagation(); e.preventDefault(); onNavigate && onNavigate("about"); }}>by Nezer</span>
+              Resora <span className="logo-subtext" onClick={(e) => { e.stopPropagation(); e.preventDefault(); window.open("https://daniel-mapano.vercel.app/", "_blank", "noopener,noreferrer"); }}>by Nezer</span>
             </span>
           </a>
           <nav className="nav-menu">
