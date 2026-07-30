@@ -46,10 +46,10 @@ export default function About({ onNavigate, isEmbedded }) {
             <a href="#" className="nav-link active" onClick={(e) => e.preventDefault()}>
               About Us
             </a>
-            <a href="#" className="nav-link" onClick={(e) => { e.preventDefault(); onNavigate && onNavigate("landing"); }}>
+            <a href="#" className="nav-link" onClick={(e) => { e.preventDefault(); onNavigate && onNavigate("services"); }}>
               Service
             </a>
-            <a href="#" className="nav-link" onClick={(e) => { e.preventDefault(); onNavigate && onNavigate("landing"); }}>
+            <a href="#" className="nav-link" onClick={(e) => { e.preventDefault(); onNavigate && onNavigate("contact"); }}>
               Contact
             </a>
           </nav>
@@ -57,24 +57,128 @@ export default function About({ onNavigate, isEmbedded }) {
       )}
 
       <main className="about-main">
-        <div className="about-split-container">
-          <div className="about-text-column">
-            <h2 className="about-title">Hi, I'm <span style={{ color: "#ea580c" }}>Dan</span></h2>
-            <h3 className="about-subtitle">The founder of <span style={{ color: "#ea580c", fontWeight: "700" }}>Nezer</span> company</h3>
-            <p className="about-description">
-              At <span style={{ color: "#ea580c", fontWeight: "700" }}>Nezer</span>, our core mission is to make the complex simple. Across all fields including engineering, modular studies, and diverse industrial sectors, we take processes that seem complicated and redesign them into intuitive, effortless experiences.
-            </p>
-            <p className="about-description" style={{ marginTop: "1rem" }}>
-              Resora is our flagship product. Built on this exact philosophy, it turns the frustrating and intricate chore of crafting a high-quality, ATS-friendly resume into a seamless, automated process that gives professionals the power to stand out in seconds.
+        {/* Hero Section */}
+        <section className="about-hero-section">
+          <div className="about-badge">ABOUT RESORA & NEZER</div>
+          <h1 className="about-hero-title">
+            Making the Complex <span className="highlight-text">Simple.</span>
+          </h1>
+          <p className="about-hero-subtitle">
+            At <span className="brand-accent">Nezer</span>, we take intricate industrial, engineering, and digital processes and redesign them into intuitive, effortless experiences.
+          </p>
+        </section>
+
+        {/* Product Overview Feature Section */}
+        <section className="about-intro-card">
+          <div className="intro-card-content">
+            <h2 className="intro-card-title">Driven by Innovation & Efficiency</h2>
+            <p className="intro-card-text">
+              <strong>Resora</strong> is Nezer's flagship application—built to turn the frustrating and intricate chore of crafting a high-quality, Applicant Tracking System (ATS) friendly resume into a seamless, automated process that gives professionals the power to stand out instantly.
             </p>
           </div>
-          <div className="about-image-column">
-            <div className="about-image-wrapper">
-              <img src="/founder.png" alt="Dan, Founder of Nezer company"
-                className="about-portrait-img" />
+        </section>
+
+        {/* Mission & Vision Dual Grid */}
+        <section className="about-grid-section">
+          <div className="about-card mission-card">
+            <div className="card-icon-wrapper">
+              <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#ea580c" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <circle cx="12" cy="12" r="10"/>
+                <circle cx="12" cy="12" r="6"/>
+                <circle cx="12" cy="12" r="2"/>
+              </svg>
+            </div>
+            <h3 className="card-title">Our Mission</h3>
+            <p className="card-description">
+              To simplify career document creation through intelligent design, removing friction and confusion so job seekers can showcase their true potential with confidence.
+            </p>
+          </div>
+
+          <div className="about-card vision-card">
+            <div className="card-icon-wrapper">
+              <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#ea580c" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7z"/>
+                <circle cx="12" cy="12" r="3"/>
+              </svg>
+            </div>
+            <h3 className="card-title">Our Vision</h3>
+            <p className="card-description">
+              To empower professionals everywhere with cutting-edge tools that elevate career opportunities, bridging the gap between talent and top recruiters.
+            </p>
+          </div>
+        </section>
+
+        {/* Core Values / Nezer Philosophy */}
+        <section className="pillars-section">
+          <h2 className="section-heading">Our Core Values</h2>
+          <div className="pillars-grid">
+            <div className="pillar-item">
+              <div className="pillar-number">01</div>
+              <h4 className="pillar-title">Process Simplicity</h4>
+              <p className="pillar-desc">
+                We believe the best technology stays out of your way. We transform complex workflows into simple, human-centered designs.
+              </p>
+            </div>
+
+            <div className="pillar-item">
+              <div className="pillar-number">02</div>
+              <h4 className="pillar-title">Uncompromising Privacy</h4>
+              <p className="pillar-desc">
+                Your career story belongs to you. We design all our platforms with security and absolute user privacy at the core.
+              </p>
+            </div>
+
+            <div className="pillar-item">
+              <div className="pillar-number">03</div>
+              <h4 className="pillar-title">Continuous Innovation</h4>
+              <p className="pillar-desc">
+                From engineering to AI profile scoring, we constantly refine our tools to keep job seekers ahead of evolving market standards.
+              </p>
+            </div>
+
+            <div className="pillar-item">
+              <div className="pillar-number">04</div>
+              <h4 className="pillar-title">Equal Opportunity</h4>
+              <p className="pillar-desc">
+                Every candidate deserves a fair shot. We democratize access to high-impact resume creation for professionals everywhere.
+              </p>
             </div>
           </div>
-        </div>
+        </section>
+
+        {/* Metrics Bar */}
+        <section className="about-stats-bar">
+          <div className="stat-box">
+            <span className="stat-number">100%</span>
+            <span className="stat-label">ATS Compliant Engine</span>
+          </div>
+          <div className="stat-divider" />
+          <div className="stat-box">
+            <span className="stat-number">10x</span>
+            <span className="stat-label">Faster Resume Generation</span>
+          </div>
+          <div className="stat-divider" />
+          <div className="stat-box">
+            <span className="stat-number">Instant</span>
+            <span className="stat-label">Live Preview & Export</span>
+          </div>
+        </section>
+
+        {/* Call to Action Banner */}
+        <section className="about-cta-card">
+          <h2 className="cta-heading">Ready to Elevate Your Resume?</h2>
+          <p className="cta-subtext">
+            Join professionals using Resora by Nezer to craft standout resumes in seconds.
+          </p>
+          <div className="cta-actions">
+            <button className="cta-btn primary" onClick={() => onNavigate && onNavigate("landing")}>
+              Get Started Now
+            </button>
+            <button className="cta-btn secondary" onClick={() => onNavigate && onNavigate("contact")}>
+              Contact Us
+            </button>
+          </div>
+        </section>
       </main>
     </div>
   );

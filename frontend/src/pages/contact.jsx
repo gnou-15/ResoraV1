@@ -68,7 +68,7 @@ export default function Contact({ onNavigate, isEmbedded, onMascotMoodChange }) 
     try {
       // Retrieve Web3Forms access key from environment variables
       const accessKey = import.meta.env.VITE_WEB3FORMS_ACCESS_KEY || "YOUR_ACCESS_KEY_HERE";
-      
+
       const response = await fetch("https://api.web3forms.com/submit", {
         method: "POST",
         headers: {
@@ -149,8 +149,10 @@ export default function Contact({ onNavigate, isEmbedded, onMascotMoodChange }) 
         <div className="contact-split-container">
           {/* Left Side: Info */}
           <div className="contact-info-column animate-fade-in">
-            <h2 className="contact-title">Get in Touch</h2>
-            <h3 className="contact-subtitle">We would love to hear from you</h3>
+            <h1 className="contact-title">
+              <span className="highlight-text">Get in Touch</span>
+            </h1>
+            <h2 className="contact-subtitle">We would love to hear from you</h2>
             <p className="contact-description">
               Have a question about our ATS template designs, found a bug, or just want to suggest a new feature?
               Shoot us a message! Nezer company is dedicated to continuous improvement and supporting your job search journey.

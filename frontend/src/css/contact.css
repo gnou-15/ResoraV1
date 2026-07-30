@@ -39,13 +39,16 @@
 
 .contact-title {
   font-family: 'Outfit', sans-serif;
-  font-weight: 700;
-  font-size: 4.5rem;
-  color: #000000;
-  margin: 0 0 1rem;
+  font-weight: 800;
+  font-size: 4rem;
+  color: #0f172a;
+  margin: 0 0 0.5rem;
   line-height: 1.1;
   letter-spacing: -0.02em;
-  text-transform: uppercase;
+}
+
+.highlight-text {
+  color: #ea580c;
 }
 
 .contact-subtitle {
