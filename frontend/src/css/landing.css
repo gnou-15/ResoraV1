@@ -58,12 +58,19 @@
 }
 
 .logo-subtext {
-  font-family: 'Inter', sans-serif;
-  font-weight: 400;
-  font-size: 2rem;
-  color: #4b5563;
-  /* muted dark grey */
-  margin-left: 6px;
+  font-family: 'Poppins', sans-serif;
+  font-weight: 700;
+  font-size: 0.75rem;
+  color: #64748b;
+  margin-left: 5px;
+  cursor: pointer;
+  letter-spacing: -0.01em;
+  transition: color 0.2s ease, opacity 0.2s ease;
+}
+
+.logo-subtext:hover {
+  color: #ea580c;
+  opacity: 0.85;
 }
 
 .nav-menu {
