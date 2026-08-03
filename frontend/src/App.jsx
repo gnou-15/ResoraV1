@@ -193,11 +193,9 @@ function App() {
                     👑 Admin Panel
                   </button>
                 )}
-                {route.page === "landing" && (
-                  <span className="user-greeting">
-                    Hi, {(decryptName(user.user_metadata?.full_name, user.id) || user.email.split('@')[0]).trim().split(/\s+/)[0]}!
-                  </span>
-                )}
+                <span className="user-greeting">
+                  Hi, {(decryptName(user.user_metadata?.full_name, user.id) || user.email.split('@')[0]).trim().split(/\s+/)[0]}!
+                </span>
                 <button
                   className="nav-btn-signin signout-btn"
                   onClick={async (e) => {
