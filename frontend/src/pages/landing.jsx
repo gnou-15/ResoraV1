@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef } from "react";
 import "../css/landing.css";
 import InteractiveBackground from "../components/InteractiveBackground";
 import PeekingMonster from "../components/PeekingMonster";
@@ -13,7 +13,11 @@ const PREDICTABLE_PROFESSIONS = [
   "Tutor",
   "School Instructor",
   "Professor",
-  "Education Specialist",
+  "Psychiatrist",
+  "Counselor",
+  "Social Worker",
+  "Therapist",
+  "Behavioral Health Specialist",
   "Project Manager",
   "Product Manager",
   "Operations Manager",
@@ -54,7 +58,7 @@ const PREDICTABLE_PROFESSIONS = [
   "Behavioral Health Specialist",
 ];
 
-export default function Landing({ onSelect, onNavigate, isEmbedded, user, mascotMood, onMascotMoodChange, plan }) {
+export default function Landing({ onSelect, onNavigate, isEmbedded, mascotMood }) {
   const [input, setInput] = useState("");
   const [placeholder, setPlaceholder] = useState("");
   const [searchError, setSearchError] = useState("");
@@ -261,7 +265,7 @@ export default function Landing({ onSelect, onNavigate, isEmbedded, user, mascot
         onSelect(parsed.profession || "general");
         return;
       }
-    } catch (e) {
+    } catch {
       // fallback
     }
     onSelect("general");
@@ -278,7 +282,7 @@ export default function Landing({ onSelect, onNavigate, isEmbedded, user, mascot
       return;
     }
 
-    if (/^[0-9\s!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]*$/.test(targetInput)) {
+    if (/^[0-9\s!@#$%^&*()_+\-=[\]{};':"\\|,.<>?]*$/.test(targetInput)) {
       setSearchError("Please enter a valid profession.");
       return;
     }

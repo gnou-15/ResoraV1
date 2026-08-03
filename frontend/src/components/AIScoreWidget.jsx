@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import { useState } from "react";
 import PeekingMonster from "./PeekingMonster";
 import { getMetricSuggestions } from "../services/aiScorer";
 import "../css/AIScoreWidget.css";
@@ -252,7 +252,7 @@ function AIScoreWidget({ resume, profession, analysisResult, loading, onUpdateRe
                       <p className="optimizer-subtext">Click on any bullet below to automatically inject quantifiable metrics (numbers/percentages):</p>
                       
                       <div className="optimizer-list">
-                        {bulletsToOptimize.map((bullet, idx) => {
+                        {bulletsToOptimize.map((bullet) => {
                           const bulletId = `${bullet.jobId}-${bullet.bulletIndex}`;
                           const isSelected = activeOptimizerBulletId === bulletId;
                           const suggestions = getMetricSuggestions(bullet.text, profession);

@@ -1,9 +1,9 @@
-import React, { useState, useEffect } from "react";
+import { useState, useEffect } from "react";
 import "../css/AdminPanel.css";
 import { supabase } from "../services/supabase";
 import { useDialog } from "../context/DialogContext";
 
-export default function AdminPanel({ isOpen, onClose, user }) {
+export default function AdminPanel({ isOpen, onClose }) {
   const { showAlert } = useDialog();
   const [payments, setPayments] = useState([]);
   const [loading, setLoading] = useState(false);

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import { useState, useEffect } from "react";
 import "../css/PricingModal.css";
 import { supabase } from "../services/supabase";
 
@@ -229,7 +229,7 @@ export default function PricingModal({ isOpen, triggerRect, onClose, currentPlan
             setIsVerifying(false);
             setRefError("Verification server is currently busy. Please try again.");
           }
-        } catch (err) {
+        } catch {
           setIsVerifying(false);
           setRefError("Failed to update account plan. Please try again.");
         }

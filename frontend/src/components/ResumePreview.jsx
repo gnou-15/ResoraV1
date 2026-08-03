@@ -55,7 +55,7 @@ function ContactLine({ personal, profession }) {
   return <p className="preview-contact">{items.join(" | ")}</p>;
 }
 
-function ResumePreview({ resume, profession, plan, onPageCountChange, isMobilePreviewActive = false }) {
+function ResumePreview({ resume, profession, onPageCountChange, isMobilePreviewActive = false }) {
   const [pages, setPages] = useState([]);
   const [isBlurred, setIsBlurred] = useState(false);
   const [measureTrigger, setMeasureTrigger] = useState(0);

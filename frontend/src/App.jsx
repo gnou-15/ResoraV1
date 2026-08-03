@@ -13,11 +13,9 @@ import { supabase } from "./services/supabase";
 import { decryptName } from "./services/encryption";
 import { getUserPlan } from "./utils/subscription";
 import AdminPanel from "./components/AdminPanel";
-import { useDialog } from "./context/DialogContext";
 import "./css/App.css";
 
 function App() {
-  const { showAlert } = useDialog();
   const [route, setRoute] = useState(() => {
     try {
       const savedRoute = sessionStorage.getItem("resora-route");
@@ -28,7 +26,7 @@ function App() {
         }
         return parsed;
       }
-    } catch (e) {
+    } catch {
       // ignore
     }
     return { page: "landing", profession: null };
@@ -61,7 +59,7 @@ function App() {
   useEffect(() => {
     try {
       sessionStorage.setItem("resora-route", JSON.stringify(route));
-    } catch (e) {
+    } catch {
       // ignore
     }
     setMascotMood("normal"); // Reset mascot mood on route change

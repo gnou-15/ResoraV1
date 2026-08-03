@@ -1,4 +1,3 @@
-import React from "react";
 import "../css/services.css";
 import InteractiveBackground from "../components/InteractiveBackground";
 

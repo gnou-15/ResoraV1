@@ -217,7 +217,7 @@ export default function Auth({ user, onNavigate, onSuccessNavigate }) {
                   full_name: encryptedFullName
                 }
               });
-            } catch (err) {
+            } catch {
               // Silently ignore session/auth errors if email confirmation is required first
             }
           }

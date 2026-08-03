@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import { useState } from "react";
 import "../css/contact.css";
 import InteractiveBackground from "../components/InteractiveBackground";
 
@@ -97,7 +97,7 @@ export default function Contact({ onNavigate, isEmbedded, onMascotMoodChange }) 
           onMascotMoodChange("frantic");
         }
       }
-    } catch (err) {
+    } catch {
       setErrors({ form: "Connection error: Failed to reach the mail server. Please check your internet connection." });
       if (onMascotMoodChange) {
         onMascotMoodChange("frantic");

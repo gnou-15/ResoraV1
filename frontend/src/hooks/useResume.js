@@ -74,7 +74,7 @@ export function useResume(profession, user) {
                 const apiData = await res.json();
                 apiPayload = apiData.resume || apiData;
               }
-            } catch (e) {
+            } catch {
               // ignore and fallback
             }
           }
@@ -187,7 +187,7 @@ export function useResume(profession, user) {
     try {
       sessionStorage.removeItem('resora-uploaded-resume');
       localStorage.removeItem('resora-uploaded-resume');
-    } catch (e) {
+    } catch {
       // ignore
     }
     const resetData = { ...defaultResume };

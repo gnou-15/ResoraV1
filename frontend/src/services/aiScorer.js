@@ -150,10 +150,9 @@ const MOCK_JOBS = {
   ]
 };
 
-function calculateJobSuitability(resume, jobTitle, profession) {
+function calculateJobSuitability(resume, jobTitle) {
   const textContent = [];
   const {
-    personal = {},
     headline = '',
     summary = '',
     technicalSkills = {},
@@ -722,7 +721,7 @@ export function analyzeResume(resume, profession = 'it') {
   scoreBreakdown.experience = expPoints;
 
   // 6. PROJECTS & CERTIFICATIONS & EXTRA (Max 15 points in breakdown)
-  let projectsBreakdownPoints = 0;
+  let projectsBreakdownPoints;
   const filledProjects = projects.filter(p => p.name);
   const filledEducation = education.filter(e => e.school || e.degree);
 
@@ -835,10 +834,10 @@ export function analyzeResume(resume, profession = 'it') {
   const finalScore = Math.max(15, Math.min(100, Math.round(scoreSum)));
 
   // Generate percentiles and placement prompts
-  let placement = "Needs Optimization";
-  let placementColor = "#ef4444"; // red
-  let acceptancePercentage = 15;
-  let mascotMood = "normal";
+  let placement;
+  let placementColor;
+  let acceptancePercentage;
+  let mascotMood;
 
   if (finalScore >= 90) {
     placement = "Top 5% of Applicants";
@@ -874,7 +873,7 @@ export function analyzeResume(resume, profession = 'it') {
     const userOffset = Math.round((finalScore - 50) * 0.4);
     const baseMatch = job.matchScore + userOffset;
     
-    const suitability = calculateJobSuitability(resume, job.title, profession);
+    const suitability = calculateJobSuitability(resume, job.title);
     const finalMatch = Math.round(baseMatch * suitability);
     
     const dynamicMatch = Math.min(99, Math.max(15, finalMatch));

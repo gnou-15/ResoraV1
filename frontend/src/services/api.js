@@ -18,7 +18,7 @@ function getGuestSessionId() {
       sessionStorage.setItem('resora_guest_session_token', sid);
     }
     return sid;
-  } catch (e) {
+  } catch {
     return 'temp';
   }
 }
@@ -52,7 +52,7 @@ export function saveResume(data, profession) {
     const sid = getGuestSessionId();
     const key = profession ? `${STORAGE_KEY}-${sid}-${profession}` : `${STORAGE_KEY}-${sid}`;
     localStorage.setItem(key, JSON.stringify(data));
-  } catch (e) {
+  } catch {
     // ignore
   }
 }
@@ -62,7 +62,7 @@ export function clearResume(profession) {
     const sid = getGuestSessionId();
     const key = profession ? `${STORAGE_KEY}-${sid}-${profession}` : `${STORAGE_KEY}-${sid}`;
     localStorage.removeItem(key);
-  } catch (e) {
+  } catch {
     // ignore
   }
 }
@@ -76,7 +76,7 @@ export function clearAllGuestResumes() {
       }
     }
     sessionStorage.removeItem('resora_guest_session_token');
-  } catch (e) {
+  } catch {
     // ignore
   }
 }

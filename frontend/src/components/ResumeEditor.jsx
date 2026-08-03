@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef } from "react";
 import { createId, skillCategories } from "../data/defaultResume";
 import { PhoneField, LocationFields } from "./ContactFields";
 import { useDialog } from "../context/DialogContext";
@@ -155,7 +155,7 @@ function ResumeEditor({
     const fullName = personal?.fullName || "";
     if (!fullName.trim()) {
       newErrors.fullName = "Full name is required";
-    } else if (!/^[a-zA-Z\s.\-]{2,}$/.test(fullName)) {
+    } else if (!/^[a-zA-Z\s.-]{2,}$/.test(fullName)) {
       newErrors.fullName = "Name must contain only letters, spaces, dots, or hyphens (min 2 chars)";
     }
 
@@ -176,13 +176,13 @@ function ResumeEditor({
 
     // Validate GitHub
     const github = personal?.github || "";
-    if (github && !github.includes("github.com") && !/^[a-zA-Z0-9\-]+$/.test(github)) {
+    if (github && !github.includes("github.com") && !/^[a-zA-Z0-9-]+$/.test(github)) {
       newErrors.github = "Please enter a valid GitHub link or username";
     }
 
     // Validate LinkedIn
     const linkedin = personal?.linkedin || "";
-    if (linkedin && !linkedin.includes("linkedin.com") && !/^[a-zA-Z0-9\-]+$/.test(linkedin)) {
+    if (linkedin && !linkedin.includes("linkedin.com") && !/^[a-zA-Z0-9-]+$/.test(linkedin)) {
       newErrors.linkedin = "Please enter a valid LinkedIn link or username";
     }
 

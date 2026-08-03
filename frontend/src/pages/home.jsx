@@ -25,7 +25,7 @@ const PROFESSION_TITLES = {
 };
 
 function Home({ profession, user, onBack, plan, onNavigateAuth }) {
-  const { showAlert, showConfirm } = useDialog();
+  const { showConfirm } = useDialog();
   const {
     resume,
     setResume,

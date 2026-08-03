@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect } from "react";
 
 export default function InteractiveAuthPattern() {
   const containerRef = useRef(null);
@@ -6,9 +6,6 @@ export default function InteractiveAuthPattern() {
   const [spotlight, setSpotlight] = useState({ x: 50, y: 50, active: false });
   const [ripples, setRipples] = useState([]);
   const [hoveredTile, setHoveredTile] = useState(null);
-
-  // Proximity lighting for the bottom-right pegboard
-  const [mouseGridPos, setMouseGridPos] = useState({ x: 0, y: 0 });
 
   const handleMouseMove = (e) => {
     const container = containerRef.current;
@@ -27,10 +24,6 @@ export default function InteractiveAuthPattern() {
     const tiltX = ((y / rect.height) - 0.5) * -16;
     const tiltY = ((x / rect.width) - 0.5) * 16;
     setTilt({ x: tiltX, y: tiltY });
-
-    // Track position relative to the bottom right pegboard (tile 9)
-    // Pegboard is roughly at bottom-right of the canvas
-    setMouseGridPos({ x, y });
   };
 
   const handleMouseLeave = () => {

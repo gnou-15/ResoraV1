@@ -1,7 +1,7 @@
 /**
  * getUserPlan — all features are free and unlocked for every signed-in user.
  */
-export function getUserPlan(user) {
+export function getUserPlan() {
   return {
     type: "free",
     name: "Free",
