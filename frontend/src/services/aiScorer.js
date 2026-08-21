@@ -907,7 +907,8 @@ export async function fetchAPIAnalysis(resume, profession = 'it') {
   }
 
   try {
-    const response = await fetch("http://localhost:8000/analyze", {
+    const backendUrl = import.meta.env.VITE_PYTHON_BACKEND_URL || "http://localhost:8000";
+    const response = await fetch(`${backendUrl.replace(/\/$/, "")}/analyze`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",

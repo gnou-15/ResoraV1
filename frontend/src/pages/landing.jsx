@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from "react";
 import "../css/landing.css";
 import InteractiveBackground from "../components/InteractiveBackground";
 import PeekingMonster from "../components/PeekingMonster";
+import ParsingLoader from "../components/ParsingLoader";
 
 const PREDICTABLE_PROFESSIONS = [
   "Nurse",
@@ -186,6 +187,7 @@ export default function Landing({ onSelect, onNavigate, isEmbedded, mascotMood }
   }
 
   const [isUploading, setIsUploading] = useState(false);
+  const [uploadingFileName, setUploadingFileName] = useState("");
   const [hasUploadedResume, setHasUploadedResume] = useState(() => {
     try {
       return !!(sessionStorage.getItem("resora-uploaded-resume") || localStorage.getItem("resora-uploaded-resume"));
@@ -208,18 +210,75 @@ export default function Landing({ onSelect, onNavigate, isEmbedded, mascotMood }
     return () => window.removeEventListener("focus", checkUpload);
   }, []);
 
+  const parseTextResumeFallback = async (file) => {
+    const text = await file.text();
+    const lines = text.split(/\r?\n/).map((l) => l.trim()).filter(Boolean);
+    const emailMatch = text.match(/[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/);
+    const phoneMatch = text.match(/(\+?\d{1,4}[\s-]?)?\(?\d{3}\)?[\s-]?\d{3}[\s-]?\d{4}/);
+    const nameLine = lines[0] || "Resume Applicant";
+    const detectedProf = detectProfession(text) || "general";
+
+    return {
+      profession: detectedProf,
+      resume: {
+        personal: {
+          fullName: nameLine,
+          email: emailMatch ? emailMatch[0] : "",
+          phoneNumber: phoneMatch ? phoneMatch[0] : "",
+          location: { country: "", state: "", city: "", barangay: "", street: "" },
+          github: "",
+          linkedin: "",
+          portfolio: ""
+        },
+        headline: "Uploaded Candidate",
+        summary: lines.slice(1, 4).join(" "),
+        skills: "Parsed from text document",
+        technicalSkills: { languages: "", frameworks: "", tools: "", databases: "", cloud: "" },
+        education: [],
+        projects: [],
+        experience: lines.length > 4 ? [{ id: "exp-1", company: "Extracted Experience", title: "Role", bullets: lines.slice(4, 8) }] : [],
+        certifications: [],
+        achievements: [],
+        userType: "professional"
+      }
+    };
+  };
+
+  const saveAndProceedUploadedResume = (detectedProf, parsedResume) => {
+    const sid = sessionStorage.getItem('resora_guest_session_token') || 'guest';
+    const storageKey = `resume-builder-data-${sid}-${detectedProf}`;
+    localStorage.setItem(storageKey, JSON.stringify(parsedResume));
+    sessionStorage.setItem("resora-uploaded-resume", JSON.stringify({ profession: detectedProf, resume: parsedResume }));
+    setHasUploadedResume(true);
+    onSelect(detectedProf);
+  };
+
   const handleFileUpload = async (e) => {
     const file = e.target.files?.[0];
     if (!file) return;
 
     setIsUploading(true);
+    setUploadingFileName(file.name);
     setSearchError("");
 
     try {
+      const isProd = window.location.hostname !== 'localhost' && window.location.hostname !== '127.0.0.1';
+      const rawEnvBackend = import.meta.env.VITE_PYTHON_BACKEND_URL || "";
+      const backendUrl = rawEnvBackend || "http://localhost:8000";
+      const isBackendLocal = !rawEnvBackend || backendUrl.includes("localhost") || backendUrl.includes("127.0.0.1");
+
+      if (isProd && isBackendLocal) {
+        if (file.name.endsWith(".txt") || file.type === "text/plain") {
+          const fallbackData = await parseTextResumeFallback(file);
+          saveAndProceedUploadedResume(fallbackData.profession, fallbackData.resume);
+          return;
+        }
+        throw new Error("PROD_BACKEND_NOT_CONFIGURED");
+      }
+
       const formData = new FormData();
       formData.append("file", file);
 
-      const backendUrl = import.meta.env.VITE_PYTHON_BACKEND_URL || "http://localhost:8000";
       const targetUrl = `${backendUrl.replace(/\/$/, "")}/api/parse-resume`;
 
       const res = await fetch(targetUrl, {
@@ -236,18 +295,18 @@ export default function Landing({ onSelect, onNavigate, isEmbedded, mascotMood }
       const detectedProf = data.profession || "general";
       const parsedResume = data.resume;
 
-      const sid = sessionStorage.getItem('resora_guest_session_token') || 'guest';
-      const storageKey = `resume-builder-data-${sid}-${detectedProf}`;
-      localStorage.setItem(storageKey, JSON.stringify(parsedResume));
-      sessionStorage.setItem("resora-uploaded-resume", JSON.stringify({ profession: detectedProf, resume: parsedResume }));
-      setHasUploadedResume(true);
-
-      onSelect(detectedProf);
+      saveAndProceedUploadedResume(detectedProf, parsedResume);
     } catch (err) {
       console.error("Resume upload error:", err);
-      const isMissingEnvOnProd = !import.meta.env.VITE_PYTHON_BACKEND_URL && window.location.hostname !== 'localhost';
-      if (isMissingEnvOnProd) {
+      if (err.message === "PROD_BACKEND_NOT_CONFIGURED") {
         setSearchError("Backend URL not configured on Vercel. Please add VITE_PYTHON_BACKEND_URL in Vercel Environment Variables.");
+      } else if (err.message?.includes("Failed to fetch") || err.name === "TypeError") {
+        const isProd = window.location.hostname !== 'localhost' && window.location.hostname !== '127.0.0.1';
+        if (isProd) {
+          setSearchError("Unable to connect to Python backend server. Please verify backend deployment and VITE_PYTHON_BACKEND_URL in Vercel.");
+        } else {
+          setSearchError("Backend server offline (http://localhost:8000). Please start FastAPI server (`uvicorn main:app --reload --port 8000`) and verify GROQ_API_KEY.");
+        }
       } else {
         setSearchError(`Failed to parse resume (${err.message || "Network Error"}). Please verify backend server and GROQ_API_KEY.`);
       }
@@ -449,7 +508,7 @@ export default function Landing({ onSelect, onNavigate, isEmbedded, mascotMood }
             }
           }}
           disabled={isUploading}
-          aria-label={hasUploadedResume ? "Uploaded" : "Upload"}
+          aria-label={hasUploadedResume ? "My Resume" : "Upload"}
         >
           <span className="folderContainer">
             {/* Back folder SVG */}
@@ -490,7 +549,7 @@ export default function Landing({ onSelect, onNavigate, isEmbedded, mascotMood }
             </svg>
           </span>
           <span className="text">
-            {hasUploadedResume ? "Uploaded" : isUploading ? "Uploading..." : "Upload"}
+            {hasUploadedResume ? "My Resume" : isUploading ? "Uploading..." : "Upload"}
           </span>
         </button>
       </div>
@@ -538,6 +597,7 @@ export default function Landing({ onSelect, onNavigate, isEmbedded, mascotMood }
           </div>
         </div>
       )}
+      {isUploading && <ParsingLoader filename={uploadingFileName} />}
     </div>
   );
 }
