@@ -1,10 +1,11 @@
 import re
 import os
 import json
+import io
 # pyrefly: ignore [missing-import]
 from dotenv import load_dotenv
 # pyrefly: ignore [missing-import]
-from fastapi import FastAPI, File, UploadFile, HTTPException
+from fastapi import FastAPI, File, UploadFile, HTTPException, Header
 # pyrefly: ignore [missing-import]
 from fastapi.middleware.cors import CORSMiddleware
 # pyrefly: ignore [missing-import]
@@ -655,21 +656,40 @@ def extract_text_from_file(filename: str, content: bytes) -> str:
                 txt = page.extract_text()
                 if txt:
                     pages_text.append(txt)
-            return "\n".join(pages_text)
+            extracted = "\n".join(pages_text)
+            if extracted.strip():
+                print(f"📄 Extracted {len(extracted)} characters from PDF via pypdf")
+                return extracted
         except Exception as e:
-            print(f"Error reading PDF: {e}")
-            return ""
+            print(f"❌ Error reading PDF with pypdf: {e}")
+
+        # Fallback for PDFs where pypdf returns empty or errors out
+        try:
+            raw_text = content.decode('latin-1', errors='ignore')
+            # Extract plain text words from stream
+            cleaned = re.sub(r'[^\x20-\x7E\n\r\t]', ' ', raw_text)
+            cleaned = re.sub(r'\s+', ' ', cleaned)
+            if len(cleaned.strip()) > 50:
+                print(f"📄 Extracted {len(cleaned)} characters from PDF via raw stream fallback")
+                return cleaned
+        except Exception as e:
+            print(f"❌ Error in raw PDF fallback: {e}")
+        return ""
     elif ext in ['docx', 'doc']:
         try:
             import docx
             doc = docx.Document(io.BytesIO(content))
-            return "\n".join([p.text for p in doc.paragraphs if p.text])
+            extracted = "\n".join([p.text for p in doc.paragraphs if p.text])
+            print(f"📄 Extracted {len(extracted)} characters from DOCX")
+            return extracted
         except Exception as e:
-            print(f"Error reading DOCX: {e}")
+            print(f"❌ Error reading DOCX: {e}")
             return ""
     else:
         try:
-            return content.decode('utf-8', errors='ignore')
+            extracted = content.decode('utf-8', errors='ignore')
+            print(f"📄 Extracted {len(extracted)} characters from plain text file")
+            return extracted
         except Exception:
             return ""
 
@@ -1081,23 +1101,38 @@ RULES:
 """
 
 def parse_with_groq_ai(text: str, api_key: str) -> Dict[str, Any]:
+    models_to_try = [
+        os.getenv("GROQ_MODEL", "").strip(),
+        "openai/gpt-oss-120b",
+        "openai/gpt-oss-20b",
+        "qwen/qwen3.6-27b",
+        "groq/compound-mini"
+    ]
+    models_to_try = [m for m in models_to_try if m]
+
     try:
         from groq import Groq
         client = Groq(api_key=api_key)
-        chat_completion = client.chat.completions.create(
-            messages=[
-                {"role": "system", "content": GROQ_SYSTEM_PROMPT},
-                {"role": "user", "content": f"Extract resume JSON from this raw text:\n\n{text}"}
-            ],
-            model="llama-3.3-70b-versatile",
-            temperature=0.1,
-            response_format={"type": "json_object"}
-        )
-        res_text = chat_completion.choices[0].message.content
-        return json.loads(res_text)
+        for model_name in models_to_try:
+            try:
+                print(f"🤖 Requesting Groq AI parsing with model '{model_name}'...")
+                chat_completion = client.chat.completions.create(
+                    messages=[
+                        {"role": "system", "content": GROQ_SYSTEM_PROMPT},
+                        {"role": "user", "content": f"Extract resume JSON from this raw text:\n\n{text}"}
+                    ],
+                    model=model_name,
+                    temperature=0.1,
+                    response_format={"type": "json_object"}
+                )
+                res_text = chat_completion.choices[0].message.content
+                return json.loads(res_text)
+            except Exception as e:
+                print(f"⚠️ Groq AI parse error with model '{model_name}': {e}")
+                continue
     except Exception as e:
-        print(f"❌ Groq AI Parse error: {e}")
-        return {}
+        print(f"❌ Groq AI client initialization error: {e}")
+    return {}
 
 
 @app.post("/api/parse-resume")
@@ -1116,7 +1151,7 @@ async def parse_resume_endpoint(
         
         parsed = {}
         if active_groq_key and not active_groq_key.startswith("gsk_your"):
-            print(f"🤖 Using Groq AI Llama-3.3 70B for resume parsing (Key: {active_groq_key[:8]}...)...")
+            print(f"🤖 Using Groq AI for resume parsing (Key: {active_groq_key[:8]}...)...")
             parsed = parse_with_groq_ai(extracted_text, active_groq_key)
         else:
             print("⚠️ No valid GROQ_API_KEY found in .env! Please add your key to backend-python/.env")

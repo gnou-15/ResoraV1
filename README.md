@@ -1,6 +1,6 @@
 # Resora v2.0.0
 
-> **Major Version 2.0.0 Release** | Secure, ATS-optimized resume builder featuring Groq AI (Llama-3.3-70B) document parsing, rule-based heuristic ATS analytics & benchmarking across 12 target professions, zero-knowledge AES-256 client-side encryption, anonymous guest mode, and zero-watermark PDF exports.
+> **Major Version 2.0.0 Release** | Secure, ATS-optimized resume builder featuring Groq AI (`openai/gpt-oss-120b`) document parsing, rule-based heuristic ATS analytics & benchmarking across 12 target professions, zero-knowledge AES-256 client-side encryption, anonymous guest mode, and zero-watermark PDF exports.
 
 ---
 
@@ -11,7 +11,7 @@
 
 ## 🛠️ Technologies
 *   **Frontend:** React 19, Vite 8, JavaScript (ES6+), Vanilla CSS
-*   **AI & Parser Microservice:** Python 3, FastAPI, Uvicorn, Groq AI API (`llama-3.3-70b-versatile`), PyPDF, Python-Docx, Pydantic
+*   **AI & Parser Microservice:** Python 3, FastAPI, Uvicorn, Groq AI API (`openai/gpt-oss-120b`), PyPDF, Python-Docx, Pydantic
 *   **Node Service:** Node.js, Express.js
 *   **Database & Auth:** Supabase (PostgreSQL), Row Level Security (RLS) policies, PL/pgSQL
 *   **Security & Encryption:** CryptoJS (AES-256 & SHA-256)
@@ -21,7 +21,7 @@
 
 ## 🌟 Key Features (v2.0.0)
 
-1.  **Groq AI Document Parser (Llama-3.3-70B):** Upload PDF, DOCX, or TXT resumes and automatically extract 100% structured JSON fields (Name, Phone, Email, Location, GitHub, LinkedIn, Technical Skills, Education, Projects, Achievements, Certifications, and Experience) in ~400ms.
+1.  **Groq AI Document Parser (`openai/gpt-oss-120b`):** Upload PDF, DOCX, or TXT resumes and automatically extract 100% structured JSON fields (Name, Phone, Email, Location, GitHub, LinkedIn, Technical Skills, Education, Projects, Achievements, Certifications, and Experience) in ~400ms.
 2.  **Weighted Industry Classifier:** Auto-detects target professions across 12 domains (*IT, Healthcare, Education, Management, Engineering, Safety, Customs, Business, Designer, Data, Sales, HR*) or gracefully falls back to the generic **"Resume Builder"** template.
 3.  **Anonymous Guest Mode & Privacy Lifecycle:** Allows users to build and edit resumes without logging in. Guest edits automatically purge on browser close unless saved into an authenticated account, supported by a discreet bottom warning prompt bubble.
 4.  **Creative Mascot Floating Upload Widget:** Animated bottom-right mascot badge widget featuring Resora's signature mascot emblem, dynamic pulse rings, and direct navigation to uploaded resumes.
