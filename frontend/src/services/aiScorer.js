@@ -375,37 +375,7 @@ export function analyzeResume(resume, profession = 'it') {
     }
   }
 
-  // Content threshold: ~44 lines = roughly 4/5 of a letter page
-  const MIDPOINT_THRESHOLD = 44;
-
-  if (estimatedLines < MIDPOINT_THRESHOLD) {
-    // Build a list of missing sections to guide the user
-    const missingSections = [];
-    if (!hasName) missingSections.push('your full name');
-    if (!hasEmail && !hasPhone) missingSections.push('contact details (email, phone)');
-    if (!headline?.trim()) missingSections.push('a target role headline');
-    if (!summary?.trim()) missingSections.push('a professional summary');
-    if (filledSkillCategories === 0) missingSections.push('your key skills');
-    if (filledExp_chk.length === 0) missingSections.push(isStudent ? 'internships or student org roles' : 'work experience');
-    if (filledEducation_chk.length === 0 || (!filledEducation_chk[0].school && !filledEducation_chk[0].degree)) missingSections.push('education details');
-    if (filledProjects_chk.length === 0) missingSections.push('projects');
-
-    return {
-      insufficientData: true,
-      estimatedFill: Math.round((estimatedLines / 55) * 100), // percentage of page filled
-      missingSections,
-      score: 0,
-      placement: '',
-      placementColor: '#94a3b8',
-      acceptancePercentage: 0,
-      mascotMood: 'normal',
-      tips: [],
-      scoreBreakdown: { contact: 0, headline: 0, summary: 0, skills: 0, experience: 0, projects: 0 },
-      jobs: []
-    };
-  }
-
-  // ── Full Analysis (content is sufficient) ──
+  // ── Full Resume Analysis ──
   const tips = [];
   const scoreBreakdown = {
     contact: 0,
