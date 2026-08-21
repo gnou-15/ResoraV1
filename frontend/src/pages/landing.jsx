@@ -438,12 +438,9 @@ export default function Landing({ onSelect, onNavigate, isEmbedded, mascotMood }
           style={{ display: "none" }}
           onChange={handleFileUpload}
         />
-        <div className="upload-tooltip-bubble">
-          {hasUploadedResume ? "Go to Uploaded Resume" : isUploading ? "Uploading..." : "Upload Resume"}
-        </div>
         <button
           type="button"
-          className={`floating-upload-btn ${hasUploadedResume ? "active-uploaded" : ""}`}
+          className={`Documents-btn ${hasUploadedResume ? "active-uploaded" : ""}`}
           onClick={() => {
             if (hasUploadedResume) {
               handleGoToUploaded();
@@ -452,53 +449,49 @@ export default function Landing({ onSelect, onNavigate, isEmbedded, mascotMood }
             }
           }}
           disabled={isUploading}
-          aria-label={hasUploadedResume ? "Go to Uploaded Resume" : "Upload Resume"}
+          aria-label={hasUploadedResume ? "Uploaded" : "Upload"}
         >
-          <div className="floating-btn-pulse-ring"></div>
-          <svg width="34" height="34" viewBox="0 0 36 36" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <defs>
-              <linearGradient id="docGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-                <stop offset="0%" stopColor="#ffffff" />
-                <stop offset="100%" stopColor="#ffedd5" />
-              </linearGradient>
-            </defs>
+          <span className="folderContainer">
+            {/* Back folder SVG */}
+            <svg className="fileBack" width="146" height="113" viewBox="0 0 146 113" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M0 4C0 1.79086 1.79086 0 4 0H50.3802C51.8285 0 53.2056 0.627965 54.1553 1.72142L64.3303 13.4371C65.2799 14.5306 66.657 15.1585 68.1053 15.1585H141.509C143.718 15.1585 145.509 16.9494 145.509 19.1585V109C145.509 111.209 143.718 113 141.509 113H3.99999C1.79085 113 0 111.209 0 109V4Z" fill={`url(#folderBack_${hasUploadedResume ? "green" : "orange"})`} />
+              <defs>
+                <linearGradient id={`folderBack_${hasUploadedResume ? "green" : "orange"}`} x1="0" y1="0" x2="72.93" y2="95.4804" gradientUnits="userSpaceOnUse">
+                  <stop stopColor={hasUploadedResume ? "#34d399" : "#ff8a00"} />
+                  <stop offset="1" stopColor={hasUploadedResume ? "#059669" : "#c2410c"} />
+                </linearGradient>
+              </defs>
+            </svg>
 
-            {/* Background Document Sheet */}
-            <rect x="7" y="9" width="20" height="24" rx="3.5" fill="url(#docGrad)" stroke="#ffffff" strokeWidth="1.2"/>
-            <path d="M 21 9 L 27 15 L 21 15 Z" fill="#fed7aa" />
+            {/* Inner Document Sheet SVG */}
+            <svg className="filePage" width="88" height="99" viewBox="0 0 88 99" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <rect width="88" height="99" rx="6" fill={`url(#folderPage_${hasUploadedResume ? "green" : "orange"})`} />
+              <line x1="16" y1="24" x2="72" y2="24" stroke={hasUploadedResume ? "#059669" : "#ea580c"} strokeWidth="5" strokeLinecap="round"/>
+              <line x1="16" y1="40" x2="56" y2="40" stroke={hasUploadedResume ? "#34d399" : "#fdba74"} strokeWidth="5" strokeLinecap="round"/>
+              <line x1="16" y1="56" x2="64" y2="56" stroke={hasUploadedResume ? "#34d399" : "#fdba74"} strokeWidth="5" strokeLinecap="round"/>
+              <line x1="16" y1="72" x2="48" y2="72" stroke={hasUploadedResume ? "#34d399" : "#fdba74"} strokeWidth="5" strokeLinecap="round"/>
+              <defs>
+                <linearGradient id={`folderPage_${hasUploadedResume ? "green" : "orange"}`} x1="0" y1="0" x2="81" y2="160.5" gradientUnits="userSpaceOnUse">
+                  <stop stopColor="#ffffff" />
+                  <stop offset="1" stopColor={hasUploadedResume ? "#ecfdf5" : "#ffedd5"} />
+                </linearGradient>
+              </defs>
+            </svg>
 
-            {/* Document lines */}
-            <line x1="11" y1="20" x2="23" y2="20" stroke="#ea580c" strokeWidth="1.8" strokeLinecap="round" />
-            <line x1="11" y1="24" x2="19" y2="24" stroke="#fdba74" strokeWidth="1.8" strokeLinecap="round" />
-            <line x1="11" y1="28" x2="21" y2="28" stroke="#fdba74" strokeWidth="1.8" strokeLinecap="round" />
-
-            {/* Resora Mascot Emblem */}
-            <g transform="translate(10, 1) scale(0.62)">
-              {/* Body */}
-              <circle cx="17" cy="18" r="8" fill="#1e293b" />
-              {/* Hat Brim */}
-              <rect x="7" y="8" width="20" height="2.2" rx="0.8" fill="#0f172a" />
-              {/* Hat Ribbon */}
-              <rect x="10" y="6.8" width="14" height="1.4" fill="#ea580c" />
-              {/* Hat Crown */}
-              <rect x="10" y="1" width="14" height="6" rx="1" fill="#0f172a" />
-              {/* Eyes */}
-              <circle cx="14" cy="16.5" r="1.8" fill="#ffffff" />
-              <circle cx="14" cy="16.5" r="0.9" fill="#0f172a" />
-              <circle cx="20" cy="16.5" r="1.8" fill="#ffffff" />
-              <circle cx="20" cy="16.5" r="0.9" fill="#0f172a" />
-              {/* Monocle */}
-              <circle cx="20" cy="16.5" r="2.8" stroke="#f59e0b" strokeWidth="0.9" fill="none" />
-            </g>
-
-            {/* Upload Arrow Badge */}
-            <circle cx="27" cy="27" r="7" fill={hasUploadedResume ? "#059669" : "#ea580c"} stroke="#ffffff" strokeWidth="1.6"/>
-            {hasUploadedResume ? (
-              <path d="M 23.5 27 L 26 29.5 L 30.5 24.5" stroke="#ffffff" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/>
-            ) : (
-              <path d="M 27 23.5 L 27 30.5 M 24.5 26 L 27 23.5 L 29.5 26" stroke="#ffffff" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/>
-            )}
-          </svg>
+            {/* Front folder cover SVG */}
+            <svg className="fileFront" width="160" height="79" viewBox="0 0 160 79" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M0.29306 12.2478C0.133905 9.38186 2.41499 6.97059 5.28537 6.97059H30.419H58.1902C59.5751 6.97059 60.9288 6.55982 62.0802 5.79025L68.977 1.18034C70.1283 0.410771 71.482 0 72.8669 0H77H155.462C157.87 0 159.733 2.1129 159.43 4.50232L150.443 75.5023C150.19 77.5013 148.489 79 146.474 79H7.78403C5.66106 79 3.9079 77.3415 3.79019 75.2218L0.29306 12.2478Z" fill={`url(#folderFront_${hasUploadedResume ? "green" : "orange"})`} />
+              <defs>
+                <linearGradient id={`folderFront_${hasUploadedResume ? "green" : "orange"}`} x1="38.7619" y1="8.71323" x2="66.9106" y2="82.8317" gradientUnits="userSpaceOnUse">
+                  <stop stopColor={hasUploadedResume ? "#6ee7b7" : "#ffedd5"} />
+                  <stop offset="1" stopColor={hasUploadedResume ? "#047857" : "#ea580c"} />
+                </linearGradient>
+              </defs>
+            </svg>
+          </span>
+          <span className="text">
+            {hasUploadedResume ? "Uploaded" : isUploading ? "Uploading..." : "Upload"}
+          </span>
         </button>
       </div>
 
