@@ -229,16 +229,28 @@ function Home({ profession, user, onBack, plan, onNavigateAuth }) {
           <span className={`save-status ${saved ? "saved" : "saving"}`}>
             {saved ? "Saved" : "Saving…"}
           </span>
-          <label htmlFor="user-type-switch" className="user-type-switch" aria-label="Toggle Professional or Student Track">
-            <input
-              type="checkbox"
-              id="user-type-switch"
-              checked={resume.userType === "student"}
-              onChange={(e) => updateUserType(e.target.checked ? "student" : "professional")}
-            />
-            <span>Professional</span>
-            <span>Student</span>
-          </label>
+          <div className="user-type-switch-wrapper">
+            <div className="track-hint-bubble">
+              <div className="track-hint-arrow" />
+              <svg className="track-hint-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <circle cx="12" cy="12" r="10" fill="#ea580c" />
+                <path d="M12 16v-4M12 8h.01" stroke="#ffffff" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
+              </svg>
+              <span className="track-hint-text">
+                Toggle Professional / Student
+              </span>
+            </div>
+            <label htmlFor="user-type-switch" className="user-type-switch" aria-label="Toggle Professional or Student Track">
+              <input
+                type="checkbox"
+                id="user-type-switch"
+                checked={resume.userType === "student"}
+                onChange={(e) => updateUserType(e.target.checked ? "student" : "professional")}
+              />
+              <span>Professional</span>
+              <span>Student</span>
+            </label>
+          </div>
           <div className="format-badge-container">
             <span className="format-badge">ATS Standard Format</span>
             <div className="ats-tooltip-bubble">

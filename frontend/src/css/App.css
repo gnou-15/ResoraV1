@@ -53,6 +53,74 @@
   margin-left: auto;
 }
 
+.user-type-switch-wrapper {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+}
+
+.track-hint-bubble {
+  position: absolute;
+  top: calc(100% + 10px);
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 100;
+  background: #ffffff;
+  border: 1px solid rgba(234, 88, 12, 0.35);
+  border-radius: 12px;
+  padding: 0.45rem 0.85rem;
+  box-shadow: 0 10px 25px rgba(234, 88, 12, 0.18), 0 3px 8px rgba(0, 0, 0, 0.08);
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+  white-space: nowrap;
+  font-family: 'Inter', sans-serif;
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: #1e293b;
+  pointer-events: none;
+  user-select: none;
+  animation: trackHintDisappearCycle 6s ease-in-out infinite;
+}
+
+.track-hint-arrow {
+  position: absolute;
+  top: -5px;
+  left: 50%;
+  transform: translateX(-50%) rotate(45deg);
+  width: 9px;
+  height: 9px;
+  background: #ffffff;
+  border-left: 1px solid rgba(234, 88, 12, 0.35);
+  border-top: 1px solid rgba(234, 88, 12, 0.35);
+}
+
+.track-hint-icon {
+  flex-shrink: 0;
+  filter: drop-shadow(0 1px 3px rgba(234, 88, 12, 0.3));
+}
+
+.track-hint-text {
+  color: #1e293b;
+  letter-spacing: -0.01em;
+  font-weight: 600;
+}
+
+@keyframes trackHintDisappearCycle {
+  0% {
+    opacity: 0;
+    transform: translate(-50%, -4px);
+  }
+  12%, 48% {
+    opacity: 1;
+    transform: translate(-50%, 0);
+  }
+  60%, 100% {
+    opacity: 0;
+    transform: translate(-50%, -4px);
+  }
+}
+
 .user-type-switch {
   --_switch-bg-clr: #f1f5f9;
   --_switch-padding: 3px;
