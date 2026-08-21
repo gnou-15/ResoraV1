@@ -354,7 +354,7 @@ export default function Landing({ onSelect, onNavigate, isEmbedded, mascotMood }
     <div className="landing-container">
       {!isEmbedded && <InteractiveBackground />}
       {!isEmbedded && (
-        <header className="landing-header">
+        <header className={`landing-header ${isUploading ? "header-disabled" : ""}`}>
           <a href="/" className="logo-container" onClick={(e) => e.preventDefault()}>
             <svg className="logo-svg" width="34" height="34" viewBox="0 0 34 34" fill="none" xmlns="http://www.w3.org/2000/svg">
               <defs>

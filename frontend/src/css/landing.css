@@ -30,6 +30,14 @@
   transform: translateY(-20px);
 }
 
+.landing-header.header-disabled {
+  pointer-events: none !important;
+  user-select: none !important;
+  opacity: 0.3 !important;
+  filter: blur(4px) !important;
+  transition: opacity 0.3s ease, filter 0.3s ease;
+}
+
 
 .logo-container {
   display: flex;

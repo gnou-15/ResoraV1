@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { createPortal } from "react-dom";
 import "../css/ParsingLoader.css";
 
 const STEPS = [
@@ -17,8 +18,8 @@ export default function ParsingLoader({ filename }) {
     return () => clearInterval(interval);
   }, []);
 
-  return (
-    <div className="parsing-loader-overlay">
+  const content = (
+    <div className="parsing-loader-overlay" onClick={(e) => e.stopPropagation()}>
       <div className="parsing-loader-content">
         <div className="domino-spinner-wrapper">
           <div className="domino-spinner">
@@ -40,4 +41,6 @@ export default function ParsingLoader({ filename }) {
       </div>
     </div>
   );
+
+  return createPortal(content, document.body);
 }
