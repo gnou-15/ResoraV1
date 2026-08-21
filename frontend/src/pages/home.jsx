@@ -226,22 +226,19 @@ function Home({ profession, user, onBack, plan, onNavigateAuth }) {
           </div>
         )}
         <div className="header-actions">
-          <div className="user-type-toggle">
-            <button
-              type="button"
-              className={resume.userType === "professional" ? "active" : ""}
-              onClick={() => updateUserType("professional")}
-            >
-              Professional
-            </button>
-            <button
-              type="button"
-              className={resume.userType === "student" ? "active" : ""}
-              onClick={() => updateUserType("student")}
-            >
-              Student
-            </button>
-          </div>
+          <span className={`save-status ${saved ? "saved" : "saving"}`}>
+            {saved ? "Saved" : "Saving…"}
+          </span>
+          <label htmlFor="user-type-switch" className="user-type-switch" aria-label="Toggle Professional or Student Track">
+            <input
+              type="checkbox"
+              id="user-type-switch"
+              checked={resume.userType === "student"}
+              onChange={(e) => updateUserType(e.target.checked ? "student" : "professional")}
+            />
+            <span>Professional</span>
+            <span>Student</span>
+          </label>
           <div className="format-badge-container">
             <span className="format-badge">ATS Standard Format</span>
             <div className="ats-tooltip-bubble">
@@ -255,9 +252,6 @@ function Home({ profession, user, onBack, plan, onNavigateAuth }) {
               </p>
             </div>
           </div>
-          <span className={`save-status ${saved ? "saved" : "saving"}`}>
-            {saved ? "Saved" : "Saving…"}
-          </span>
           <button
             type="button"
             className="btn btn-secondary btn-export"
