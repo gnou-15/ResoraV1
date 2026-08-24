@@ -27,6 +27,8 @@ export function PhoneField({ phoneCountry, phoneNumber, onCountryChange, onNumbe
           value={phoneNumber}
           onChange={(e) => onNumberChange(e.target.value)}
           placeholder={selected.phonePlaceholder}
+          autoComplete="off"
+          data-lpignore="true"
         />
       </div>
       {error && <span className="field-error-msg" style={{ color: '#dc2626', fontSize: '0.75rem', marginTop: '0.2rem' }}>{error}</span>}
@@ -344,6 +346,8 @@ export function LocationFields({ location, onChange }) {
                 value={location.state || ''}
                 onChange={(e) => onChange('state', e.target.value)}
                 placeholder={isPhilippines ? 'Metro Manila' : 'California'}
+                autoComplete="off"
+                data-lpignore="true"
               />
               {isPhilippines && !apiError && (
                 <button
@@ -409,6 +413,8 @@ export function LocationFields({ location, onChange }) {
                 value={location.city || ''}
                 onChange={(e) => onChange('city', e.target.value)}
                 placeholder={isPhilippines ? 'Quezon City' : 'San Francisco'}
+                autoComplete="off"
+                data-lpignore="true"
               />
               {isPhilippines && !apiError && !customProvince && location.state && (
                 <button
@@ -472,6 +478,8 @@ export function LocationFields({ location, onChange }) {
                 value={location.barangay || ''}
                 onChange={(e) => onChange('barangay', e.target.value)}
                 placeholder={isPhilippines ? 'Barangay Holy Spirit' : 'Downtown'}
+                autoComplete="off"
+                data-lpignore="true"
               />
               {isPhilippines && !apiError && !customProvince && !customCity && location.city && (
                 <button
@@ -508,6 +516,8 @@ export function LocationFields({ location, onChange }) {
             value={location.street || ''}
             onChange={(e) => onChange('street', e.target.value)}
             placeholder="123 Main Street, Unit 4B"
+            autoComplete="off"
+            data-lpignore="true"
           />
         </label>
       </div>

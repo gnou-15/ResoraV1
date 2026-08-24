@@ -245,7 +245,6 @@ function App() {
         <div className={`slider-track slide-to-${route.page === "loading" ? "loading" : route.page}`}>
           <div className="slide-item" onScroll={handleScroll}>
             <Landing
-              key={route.page === "landing" ? "landing-active" : "landing-inactive"}
               user={user}
               onSelect={(p) => {
                 setRoute({ page: "loading", profession: p });

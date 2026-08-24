@@ -66,7 +66,30 @@ export default function Landing({ onSelect, onNavigate, isEmbedded, mascotMood, 
   const [searchError, setSearchError] = useState("");
   const [showAuthModal, setShowAuthModal] = useState(false);
   const [localMood, setLocalMood] = useState("normal");
-  const [existingResumeInfo, setExistingResumeInfo] = useState(null);
+  const [existingResumeInfo, setExistingResumeInfo] = useState(() => {
+    try {
+      const cached = localStorage.getItem("resora-last-active-resume-info");
+      if (cached) {
+        return JSON.parse(cached);
+      }
+      const uploadedRaw = sessionStorage.getItem("resora-uploaded-resume") || localStorage.getItem("resora-uploaded-resume");
+      if (uploadedRaw) {
+        const uploadedData = JSON.parse(uploadedRaw);
+        if (uploadedData && uploadedData.resume) {
+          const headline = uploadedData.resume.headline || uploadedData.resume.experience?.[0]?.title || "";
+          return {
+            hasResume: true,
+            profession: uploadedData.profession || "it",
+            targetRole: headline || uploadedData.profession || "Software Developer",
+            resume: uploadedData.resume
+          };
+        }
+      }
+    } catch {
+      // fallback
+    }
+    return null;
+  });
   const [isSearchingNewRole, setIsSearchingNewRole] = useState(false);
   const inputRef = useRef(null);
 
@@ -422,20 +445,20 @@ export default function Landing({ onSelect, onNavigate, isEmbedded, mascotMood, 
         <h1 className="sr-only">Build a Professional, ATS-Friendly Resume with Resora</h1>
         <PeekingMonster mood={mascotMood || localMood} />
         {existingResumeInfo && !isSearchingNewRole ? (
-          <div className="hero-title-container returning-hero">
+          <div key="returning-title" className="hero-title-container returning-hero hero-fade-enter">
             <h2 className="hero-title-returning">
               Ready to work on your <span className="highlight-role">{existingResumeInfo.targetRole}</span> resume?
             </h2>
           </div>
         ) : (
-          <div className="hero-title-container">
+          <div key="default-title" className="hero-title-container hero-fade-enter">
             <h2 className="hero-title-line">What is your</h2>
             <h2 className="hero-title-line">Profession?</h2>
           </div>
         )}
 
         {existingResumeInfo && !isSearchingNewRole ? (
-          <div className="existing-resume-cta-row">
+          <div key="returning-cta" className="existing-resume-cta-row hero-fade-enter">
             <button
               type="button"
               className="btn-go-to-resume"
@@ -461,7 +484,7 @@ export default function Landing({ onSelect, onNavigate, isEmbedded, mascotMood, 
             </button>
           </div>
         ) : (
-          <form className={`search-bar-pill ${searchError ? "shake" : ""}`} onSubmit={handleSubmit}>
+          <form key="search-form" className={`search-bar-pill hero-fade-enter ${searchError ? "shake" : ""}`} onSubmit={handleSubmit}>
             <div className="search-input-wrapper">
               <input
                 ref={inputRef}
@@ -508,14 +531,19 @@ export default function Landing({ onSelect, onNavigate, isEmbedded, mascotMood, 
         )}
 
         {existingResumeInfo && isSearchingNewRole && (
-          <button
-            type="button"
-            className="btn-back-to-existing-link"
-            onClick={() => setIsSearchingNewRole(false)}
-            style={{ marginTop: "0.8rem" }}
-          >
-            ← Back to {existingResumeInfo.targetRole} Resume
-          </button>
+          <div className="back-to-existing-wrapper">
+            <button
+              type="button"
+              className="btn-back-to-existing-link"
+              onClick={() => setIsSearchingNewRole(false)}
+            >
+              <svg className="back-arrow-svg" xmlns="http://www.w3.org/2000/svg" width="16" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                <line x1="19" y1="12" x2="5" y2="12" />
+                <polyline points="12 19 5 12 12 5" />
+              </svg>
+              <span className="hover-underline-animation">Back to {existingResumeInfo.targetRole} Resume</span>
+            </button>
+          </div>
         )}
 
         {(!existingResumeInfo || isSearchingNewRole) && (
@@ -553,74 +581,76 @@ export default function Landing({ onSelect, onNavigate, isEmbedded, mascotMood, 
         </p>
       </main>
 
-      <div className="floating-upload-resume-widget">
-        <input
-          type="file"
-          id="resume-upload-input"
-          accept=".pdf,.docx,.doc,.txt"
-          style={{ display: "none" }}
-          onChange={handleFileUpload}
-        />
-        <button
-          type="button"
-          className={`Documents-btn ${hasUploadedResume ? "active-uploaded" : ""}`}
-          onClick={() => {
-            if (hasUploadedResume) {
-              handleGoToUploaded();
-            } else {
-              document.getElementById("resume-upload-input")?.click();
-            }
-          }}
-          disabled={isUploading}
-          aria-label={hasUploadedResume ? "My Resume" : "Upload"}
-        >
-          <span className="folderContainer">
-            {/* Back folder SVG */}
-            <svg className="fileBack" width="146" height="113" viewBox="0 0 146 113" fill="none" xmlns="http://www.w3.org/2000/svg">
-              <path d="M0 4C0 1.79086 1.79086 0 4 0H50.3802C51.8285 0 53.2056 0.627965 54.1553 1.72142L64.3303 13.4371C65.2799 14.5306 66.657 15.1585 68.1053 15.1585H141.509C143.718 15.1585 145.509 16.9494 145.509 19.1585V109C145.509 111.209 143.718 113 141.509 113H3.99999C1.79085 113 0 111.209 0 109V4Z" fill={`url(#folderBack_${hasUploadedResume ? "green" : "orange"})`} />
-              <defs>
-                <linearGradient id={`folderBack_${hasUploadedResume ? "green" : "orange"}`} x1="0" y1="0" x2="72.93" y2="95.4804" gradientUnits="userSpaceOnUse">
-                  <stop stopColor={hasUploadedResume ? "#34d399" : "#ff8a00"} />
-                  <stop offset="1" stopColor={hasUploadedResume ? "#059669" : "#c2410c"} />
-                </linearGradient>
-              </defs>
-            </svg>
+      {(!existingResumeInfo || isSearchingNewRole) && (
+        <div className="floating-upload-resume-widget">
+          <input
+            type="file"
+            id="resume-upload-input"
+            accept=".pdf,.docx,.doc,.txt"
+            style={{ display: "none" }}
+            onChange={handleFileUpload}
+          />
+          <button
+            type="button"
+            className={`Documents-btn ${hasUploadedResume ? "active-uploaded" : ""}`}
+            onClick={() => {
+              if (hasUploadedResume) {
+                handleGoToUploaded();
+              } else {
+                document.getElementById("resume-upload-input")?.click();
+              }
+            }}
+            disabled={isUploading}
+            aria-label={hasUploadedResume ? "My Resume" : "Upload"}
+          >
+            <span className="folderContainer">
+              {/* Back folder SVG */}
+              <svg className="fileBack" width="146" height="113" viewBox="0 0 146 113" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M0 4C0 1.79086 1.79086 0 4 0H50.3802C51.8285 0 53.2056 0.627965 54.1553 1.72142L64.3303 13.4371C65.2799 14.5306 66.657 15.1585 68.1053 15.1585H141.509C143.718 15.1585 145.509 16.9494 145.509 19.1585V109C145.509 111.209 143.718 113 141.509 113H3.99999C1.79085 113 0 111.209 0 109V4Z" fill={`url(#folderBack_${hasUploadedResume ? "green" : "orange"})`} />
+                <defs>
+                  <linearGradient id={`folderBack_${hasUploadedResume ? "green" : "orange"}`} x1="0" y1="0" x2="72.93" y2="95.4804" gradientUnits="userSpaceOnUse">
+                    <stop stopColor={hasUploadedResume ? "#34d399" : "#ff8a00"} />
+                    <stop offset="1" stopColor={hasUploadedResume ? "#059669" : "#c2410c"} />
+                  </linearGradient>
+                </defs>
+              </svg>
 
-            {/* Inner Document Sheet SVG */}
-            <svg className="filePage" width="88" height="99" viewBox="0 0 88 99" fill="none" xmlns="http://www.w3.org/2000/svg">
-              <rect width="88" height="99" rx="6" fill={`url(#folderPage_${hasUploadedResume ? "green" : "orange"})`} />
-              <line x1="16" y1="24" x2="72" y2="24" stroke={hasUploadedResume ? "#059669" : "#ea580c"} strokeWidth="5" strokeLinecap="round"/>
-              <line x1="16" y1="40" x2="56" y2="40" stroke={hasUploadedResume ? "#34d399" : "#fdba74"} strokeWidth="5" strokeLinecap="round"/>
-              <line x1="16" y1="56" x2="64" y2="56" stroke={hasUploadedResume ? "#34d399" : "#fdba74"} strokeWidth="5" strokeLinecap="round"/>
-              <line x1="16" y1="72" x2="48" y2="72" stroke={hasUploadedResume ? "#34d399" : "#fdba74"} strokeWidth="5" strokeLinecap="round"/>
-              <defs>
-                <linearGradient id={`folderPage_${hasUploadedResume ? "green" : "orange"}`} x1="0" y1="0" x2="81" y2="160.5" gradientUnits="userSpaceOnUse">
-                  <stop stopColor="#ffffff" />
-                  <stop offset="1" stopColor={hasUploadedResume ? "#ecfdf5" : "#ffedd5"} />
-                </linearGradient>
-              </defs>
-            </svg>
+              {/* Inner Document Sheet SVG */}
+              <svg className="filePage" width="88" height="99" viewBox="0 0 88 99" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <rect width="88" height="99" rx="6" fill={`url(#folderPage_${hasUploadedResume ? "green" : "orange"})`} />
+                <line x1="16" y1="24" x2="72" y2="24" stroke={hasUploadedResume ? "#059669" : "#ea580c"} strokeWidth="5" strokeLinecap="round"/>
+                <line x1="16" y1="40" x2="56" y2="40" stroke={hasUploadedResume ? "#34d399" : "#fdba74"} strokeWidth="5" strokeLinecap="round"/>
+                <line x1="16" y1="56" x2="64" y2="56" stroke={hasUploadedResume ? "#34d399" : "#fdba74"} strokeWidth="5" strokeLinecap="round"/>
+                <line x1="16" y1="72" x2="48" y2="72" stroke={hasUploadedResume ? "#34d399" : "#fdba74"} strokeWidth="5" strokeLinecap="round"/>
+                <defs>
+                  <linearGradient id={`folderPage_${hasUploadedResume ? "green" : "orange"}`} x1="0" y1="0" x2="81" y2="160.5" gradientUnits="userSpaceOnUse">
+                    <stop stopColor="#ffffff" />
+                    <stop offset="1" stopColor={hasUploadedResume ? "#ecfdf5" : "#ffedd5"} />
+                  </linearGradient>
+                </defs>
+              </svg>
 
-            {/* Front folder cover SVG */}
-            <svg className="fileFront" width="160" height="79" viewBox="0 0 160 79" fill="none" xmlns="http://www.w3.org/2000/svg">
-              <path d="M0.29306 12.2478C0.133905 9.38186 2.41499 6.97059 5.28537 6.97059H30.419H58.1902C59.5751 6.97059 60.9288 6.55982 62.0802 5.79025L68.977 1.18034C70.1283 0.410771 71.482 0 72.8669 0H77H155.462C157.87 0 159.733 2.1129 159.43 4.50232L150.443 75.5023C150.19 77.5013 148.489 79 146.474 79H7.78403C5.66106 79 3.9079 77.3415 3.79019 75.2218L0.29306 12.2478Z" fill={`url(#folderFront_${hasUploadedResume ? "green" : "orange"})`} />
-              <defs>
-                <linearGradient id={`folderFront_${hasUploadedResume ? "green" : "orange"}`} x1="38.7619" y1="8.71323" x2="66.9106" y2="82.8317" gradientUnits="userSpaceOnUse">
-                  <stop stopColor={hasUploadedResume ? "#6ee7b7" : "#ffedd5"} />
-                  <stop offset="1" stopColor={hasUploadedResume ? "#047857" : "#ea580c"} />
-                </linearGradient>
-              </defs>
-            </svg>
-          </span>
-          <span className="text">
-            {hasUploadedResume ? "My Resume" : isUploading ? "Uploading..." : "Upload"}
-          </span>
-        </button>
-      </div>
+              {/* Front folder cover SVG */}
+              <svg className="fileFront" width="160" height="79" viewBox="0 0 160 79" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M0.29306 12.2478C0.133905 9.38186 2.41499 6.97059 5.28537 6.97059H30.419H58.1902C59.5751 6.97059 60.9288 6.55982 62.0802 5.79025L68.977 1.18034C70.1283 0.410771 71.482 0 72.8669 0H77H155.462C157.87 0 159.733 2.1129 159.43 4.50232L150.443 75.5023C150.19 77.5013 148.489 79 146.474 79H7.78403C5.66106 79 3.9079 77.3415 3.79019 75.2218L0.29306 12.2478Z" fill={`url(#folderFront_${hasUploadedResume ? "green" : "orange"})`} />
+                <defs>
+                  <linearGradient id={`folderFront_${hasUploadedResume ? "green" : "orange"}`} x1="38.7619" y1="8.71323" x2="66.9106" y2="82.8317" gradientUnits="userSpaceOnUse">
+                    <stop stopColor={hasUploadedResume ? "#6ee7b7" : "#ffedd5"} />
+                    <stop offset="1" stopColor={hasUploadedResume ? "#047857" : "#ea580c"} />
+                  </linearGradient>
+                </defs>
+              </svg>
+            </span>
+            <span className="text">
+              {hasUploadedResume ? "My Resume" : isUploading ? "Uploading..." : "Upload"}
+            </span>
+          </button>
+        </div>
+      )}
 
       <footer className="landing-footer">
         <p className="footer-version-text">
-          Resora by Nezer • <span className="footer-version-badge">v2.0.0</span>
+          Resora by Nezer • <span className="footer-version-badge">v2.5.0</span>
         </p>
       </footer>
 

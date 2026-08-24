@@ -123,6 +123,18 @@ export async function saveResumeToSupabase(data, profession, userId) {
       console.error('Error saving resume to Supabase:', error);
       return false;
     }
+
+    try {
+      const headline = data.headline || data.experience?.[0]?.title || '';
+      const resInfo = {
+        hasResume: true,
+        profession: profession || 'it',
+        targetRole: headline || profession || 'Software Developer',
+        resume: data
+      };
+      localStorage.setItem('resora-last-active-resume-info', JSON.stringify(resInfo));
+    } catch {}
+
     return true;
   } catch (err) {
     console.error('Catch error saving resume to Supabase:', err);
@@ -142,6 +154,11 @@ export async function clearResumeFromSupabase(profession, userId) {
       console.error('Error clearing resume from Supabase:', error);
       return false;
     }
+
+    try {
+      localStorage.removeItem('resora-last-active-resume-info');
+    } catch {}
+
     return true;
   } catch (err) {
     console.error('Catch error clearing resume from Supabase:', err);
@@ -163,12 +180,16 @@ export async function findExistingUserResume(user) {
           const decrypted = decryptData(item.resume_data, user.id);
           if (decrypted) {
             const headline = decrypted.headline || decrypted.experience?.[0]?.title || '';
-            return {
+            const resInfo = {
               hasResume: true,
               profession: item.profession || 'it',
               targetRole: headline || item.profession || 'Software Developer',
               resume: decrypted
             };
+            try {
+              localStorage.setItem('resora-last-active-resume-info', JSON.stringify(resInfo));
+            } catch {}
+            return resInfo;
           }
         }
       }
@@ -180,12 +201,16 @@ export async function findExistingUserResume(user) {
       const uploadedData = JSON.parse(uploadedRaw);
       if (uploadedData && uploadedData.resume) {
         const headline = uploadedData.resume.headline || uploadedData.resume.experience?.[0]?.title || '';
-        return {
+        const resInfo = {
           hasResume: true,
           profession: uploadedData.profession || 'it',
           targetRole: headline || uploadedData.profession || 'Software Developer',
           resume: uploadedData.resume
         };
+        try {
+          localStorage.setItem('resora-last-active-resume-info', JSON.stringify(resInfo));
+        } catch {}
+        return resInfo;
       }
     }
 
@@ -201,12 +226,16 @@ export async function findExistingUserResume(user) {
             const parts = k.split('-');
             const prof = parts[parts.length - 1] || 'it';
             const headline = parsed.headline || parsed.experience?.[0]?.title || '';
-            return {
+            const resInfo = {
               hasResume: true,
               profession: prof,
               targetRole: headline || prof || 'Software Developer',
               resume: parsed
             };
+            try {
+              localStorage.setItem('resora-last-active-resume-info', JSON.stringify(resInfo));
+            } catch {}
+            return resInfo;
           }
         }
       }
@@ -214,5 +243,9 @@ export async function findExistingUserResume(user) {
   } catch (err) {
     console.error('Error finding existing user resume:', err);
   }
+
+  try {
+    localStorage.removeItem('resora-last-active-resume-info');
+  } catch {}
   return null;
 }

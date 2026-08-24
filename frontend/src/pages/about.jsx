@@ -58,7 +58,6 @@ export default function About({ onNavigate, isEmbedded }) {
       <main className="about-main">
         {/* Hero Section */}
         <section className="about-hero-section">
-          <div className="about-badge">ABOUT RESORA & NEZER</div>
           <h1 className="about-hero-title">
             Making the Complex <span className="highlight-text">Simple.</span>
           </h1>

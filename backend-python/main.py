@@ -27,7 +27,7 @@ app.add_middleware(
 
 @app.get("/health")
 def health_check():
-    return {"status": "online", "service": "Resora Python FastAPI Backend", "version": "1.0.0"}
+    return {"status": "online", "service": "Resora Python FastAPI Backend", "version": "2.5.0"}
 
 # --- Pydantic Data Models matching JS Resume schema ---
 

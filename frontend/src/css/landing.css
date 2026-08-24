@@ -1093,21 +1093,75 @@
   transform: translateY(0);
 }
 
+.back-to-existing-wrapper {
+  width: 100%;
+  max-width: 580px;
+  display: flex;
+  justify-content: flex-start;
+  margin-top: 0.4rem;
+  padding-left: 0.5rem;
+  z-index: 10;
+}
+
 .btn-back-to-existing-link {
   background: none;
   border: none;
   color: #64748b;
-  font-size: 0.92rem;
+  font-size: 0.84rem;
   font-weight: 600;
+  font-family: 'Inter', sans-serif;
   cursor: pointer;
-  transition: color 0.2s ease;
-  padding: 0.4rem 0.8rem;
-  border-radius: 8px;
+  padding: 0.3rem 0.4rem;
+  border-radius: 6px;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  transition: color 0.25s ease;
 }
 
-.btn-back-to-existing-link:hover {
+.btn-back-to-existing-link .back-arrow-svg {
+  transform: translateX(0);
+  transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1), stroke 0.25s ease;
+  flex-shrink: 0;
+  stroke: #64748b;
+}
+
+.btn-back-to-existing-link:hover .back-arrow-svg {
+  transform: translateX(-4px);
+  stroke: #ea580c;
+}
+
+.btn-back-to-existing-link:active .back-arrow-svg {
+  transform: scale(0.9) translateX(-4px);
+}
+
+.btn-back-to-existing-link .hover-underline-animation {
+  position: relative;
+  padding-bottom: 2px;
+  color: #64748b;
+  transition: color 0.25s ease;
+}
+
+.btn-back-to-existing-link:hover .hover-underline-animation {
   color: #ea580c;
-  text-decoration: underline;
+}
+
+.btn-back-to-existing-link .hover-underline-animation::after {
+  content: "";
+  position: absolute;
+  width: 100%;
+  transform: scaleX(0);
+  height: 2px;
+  bottom: 0;
+  left: 0;
+  background-color: #ea580c;
+  transform-origin: bottom left;
+  transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.btn-back-to-existing-link:hover .hover-underline-animation::after {
+  transform: scaleX(1);
+  transform-origin: bottom right;
 }
 
 @media (max-width: 640px) {
@@ -1122,5 +1176,24 @@
   .btn-go-to-resume,
   .btn-switch-role-secondary {
     width: 100%;
+  }
+}
+
+/* Smooth View Transition Animations */
+.hero-fade-enter {
+  animation: heroFadeSlideIn 0.45s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  will-change: opacity, transform, filter;
+}
+
+@keyframes heroFadeSlideIn {
+  0% {
+    opacity: 0;
+    transform: translateY(16px) scale(0.985);
+    filter: blur(4px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+    filter: blur(0);
   }
 }

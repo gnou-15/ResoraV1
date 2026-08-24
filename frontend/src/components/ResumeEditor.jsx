@@ -81,6 +81,9 @@ function Field({
         className={error ? "input-error" : ""}
         style={rows ? { overflow: "hidden" } : undefined}
         readOnly={readOnly}
+        autoComplete="off"
+        data-lpignore="true"
+        data-form-type="other"
       />
       {error && <span className="field-error-msg" style={{ color: "#dc2626", fontSize: "0.75rem", marginTop: "0.2rem" }}>{error}</span>}
     </label>
