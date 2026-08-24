@@ -133,7 +133,9 @@ export async function saveResumeToSupabase(data, profession, userId) {
         resume: data
       };
       localStorage.setItem('resora-last-active-resume-info', JSON.stringify(resInfo));
-    } catch {}
+    } catch {
+      /* ignore storage errors */
+    }
 
     return true;
   } catch (err) {
@@ -157,7 +159,9 @@ export async function clearResumeFromSupabase(profession, userId) {
 
     try {
       localStorage.removeItem('resora-last-active-resume-info');
-    } catch {}
+    } catch {
+      /* ignore storage errors */
+    }
 
     return true;
   } catch (err) {
@@ -188,7 +192,9 @@ export async function findExistingUserResume(user) {
             };
             try {
               localStorage.setItem('resora-last-active-resume-info', JSON.stringify(resInfo));
-            } catch {}
+            } catch {
+              /* ignore storage errors */
+            }
             return resInfo;
           }
         }
@@ -209,7 +215,9 @@ export async function findExistingUserResume(user) {
         };
         try {
           localStorage.setItem('resora-last-active-resume-info', JSON.stringify(resInfo));
-        } catch {}
+        } catch {
+          /* ignore storage errors */
+        }
         return resInfo;
       }
     }
@@ -234,7 +242,9 @@ export async function findExistingUserResume(user) {
             };
             try {
               localStorage.setItem('resora-last-active-resume-info', JSON.stringify(resInfo));
-            } catch {}
+            } catch {
+              /* ignore storage errors */
+            }
             return resInfo;
           }
         }
@@ -246,6 +256,8 @@ export async function findExistingUserResume(user) {
 
   try {
     localStorage.removeItem('resora-last-active-resume-info');
-  } catch {}
+  } catch {
+    /* ignore storage errors */
+  }
   return null;
 }
