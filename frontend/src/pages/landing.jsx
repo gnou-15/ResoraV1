@@ -518,32 +518,34 @@ export default function Landing({ onSelect, onNavigate, isEmbedded, mascotMood, 
           </button>
         )}
 
-        <div className="hero-sample-new">
-          Try:
-          <button
-            type="button"
-            className="hero-sample-link"
-            onClick={() => setInput("nurse")}
-          >
-            nurse
-          </button>
-          ·
-          <button
-            type="button"
-            className="hero-sample-link"
-            onClick={() => setInput("frontend developer")}
-          >
-            frontend developer
-          </button>
-          ·
-          <button
-            type="button"
-            className="hero-sample-link"
-            onClick={() => setInput("project manager")}
-          >
-            project manager
-          </button>
-        </div>
+        {(!existingResumeInfo || isSearchingNewRole) && (
+          <div className="hero-sample-new">
+            Try:
+            <button
+              type="button"
+              className="hero-sample-link"
+              onClick={() => setInput("nurse")}
+            >
+              nurse
+            </button>
+            ·
+            <button
+              type="button"
+              className="hero-sample-link"
+              onClick={() => setInput("frontend developer")}
+            >
+              frontend developer
+            </button>
+            ·
+            <button
+              type="button"
+              className="hero-sample-link"
+              onClick={() => setInput("project manager")}
+            >
+              project manager
+            </button>
+          </div>
+        )}
 
 
         <p className="hero-description-new">

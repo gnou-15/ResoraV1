@@ -161,8 +161,8 @@
 }
 
 .hero-title-container {
+  margin-top: 1.6rem;
   margin-bottom: 0.85rem;
-  /* Tighten spacing to search bar */
 }
 
 .hero-title-line {
@@ -970,7 +970,8 @@
 
 /* Returning User CTA Card & Title Styles */
 .hero-title-container.returning-hero {
-  margin-bottom: 0.5rem;
+  margin-top: 1.85rem;
+  margin-bottom: 0.85rem;
 }
 
 .hero-welcome-badge {
