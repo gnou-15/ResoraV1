@@ -164,7 +164,8 @@ function calculateJobSuitability(resume, jobTitle) {
 
   if (headline) textContent.push(headline.toLowerCase());
   if (summary) textContent.push(summary.toLowerCase());
-  if (resume.skills) textContent.push(resume.skills.toLowerCase());
+  if (typeof resume.skills === 'string') textContent.push(resume.skills.toLowerCase());
+  else if (Array.isArray(resume.skills)) textContent.push(...resume.skills.map(s => String(s).toLowerCase()));
 
   if (technicalSkills) {
     Object.values(technicalSkills).forEach(val => {
@@ -254,22 +255,22 @@ export function analyzeResume(resume, profession = 'it') {
   // letter-size page (8.5 × 11in). A full page is roughly 55 printable lines.
   // The midpoint is ~28 lines. We count filled sections and text volume to
   // determine if the resume has enough substance for a meaningful analysis.
-  let estimatedLines = 0;
+  let _estimatedLines = 0;
 
   // Header block: name, contact info → ~3 lines if present
   const hasName = personal.fullName?.trim();
   const hasEmail = personal.email?.trim();
   const hasPhone = personal.phoneNumber?.trim();
   const filledContactFields = [hasName, hasEmail, hasPhone, personal.linkedin?.trim(), personal.github?.trim(), personal.portfolio?.trim(), personal.location?.city?.trim()].filter(Boolean).length;
-  if (filledContactFields > 0) estimatedLines += Math.min(3, Math.ceil(filledContactFields / 2));
+  if (filledContactFields > 0) _estimatedLines += Math.min(3, Math.ceil(filledContactFields / 2));
 
   // Headline → 1 line
-  if (headline?.trim()) estimatedLines += 2; // section header + content
+  if (headline?.trim()) _estimatedLines += 2; // section header + content
 
   // Summary → approximately 1 line per 80 chars
   if (summary?.trim()) {
-    estimatedLines += 2; // section header + spacing
-    estimatedLines += Math.ceil(summary.length / 80);
+    _estimatedLines += 2; // section header + spacing
+    _estimatedLines += Math.ceil(summary.length / 80);
   }
 
   // Skills → 1 line per category that has items
@@ -317,60 +318,60 @@ export function analyzeResume(resume, profession = 'it') {
     }
   }
   if (filledSkillCategories > 0) {
-    estimatedLines += 2; // section header + spacing
-    estimatedLines += filledSkillCategories;
+    _estimatedLines += 2; // section header + spacing
+    _estimatedLines += filledSkillCategories;
   }
 
   // Education → ~3 lines per entry (school + degree + dates/gpa)
   const filledEducation_chk = education.filter(e => e.school || e.degree);
   if (filledEducation_chk.length > 0) {
-    estimatedLines += 2; // section header + spacing
+    _estimatedLines += 2; // section header + spacing
     filledEducation_chk.forEach(edu => {
-      estimatedLines += 2; // school + degree line
-      if (edu.gpa?.trim()) estimatedLines += 1;
-      if (edu.coursework?.trim()) estimatedLines += Math.ceil(edu.coursework.length / 80);
+      _estimatedLines += 2; // school + degree line
+      if (edu.gpa?.trim()) _estimatedLines += 1;
+      if (edu.coursework?.trim()) _estimatedLines += Math.ceil(edu.coursework.length / 80);
     });
   }
 
   // Experience → ~2 lines per role header + 1 line per bullet
   const filledExp_chk = experience.filter(e => e.company || e.title);
   if (filledExp_chk.length > 0) {
-    estimatedLines += 2; // section header + spacing
+    _estimatedLines += 2; // section header + spacing
     filledExp_chk.forEach(job => {
-      estimatedLines += 2; // company + title line
+      _estimatedLines += 2; // company + title line
       const jobBullets = (job.bullets || []).filter(b => b && b.trim());
-      estimatedLines += jobBullets.length;
+      _estimatedLines += jobBullets.length;
     });
   }
 
   // Projects → ~2 lines per project header + 1 per bullet
   const filledProjects_chk = projects.filter(p => p.name);
   if (filledProjects_chk.length > 0) {
-    estimatedLines += 2; // section header + spacing
+    _estimatedLines += 2; // section header + spacing
     filledProjects_chk.forEach(proj => {
-      estimatedLines += 1; // project name
-      if (proj.stack?.trim()) estimatedLines += 1;
+      _estimatedLines += 1; // project name
+      if (proj.stack?.trim()) _estimatedLines += 1;
       const projBullets = (proj.bullets || []).filter(b => b && b.trim());
-      estimatedLines += projBullets.length;
+      _estimatedLines += projBullets.length;
     });
   }
 
   // Certifications → 1 line each
   const filledCerts_chk = certifications.filter(c => c.name);
   if (filledCerts_chk.length > 0) {
-    estimatedLines += 2;
-    estimatedLines += filledCerts_chk.length;
+    _estimatedLines += 2;
+    _estimatedLines += filledCerts_chk.length;
   }
 
   // Achievements (students) → 1-2 lines each
   if (isStudent) {
     const filledAchievements = achievements.filter(a => a.title);
     if (filledAchievements.length > 0) {
-      estimatedLines += 2;
+      _estimatedLines += 2;
       filledAchievements.forEach(a => {
-        estimatedLines += 1;
+        _estimatedLines += 1;
         const aBullets = (a.bullets || []).filter(b => b && b.trim());
-        estimatedLines += aBullets.length;
+        _estimatedLines += aBullets.length;
       });
     }
   }

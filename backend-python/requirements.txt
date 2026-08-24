@@ -6,3 +6,6 @@ python-docx
 python-multipart
 groq
 python-dotenv
+pytest
+httpx
+ruff
