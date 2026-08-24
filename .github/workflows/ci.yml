@@ -84,6 +84,30 @@ jobs:
       - name: Run Pytest Execution
         run: pytest
 
+  docker-build:
+    name: Docker Image Build Verification
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build Node Backend Image
+        uses: docker/build-push-action@v5
+        with:
+          context: ./backend-node
+          push: false
+          tags: resora-backend-node:test
+
+      - name: Build Python Backend Image
+        uses: docker/build-push-action@v5
+        with:
+          context: ./backend-python
+          push: false
+          tags: resora-backend-python:test
+
   security-scan:
     name: Dependency Vulnerability Scan
     runs-on: ubuntu-latest
@@ -110,7 +134,7 @@ jobs:
 
   ci-summary:
     name: CI Pipeline Quality Gate
-    needs: [frontend-ci, backend-node-ci, backend-python-ci, security-scan]
+    needs: [frontend-ci, backend-node-ci, backend-python-ci, docker-build, security-scan]
     runs-on: ubuntu-latest
     if: always()
     steps:
@@ -118,7 +142,8 @@ jobs:
         run: |
           if [ "${{ needs.frontend-ci.result }}" != "success" ] || \
              [ "${{ needs.backend-node-ci.result }}" != "success" ] || \
-             [ "${{ needs.backend-python-ci.result }}" != "success" ]; then
+             [ "${{ needs.backend-python-ci.result }}" != "success" ] || \
+             [ "${{ needs.docker-build.result }}" != "success" ]; then
             echo "❌ One or more CI jobs failed!"
             exit 1
           fi

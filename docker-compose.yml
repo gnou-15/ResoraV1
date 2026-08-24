@@ -1,0 +1,33 @@
+version: '3.8'
+
+services:
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    ports:
+      - "5173:80"
+    environment:
+      - VITE_PYTHON_BACKEND_URL=http://localhost:8000
+    depends_on:
+      - backend-node
+      - backend-python
+
+  backend-node:
+    build:
+      context: ./backend-node
+      dockerfile: Dockerfile
+    ports:
+      - "5000:5000"
+    environment:
+      - PORT=5000
+      - NODE_ENV=production
+
+  backend-python:
+    build:
+      context: ./backend-python
+      dockerfile: Dockerfile
+    ports:
+      - "8000:8000"
+    environment:
+      - PORT=8000
