@@ -1,14 +1,5 @@
-import { createContext, useContext, useState } from "react";
-
-const DialogContext = createContext(null);
-
-export function useDialog() {
-  const context = useContext(DialogContext);
-  if (!context) {
-    throw new Error("useDialog must be used within a DialogProvider");
-  }
-  return context;
-}
+import { useState } from "react";
+import { DialogContext } from "./DialogContext";
 
 export function DialogProvider({ children }) {
   const [dialogState, setDialogState] = useState({

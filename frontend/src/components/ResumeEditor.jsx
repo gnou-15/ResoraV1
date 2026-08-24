@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import { createId, skillCategories } from "../data/defaultResume";
 import { PhoneField, LocationFields } from "./ContactFields";
-import { useDialog } from "../context/DialogContext";
+import { useDialog } from "../context/useDialog";
 
 function Section({ title, hint, children, onAdd, addLabel, onRemoveSection, removeSectionLabel }) {
   return (

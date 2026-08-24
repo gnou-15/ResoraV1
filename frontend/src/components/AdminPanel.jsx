@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import "../css/AdminPanel.css";
 import { supabase } from "../services/supabase";
-import { useDialog } from "../context/DialogContext";
+import { useDialog } from "../context/useDialog";
 
 export default function AdminPanel({ isOpen, onClose }) {
   const { showAlert } = useDialog();

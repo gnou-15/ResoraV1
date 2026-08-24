@@ -6,7 +6,7 @@ import { useResume } from "../hooks/useResume";
 import { defaultResume } from "../data/defaultResume";
 import AIScoreWidget from "../components/AIScoreWidget";
 import { analyzeResume, fetchAPIAnalysis } from "../services/aiScorer";
-import { useDialog } from "../context/DialogContext";
+import { useDialog } from "../context/useDialog";
 
 const PROFESSION_TITLES = {
   it: "IT Resume Builder",
