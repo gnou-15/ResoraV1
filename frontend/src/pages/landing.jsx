@@ -423,10 +423,6 @@ export default function Landing({ onSelect, onNavigate, isEmbedded, mascotMood, 
         <PeekingMonster mood={mascotMood || localMood} />
         {existingResumeInfo && !isSearchingNewRole ? (
           <div className="hero-title-container returning-hero">
-            <div className="hero-welcome-badge">
-              <span className="badge-dot"></span>
-              <span>Active Resume Loaded</span>
-            </div>
             <h2 className="hero-title-returning">
               Ready to work on your <span className="highlight-role">{existingResumeInfo.targetRole}</span> resume?
             </h2>
