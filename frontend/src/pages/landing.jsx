@@ -422,10 +422,13 @@ export default function Landing({ onSelect, onNavigate, isEmbedded, mascotMood, 
         <h1 className="sr-only">Build a Professional, ATS-Friendly Resume with Resora</h1>
         <PeekingMonster mood={mascotMood || localMood} />
         {existingResumeInfo && !isSearchingNewRole ? (
-          <div className="hero-title-container">
-            <h2 className="hero-title-line">Ready to work on your</h2>
-            <h2 className="hero-title-line">
-              <span className="highlight-role">{existingResumeInfo.targetRole}</span> Resume?
+          <div className="hero-title-container returning-hero">
+            <div className="hero-welcome-badge">
+              <span className="badge-dot"></span>
+              <span>Active Resume Loaded</span>
+            </div>
+            <h2 className="hero-title-returning">
+              Ready to work on your <span className="highlight-role">{existingResumeInfo.targetRole}</span> resume?
             </h2>
           </div>
         ) : (
@@ -436,14 +439,14 @@ export default function Landing({ onSelect, onNavigate, isEmbedded, mascotMood, 
         )}
 
         {existingResumeInfo && !isSearchingNewRole ? (
-          <div className="existing-resume-cta-card">
+          <div className="existing-resume-cta-row">
             <button
               type="button"
               className="btn-go-to-resume"
               onClick={() => onSelect(existingResumeInfo.profession)}
             >
               <span>Go to My Resume</span>
-              <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+              <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
                 <line x1="5" y1="12" x2="19" y2="12" />
                 <polyline points="12 5 19 12 12 19" />
               </svg>
@@ -451,10 +454,14 @@ export default function Landing({ onSelect, onNavigate, isEmbedded, mascotMood, 
 
             <button
               type="button"
-              className="btn-switch-role-link"
+              className="btn-switch-role-secondary"
               onClick={() => setIsSearchingNewRole(true)}
             >
-              Or search for a different role / start new
+              <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <circle cx="11" cy="11" r="8"></circle>
+                <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+              </svg>
+              <span>Search Different Role</span>
             </button>
           </div>
         ) : (
