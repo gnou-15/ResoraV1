@@ -5,7 +5,7 @@ import ResumePreview from "../components/ResumePreview";
 import { useResume } from "../hooks/useResume";
 import { defaultResume } from "../data/defaultResume";
 import AIScoreWidget from "../components/AIScoreWidget";
-import { analyzeResume, fetchAPIAnalysis } from "../services/aiScorer";
+import { analyzeResume, fetchAPIAnalysis, getCachedAnalysis, setCachedAnalysis, getResumeSignature } from "../services/aiScorer";
 import { useDialog } from "../context/useDialog";
 
 const PROFESSION_TITLES = {
@@ -51,10 +51,17 @@ function Home({ profession, user, onBack, plan, onNavigateAuth }) {
   const hasSyncedInitially = useRef(false);
   const lastSyncedResumeRef = useRef(null);
 
-  // Reset sync check flag and load local analysis when profession or userType changes
+  // Reset sync check flag and load cached or local analysis when profession or userType changes
   useEffect(() => {
     hasSyncedInitially.current = false;
-    setAnalysisResult(analyzeResume(resume || defaultResume, profession));
+    const cached = getCachedAnalysis(profession, resume || defaultResume);
+    if (cached) {
+      setAnalysisResult(cached);
+    } else {
+      const local = analyzeResume(resume || defaultResume, profession);
+      setAnalysisResult(local);
+      setCachedAnalysis(profession, resume || defaultResume, local);
+    }
   }, [profession, resume?.userType]);
 
   useEffect(() => {
@@ -108,17 +115,20 @@ function Home({ profession, user, onBack, plan, onNavigateAuth }) {
 
 
 
-  // Debounced real-time analysis sync whenever resume changes
+  // Debounced real-time analysis sync ONLY whenever resume actually changes
   useEffect(() => {
     if (!isInitialized) return;
 
-    const resumeChanged = JSON.stringify(resume) !== JSON.stringify(lastSyncedResumeRef.current);
+    const currentSig = getResumeSignature(resume);
+    const lastSig = getResumeSignature(lastSyncedResumeRef.current);
+    const resumeChanged = currentSig !== lastSig;
 
     const runSync = async () => {
       setSyncing(true);
       try {
         const res = await fetchAPIAnalysis(resume, profession);
         setAnalysisResult(res);
+        setCachedAnalysis(profession, resume, res);
         lastSyncedResumeRef.current = resume;
       } catch (e) {
         console.error("Failed syncing analysis with backend:", e);
@@ -130,6 +140,12 @@ function Home({ profession, user, onBack, plan, onNavigateAuth }) {
     // On initial load or when switching profession/form type
     if (!hasSyncedInitially.current) {
       hasSyncedInitially.current = true;
+      lastSyncedResumeRef.current = resume;
+      const cached = getCachedAnalysis(profession, resume);
+      if (cached) {
+        setAnalysisResult(cached);
+        return; // Cached analysis is valid and up-to-date! No API call required.
+      }
       runSync();
       return;
     }

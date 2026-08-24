@@ -898,3 +898,81 @@ export async function fetchAPIAnalysis(resume, profession = 'it') {
   }
 }
 
+const ANALYSIS_CACHE_KEY_PREFIX = 'resora_analysis_cache_';
+
+export function getResumeSignature(resume) {
+  if (!resume) return '';
+  try {
+    return JSON.stringify({
+      personal: resume.personal,
+      headline: resume.headline,
+      summary: resume.summary,
+      skills: resume.skills,
+      technicalSkills: resume.technicalSkills,
+      experience: resume.experience,
+      education: resume.education,
+      projects: resume.projects,
+      certifications: resume.certifications,
+      achievements: resume.achievements,
+      userType: resume.userType,
+    });
+  } catch {
+    return '';
+  }
+}
+
+const memoryStorage = new Map();
+
+function safeGetStorage(key) {
+  try {
+    if (typeof localStorage !== 'undefined') {
+      return localStorage.getItem(key);
+    }
+  } catch {
+    // ignore
+  }
+  return memoryStorage.get(key) || null;
+}
+
+function safeSetStorage(key, value) {
+  try {
+    if (typeof localStorage !== 'undefined') {
+      localStorage.setItem(key, value);
+      return;
+    }
+  } catch {
+    // ignore
+  }
+  memoryStorage.set(key, value);
+}
+
+export function getCachedAnalysis(profession, resume) {
+  try {
+    const key = `${ANALYSIS_CACHE_KEY_PREFIX}${profession || 'it'}`;
+    const raw = safeGetStorage(key);
+    if (!raw) return null;
+    const cached = JSON.parse(raw);
+    const currentSig = getResumeSignature(resume);
+    if (cached && cached.signature === currentSig && cached.result) {
+      return cached.result;
+    }
+  } catch {
+    // ignore
+  }
+  return null;
+}
+
+export function setCachedAnalysis(profession, resume, result) {
+  try {
+    const key = `${ANALYSIS_CACHE_KEY_PREFIX}${profession || 'it'}`;
+    const signature = getResumeSignature(resume);
+    safeSetStorage(key, JSON.stringify({
+      signature,
+      result,
+      savedAt: new Date().toISOString()
+    }));
+  } catch {
+    // ignore
+  }
+}
+
