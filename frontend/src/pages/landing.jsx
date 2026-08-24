@@ -67,22 +67,13 @@ export default function Landing({ onSelect, onNavigate, isEmbedded, mascotMood, 
   const [showAuthModal, setShowAuthModal] = useState(false);
   const [localMood, setLocalMood] = useState("normal");
   const [existingResumeInfo, setExistingResumeInfo] = useState(() => {
+    if (!user) return null;
     try {
       const cached = localStorage.getItem("resora-last-active-resume-info");
       if (cached) {
-        return JSON.parse(cached);
-      }
-      const uploadedRaw = sessionStorage.getItem("resora-uploaded-resume") || localStorage.getItem("resora-uploaded-resume");
-      if (uploadedRaw) {
-        const uploadedData = JSON.parse(uploadedRaw);
-        if (uploadedData && uploadedData.resume) {
-          const headline = uploadedData.resume.headline || uploadedData.resume.experience?.[0]?.title || "";
-          return {
-            hasResume: true,
-            profession: uploadedData.profession || "it",
-            targetRole: headline || uploadedData.profession || "Software Developer",
-            resume: uploadedData.resume
-          };
+        const parsed = JSON.parse(cached);
+        if (parsed && parsed.hasResume && parsed.userId === user.id) {
+          return parsed;
         }
       }
     } catch {
@@ -96,9 +87,22 @@ export default function Landing({ onSelect, onNavigate, isEmbedded, mascotMood, 
   useEffect(() => {
     let isMounted = true;
     async function checkExisting() {
+      if (!user) {
+        if (isMounted) setExistingResumeInfo(null);
+        try {
+          localStorage.removeItem("resora-last-active-resume-info");
+        } catch {
+          /* ignore */
+        }
+        return;
+      }
       const info = await findExistingUserResume(user);
-      if (isMounted && info && info.hasResume) {
-        setExistingResumeInfo(info);
+      if (isMounted) {
+        if (info && info.hasResume && info.userId === user.id) {
+          setExistingResumeInfo(info);
+        } else {
+          setExistingResumeInfo(null);
+        }
       }
     }
     checkExisting();

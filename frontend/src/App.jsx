@@ -74,7 +74,15 @@ function App() {
 
     // Listen to changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-      setUser(session?.user ?? null);
+      const activeUser = session?.user ?? null;
+      setUser(activeUser);
+      if (!activeUser) {
+        try {
+          localStorage.removeItem("resora-last-active-resume-info");
+        } catch {
+          /* ignore */
+        }
+      }
     });
 
     return () => subscription.unsubscribe();
@@ -106,8 +114,8 @@ function App() {
     }
   };
 
-  const transitionToPage = (targetPage, customMessage, useBuffer = true) => {
-    if ((route.page === "auth" || targetPage === "auth") && useBuffer) {
+  const transitionToPage = (targetPage, customMessage, useBuffer = false) => {
+    if (useBuffer && targetPage !== "auth") {
       setTransitionMessage(customMessage || "Preparing your space...");
       setShowAuthTransition(true);
       setTimeout(() => {
@@ -202,6 +210,11 @@ function App() {
                     e.preventDefault();
                     setIsSigningOut(true);
                     setMascotMood("frantic");
+                    try {
+                      localStorage.removeItem("resora-last-active-resume-info");
+                    } catch {
+                      /* ignore */
+                    }
                     await supabase.auth.signOut();
                     transitionToPage("auth", "See you again!");
                   }}
@@ -281,7 +294,7 @@ function App() {
             <Auth
               user={user}
               onNavigate={(page) => transitionToPage(page, null, false)}
-              onSuccessNavigate={(page, msg) => transitionToPage(page, msg, true)}
+              onSuccessNavigate={(page, msg) => transitionToPage(page, msg, false)}
             />
           </div>
         </div>

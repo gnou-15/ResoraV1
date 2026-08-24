@@ -378,7 +378,7 @@ export default function Auth({ user, onNavigate, onSuccessNavigate }) {
                 <h1 className="auth-logo-text">Resora</h1>
               </div>
 
-              {isLogin && (
+              {isLogin && !success && (
                 <button
                   type="button"
                   className="auth-back-link-btn"
