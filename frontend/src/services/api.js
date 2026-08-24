@@ -148,3 +148,71 @@ export async function clearResumeFromSupabase(profession, userId) {
     return false;
   }
 }
+
+export async function findExistingUserResume(user) {
+  try {
+    if (user) {
+      const { data, error } = await supabase
+        .from('resumes')
+        .select('profession, resume_data, updated_at')
+        .eq('user_id', user.id)
+        .order('updated_at', { ascending: false });
+
+      if (!error && data && data.length > 0) {
+        for (const item of data) {
+          const decrypted = decryptData(item.resume_data, user.id);
+          if (decrypted) {
+            const headline = decrypted.headline || decrypted.experience?.[0]?.title || '';
+            return {
+              hasResume: true,
+              profession: item.profession || 'it',
+              targetRole: headline || item.profession || 'Software Developer',
+              resume: decrypted
+            };
+          }
+        }
+      }
+    }
+
+    // Check guest uploaded or guest local storage
+    const uploadedRaw = sessionStorage.getItem('resora-uploaded-resume') || localStorage.getItem('resora-uploaded-resume');
+    if (uploadedRaw) {
+      const uploadedData = JSON.parse(uploadedRaw);
+      if (uploadedData && uploadedData.resume) {
+        const headline = uploadedData.resume.headline || uploadedData.resume.experience?.[0]?.title || '';
+        return {
+          hasResume: true,
+          profession: uploadedData.profession || 'it',
+          targetRole: headline || uploadedData.profession || 'Software Developer',
+          resume: uploadedData.resume
+        };
+      }
+    }
+
+    // Check guest session storage
+    const sid = sessionStorage.getItem('resora_guest_session_token');
+    if (sid) {
+      for (let i = 0; i < localStorage.length; i++) {
+        const k = localStorage.key(i);
+        if (k && k.startsWith(`${STORAGE_KEY}-${sid}`)) {
+          const raw = localStorage.getItem(k);
+          if (raw) {
+            const parsed = JSON.parse(raw);
+            const parts = k.split('-');
+            const prof = parts[parts.length - 1] || 'it';
+            const headline = parsed.headline || parsed.experience?.[0]?.title || '';
+            return {
+              hasResume: true,
+              profession: prof,
+              targetRole: headline || prof || 'Software Developer',
+              resume: parsed
+            };
+          }
+        }
+      }
+    }
+  } catch (err) {
+    console.error('Error finding existing user resume:', err);
+  }
+  return null;
+}

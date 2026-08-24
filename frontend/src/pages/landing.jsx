@@ -3,6 +3,7 @@ import "../css/landing.css";
 import InteractiveBackground from "../components/InteractiveBackground";
 import PeekingMonster from "../components/PeekingMonster";
 import ParsingLoader from "../components/ParsingLoader";
+import { findExistingUserResume } from "../services/api";
 
 const PREDICTABLE_PROFESSIONS = [
   "Nurse",
@@ -59,13 +60,27 @@ const PREDICTABLE_PROFESSIONS = [
   "Behavioral Health Specialist",
 ];
 
-export default function Landing({ onSelect, onNavigate, isEmbedded, mascotMood }) {
+export default function Landing({ onSelect, onNavigate, isEmbedded, mascotMood, user }) {
   const [input, setInput] = useState("");
   const [placeholder, setPlaceholder] = useState("");
   const [searchError, setSearchError] = useState("");
   const [showAuthModal, setShowAuthModal] = useState(false);
   const [localMood, setLocalMood] = useState("normal");
+  const [existingResumeInfo, setExistingResumeInfo] = useState(null);
+  const [isSearchingNewRole, setIsSearchingNewRole] = useState(false);
   const inputRef = useRef(null);
+
+  useEffect(() => {
+    let isMounted = true;
+    async function checkExisting() {
+      const info = await findExistingUserResume(user);
+      if (isMounted && info && info.hasResume) {
+        setExistingResumeInfo(info);
+      }
+    }
+    checkExisting();
+    return () => { isMounted = false; };
+  }, [user]);
 
   const suggestions = input.trim()
     ? PREDICTABLE_PROFESSIONS.filter(
@@ -406,55 +421,99 @@ export default function Landing({ onSelect, onNavigate, isEmbedded, mascotMood }
       <main className="landing-hero">
         <h1 className="sr-only">Build a Professional, ATS-Friendly Resume with Resora</h1>
         <PeekingMonster mood={mascotMood || localMood} />
-        <div className="hero-title-container">
-          <h2 className="hero-title-line">What is your</h2>
-          <h2 className="hero-title-line">Profession?</h2>
-        </div>
-
-        <form className={`search-bar-pill ${searchError ? "shake" : ""}`} onSubmit={handleSubmit}>
-          <div className="search-input-wrapper">
-            <input
-              ref={inputRef}
-              type="text"
-              className="search-input-field"
-              placeholder={placeholder || "I am a ..."}
-              value={input}
-              onChange={(e) => {
-                setInput(e.target.value);
-                if (searchError) setSearchError("");
-              }}
-              onKeyDown={handleKeyDown}
-              aria-label="Profession"
-            />
+        {existingResumeInfo && !isSearchingNewRole ? (
+          <div className="hero-title-container">
+            <h2 className="hero-title-line">Ready to work on your</h2>
+            <h2 className="hero-title-line">
+              <span className="highlight-role">{existingResumeInfo.targetRole}</span> Resume?
+            </h2>
           </div>
-          <button type="submit" className="search-submit-btn" aria-label="Search">
-            <svg viewBox="0 0 24 24">
-              <circle cx="11" cy="11" r="8"></circle>
-              <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
-            </svg>
+        ) : (
+          <div className="hero-title-container">
+            <h2 className="hero-title-line">What is your</h2>
+            <h2 className="hero-title-line">Profession?</h2>
+          </div>
+        )}
+
+        {existingResumeInfo && !isSearchingNewRole ? (
+          <div className="existing-resume-cta-card">
+            <button
+              type="button"
+              className="btn-go-to-resume"
+              onClick={() => onSelect(existingResumeInfo.profession)}
+            >
+              <span>Go to My Resume</span>
+              <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                <line x1="5" y1="12" x2="19" y2="12" />
+                <polyline points="12 5 19 12 12 19" />
+              </svg>
+            </button>
+
+            <button
+              type="button"
+              className="btn-switch-role-link"
+              onClick={() => setIsSearchingNewRole(true)}
+            >
+              Or search for a different role / start new
+            </button>
+          </div>
+        ) : (
+          <form className={`search-bar-pill ${searchError ? "shake" : ""}`} onSubmit={handleSubmit}>
+            <div className="search-input-wrapper">
+              <input
+                ref={inputRef}
+                type="text"
+                className="search-input-field"
+                placeholder={placeholder || "I am a ..."}
+                value={input}
+                onChange={(e) => {
+                  setInput(e.target.value);
+                  if (searchError) setSearchError("");
+                }}
+                onKeyDown={handleKeyDown}
+                aria-label="Profession"
+              />
+            </div>
+            <button type="submit" className="search-submit-btn" aria-label="Search">
+              <svg viewBox="0 0 24 24">
+                <circle cx="11" cy="11" r="8"></circle>
+                <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+              </svg>
+            </button>
+
+            {searchError && (
+              <div className="search-error-bubble">
+                {searchError}
+              </div>
+            )}
+
+            {suggestions.length > 0 && (
+              <div className="search-predictions-dropdown">
+                {suggestions.map((sug) => (
+                  <button
+                    key={sug}
+                    type="button"
+                    className="prediction-item"
+                    onClick={() => handleSelectSuggestion(sug)}
+                  >
+                    {sug}
+                  </button>
+                ))}
+              </div>
+            )}
+          </form>
+        )}
+
+        {existingResumeInfo && isSearchingNewRole && (
+          <button
+            type="button"
+            className="btn-back-to-existing-link"
+            onClick={() => setIsSearchingNewRole(false)}
+            style={{ marginTop: "0.8rem" }}
+          >
+            ← Back to {existingResumeInfo.targetRole} Resume
           </button>
-
-          {searchError && (
-            <div className="search-error-bubble">
-              {searchError}
-            </div>
-          )}
-
-          {suggestions.length > 0 && (
-            <div className="search-predictions-dropdown">
-              {suggestions.map((sug) => (
-                <button
-                  key={sug}
-                  type="button"
-                  className="prediction-item"
-                  onClick={() => handleSelectSuggestion(sug)}
-                >
-                  {sug}
-                </button>
-              ))}
-            </div>
-          )}
-        </form>
+        )}
 
         <div className="hero-sample-new">
           Try:

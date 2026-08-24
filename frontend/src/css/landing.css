@@ -967,3 +967,69 @@
     font-size: 12px;
   }
 }
+
+/* Returning User CTA Card Styles */
+.existing-resume-cta-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1rem;
+  width: 100%;
+  max-width: 540px;
+  margin-top: 1rem;
+  z-index: 10;
+}
+
+.btn-go-to-resume {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.75rem;
+  width: 100%;
+  padding: 1.2rem 2.5rem;
+  background: linear-gradient(135deg, #f97316 0%, #ea580c 100%);
+  color: #ffffff;
+  font-size: 1.25rem;
+  font-weight: 700;
+  font-family: 'Outfit', sans-serif;
+  border-radius: 9999px;
+  border: none;
+  cursor: pointer;
+  box-shadow: 0 10px 25px -5px rgba(234, 88, 12, 0.4), 0 8px 10px -6px rgba(234, 88, 12, 0.2);
+  transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.btn-go-to-resume:hover {
+  transform: translateY(-3px) scale(1.02);
+  box-shadow: 0 15px 30px -5px rgba(234, 88, 12, 0.5), 0 10px 12px -5px rgba(234, 88, 12, 0.3);
+  background: linear-gradient(135deg, #fb923c 0%, #f97316 100%);
+}
+
+.btn-go-to-resume:active {
+  transform: translateY(0) scale(0.98);
+}
+
+.btn-switch-role-link,
+.btn-back-to-existing-link {
+  background: none;
+  border: none;
+  color: #64748b;
+  font-size: 0.95rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: color 0.2s ease, text-decoration 0.2s ease;
+  padding: 0.4rem 0.8rem;
+  border-radius: 8px;
+}
+
+.btn-switch-role-link:hover,
+.btn-back-to-existing-link:hover {
+  color: #ea580c;
+  text-decoration: underline;
+}
+
+.highlight-role {
+  color: #f97316;
+  position: relative;
+  display: inline-block;
+}
