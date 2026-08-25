@@ -15,6 +15,26 @@ import { getUserPlan } from "./utils/subscription";
 import AdminPanel from "./components/AdminPanel";
 import "./css/App.css";
 
+function getInitialCachedUser() {
+  try {
+    for (let i = 0; i < localStorage.length; i++) {
+      const key = localStorage.key(i);
+      if (key && key.startsWith("sb-") && key.endsWith("-auth-token")) {
+        const item = localStorage.getItem(key);
+        if (item) {
+          const parsed = JSON.parse(item);
+          if (parsed && parsed.user) {
+            return parsed.user;
+          }
+        }
+      }
+    }
+  } catch {
+    // fallback
+  }
+  return null;
+}
+
 function App() {
   const [route, setRoute] = useState(() => {
     try {
@@ -35,7 +55,7 @@ function App() {
   const [isExitingBuilder, setIsExitingBuilder] = useState(false);
   const [showLoader, setShowLoader] = useState(false);
   const [showInitialSplash, setShowInitialSplash] = useState(true);
-  const [user, setUser] = useState(null);
+  const [user, setUser] = useState(getInitialCachedUser);
   const [adminPanelOpen, setAdminPanelOpen] = useState(false);
 
   const isAdmin = user && user.email === (import.meta.env.VITE_ADMIN_EMAIL || "nezer.resora@gmail.com");
