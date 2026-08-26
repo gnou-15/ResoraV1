@@ -20,7 +20,7 @@ app.use((req, res, next) => {
 });
 
 app.get('/health', (req, res) => {
-  res.json({ status: 'online', service: 'Resora Node.js Backend', version: '2.5.3' });
+  res.json({ status: 'online', service: 'Resora Node.js Backend', version: '2.5.5' });
 });
 
 if (process.env.NODE_ENV !== 'test') {

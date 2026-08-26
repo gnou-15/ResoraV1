@@ -86,7 +86,7 @@ async def log_requests(request: Request, call_next):
 
 @app.get("/health")
 def health_check():
-    return {"status": "online", "service": "Resora Python FastAPI Backend", "version": "2.5.3"}
+    return {"status": "online", "service": "Resora Python FastAPI Backend", "version": "2.5.5"}
 
 
 @app.get("/api/rate-limit-status")

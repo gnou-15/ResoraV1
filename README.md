@@ -1,11 +1,11 @@
-# Resora v2.5.3
+# Resora v2.5.5
 
-> **Major Version 2.5.3 Release** | Secure, state-of-the-art ATS-optimized resume builder featuring high-speed Groq AI (`groq/compound-mini`, `llama-3.3-70b-versatile`) document parsing, real-time chunking stage pipeline & percentage tracking, 5-second button-embedded confirmation fill, soft 3D Neumorphic card aesthetics, zero-knowledge AES-256 client-side encryption, SHA-256 in-memory LRU caching (<5ms duplicate parsing), and IP rate-limiting anti-abuse protection.
+> **Major Version 2.5.5 Release** | Secure, state-of-the-art ATS-optimized resume builder featuring high-speed Groq AI (`groq/compound-mini`, `llama-3.3-70b-versatile`) document parsing, real-time chunking stage pipeline & percentage tracking, 5-second button-embedded confirmation fill, soft 3D Neumorphic card aesthetics, zero-knowledge AES-256 client-side encryption, SHA-256 in-memory LRU caching (<5ms duplicate parsing), and weekly IP rate-limiting anti-abuse protection (3 uploads / week).
 
 ---
 
 ## ⏱️ Development & Release
-> **Version 2.5.3 Release** — *Updated August 2026*
+> **Version 2.5.5 Release** — *Updated August 2026*
 
 ---
 
@@ -19,7 +19,7 @@
 
 ---
 
-## 🌟 Key Features (v2.5.3)
+## 🌟 Key Features (v2.5.5)
 
 1.  **⚡ High-Speed Groq AI Document Parser:** Automatically parses PDF, DOCX, or TXT resumes into 100% structured JSON fields (Name, Contact, Technical Skills, Experience, Education, Projects, Certifications) using multi-model AI pipelines (`groq/compound-mini`, `llama-3.3-70b-versatile`) with sub-second SHA-256 result caching (<5ms re-parsing).
 2.  **📊 Real-Time Chunking & Progress Stage Pipeline:** Interactive upload modal featuring dynamic stage pipeline checkmarks (*Reading PDF*, *Chunking Text*, *AI Keyword Extraction*, *ATS Layout Generation*), filename pill badge, and a smooth live percentage counter (`0% → 99%`).
@@ -27,7 +27,7 @@
 4.  **⏱️ Button-Embedded 5-Second Confirmation Grace Period:** Destructive action modals (like **Reset Resume**) feature a smooth left-to-right fill progress animation embedded directly inside the Confirm button with an instant **Cancel / Abort** guard.
 5.  **🎨 Soft 3D Neumorphic Design System:** Sculpted interface aesthetics featuring 30px rounded cards, ambient light/shadow elevation, right-to-left hover underline physics, and reactive mascot mood animations.
 6.  **🎯 Weighted Industry Classifier & ATS Keyword Scoring:** Auto-classifies candidate profiles across 12 target professions (*IT, Healthcare, Education, Management, Engineering, Safety, Customs, Business, Designer, Data, Sales, HR*) and audits action verbs, metrics, and ATS compatibility.
-7.  **🛡️ Anti-Abuse & Rate-Limiting Safeguards:** Enforces client/server 5MB max file size limits and sliding-window IP rate limiting (5 uploads/min) to safeguard server resources and API quotas.
+7.  **🛡️ Anti-Abuse & Rate-Limiting Safeguards:** Enforces client/server 5MB max file size limits and sliding-window IP rate limiting (3 uploads / week) with real-time remaining quota counter indicators and delayed explanation tooltips.
 8.  **🚀 100% Free & Watermark-Free PDF Exports:** Unlimited access to AI diagnostics, multi-profession templates, and clean, high-resolution PDF exports with zero watermarks or subscription paywalls.
 
 ---

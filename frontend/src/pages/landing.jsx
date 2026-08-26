@@ -910,7 +910,7 @@ export default function Landing({ onSelect, onNavigate, isEmbedded, mascotMood, 
 
       <footer className="landing-footer">
         <p className="footer-version-text">
-          Resora by Nezer • <span className="footer-version-badge">v2.5.3</span>
+          Resora by Nezer • <span className="footer-version-badge">v2.5.5</span>
         </p>
       </footer>
 
