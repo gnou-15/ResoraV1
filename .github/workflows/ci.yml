@@ -143,7 +143,8 @@ jobs:
           if [ "${{ needs.frontend-ci.result }}" != "success" ] || \
              [ "${{ needs.backend-node-ci.result }}" != "success" ] || \
              [ "${{ needs.backend-python-ci.result }}" != "success" ] || \
-             [ "${{ needs.docker-build.result }}" != "success" ]; then
+             [ "${{ needs.docker-build.result }}" != "success" ] || \
+             [ "${{ needs.security-scan.result }}" != "success" ]; then
             echo "❌ One or more CI jobs failed!"
             exit 1
           fi

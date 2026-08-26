@@ -1,4 +1,3 @@
-// @vitest-environment jsdom
 /**
  * Tests for guest session persistence and resume storage logic in api.js.
  *
@@ -11,8 +10,36 @@
  */
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 
+// Pure in-memory Storage mock to avoid jsdom/undici webidl conflicts in CI
+class StorageMock {
+  constructor() {
+    this.store = new Map();
+  }
+  get length() {
+    return this.store.size;
+  }
+  key(i) {
+    return Array.from(this.store.keys())[i] ?? null;
+  }
+  getItem(key) {
+    return this.store.has(key) ? this.store.get(key) : null;
+  }
+  setItem(key, value) {
+    this.store.set(key, String(value));
+  }
+  removeItem(key) {
+    this.store.delete(key);
+  }
+  clear() {
+    this.store.clear();
+  }
+}
+
+globalThis.localStorage = new StorageMock();
+globalThis.sessionStorage = new StorageMock();
+
 // vi.mock calls are hoisted by Vitest to the top of the file automatically,
-// so they run before any imports — this is the correct, reliable pattern.
+// so they run before any imports.
 vi.mock('../services/supabase', () => ({ supabase: {} }));
 vi.mock('../services/encryption', () => ({
   encryptData: (data) => data,
@@ -25,7 +52,7 @@ vi.mock('../data/defaultResume', () => ({
   migrateResume: (d) => d,
 }));
 
-// Static import — resolved after mocks are hoisted, works correctly in all environments
+// Static import — resolved after mocks are hoisted, works reliably in Node environment
 import { loadResume, saveResume, clearResume } from '../services/api';
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
