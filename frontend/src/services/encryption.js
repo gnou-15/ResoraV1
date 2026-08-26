@@ -79,15 +79,15 @@ export function decryptData(data, userId) {
     if (!data.encrypted || !data.ciphertext) return data; // plaintext fallback
 
     const key = getKey(userId);
-    if (!key) return data;
+    if (!key) return null;
 
     try {
         const bytes = CryptoJS.AES.decrypt(data.ciphertext, key);
         const jsonStr = bytes.toString(CryptoJS.enc.Utf8);
-        if (!jsonStr) return data;
+        if (!jsonStr) return null;
         return JSON.parse(jsonStr);
     } catch (err) {
         console.error('Error decrypting data:', err);
-        return data;
+        return null;
     }
 }

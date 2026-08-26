@@ -1139,24 +1139,28 @@ RULES:
 """
 
 def parse_with_groq_ai(text: str, api_key: str) -> Dict[str, Any]:
+    # Priority: prefer fast models first. Limit to 2 attempts max so total AI time stays under ~20s.
     models_to_try = [
         os.getenv("GROQ_MODEL", "").strip(),
-        "groq/compound-mini",
-        "llama-3.3-70b-versatile",
-        "llama-3.1-8b-instant",
-        "qwen/qwen3.6-27b",
-        "openai/gpt-oss-120b",
-        "openai/gpt-oss-20b"
+        "llama-3.1-8b-instant",      # Fast, lightweight
+        "llama-3.3-70b-versatile",   # More capable fallback
     ]
     seen = set()
     models_to_try = [m for m in models_to_try if m and not (m in seen or seen.add(m))]
+
+    # Hard deadline: don't spend more than 20 seconds on AI parsing total
+    deadline = time.time() + 20.0
 
     try:
         from groq import Groq
         client = Groq(api_key=api_key)
         for model_name in models_to_try:
+            if time.time() >= deadline:
+                print("⚠️ Global AI parse deadline exceeded — falling back to heuristic parser.")
+                break
+            remaining = max(1.0, deadline - time.time())
             try:
-                print(f"🤖 Requesting Groq AI parsing with model '{model_name}' (timeout 4.0s)...")
+                print(f"🤖 Requesting Groq AI parsing with model '{model_name}' (timeout {remaining:.1f}s)...")
                 chat_completion = client.chat.completions.create(
                     messages=[
                         {"role": "system", "content": GROQ_SYSTEM_PROMPT},
@@ -1165,10 +1169,15 @@ def parse_with_groq_ai(text: str, api_key: str) -> Dict[str, Any]:
                     model=model_name,
                     temperature=0.1,
                     response_format={"type": "json_object"},
-                    timeout=4.0
+                    timeout=min(10.0, remaining)
                 )
                 res_text = chat_completion.choices[0].message.content
-                return json.loads(res_text)
+                parsed = json.loads(res_text)
+                if parsed and "resume" in parsed:
+                    print(f"✅ Groq AI parse succeeded with model '{model_name}'")
+                    return parsed
+                else:
+                    print(f"⚠️ Groq model '{model_name}' returned invalid schema — trying next model")
             except Exception as e:
                 print(f"⚠️ Groq AI parse error with model '{model_name}': {e}")
                 continue
@@ -1214,6 +1223,20 @@ async def parse_resume_endpoint(
         if not parsed or "resume" not in parsed:
             print("⚡ Falling back to local heuristic parser...")
             parsed = parse_resume_fields(extracted_text)
+
+        # Verify resume has at least some meaningful content
+        resume_obj = parsed.get("resume", {})
+        has_content = bool(
+            (resume_obj.get("personal", {}) or {}).get("fullName", "").strip() or
+            resume_obj.get("headline", "").strip() or
+            resume_obj.get("skills", "").strip() or
+            any((e.get("title") or e.get("company")) for e in (resume_obj.get("experience") or [])) or
+            any(e.get("school") for e in (resume_obj.get("education") or []))
+        )
+        if not has_content:
+            # Return with 'general' profession so frontend doesn't default to IT
+            print("⚠️ Parsed resume appears empty — returning as 'general' profession")
+            parsed["profession"] = "general"
 
         if parsed and "resume" in parsed:
             if len(PARSED_PDF_CACHE) >= MAX_CACHE_ENTRIES:

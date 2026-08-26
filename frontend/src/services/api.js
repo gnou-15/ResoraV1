@@ -1,5 +1,6 @@
 import { supabase } from './supabase';
 import { encryptData, decryptData } from './encryption';
+import { isResumeEmpty } from '../data/defaultResume';
 
 const STORAGE_KEY = 'resume-builder-data';
 
@@ -107,6 +108,18 @@ export async function loadResumeFromSupabase(profession, userId) {
 
 export async function saveResumeToSupabase(data, profession, userId) {
   try {
+    const empty = isResumeEmpty(data);
+    if (empty) {
+      // If resume has been cleared, remove it from Supabase and cache
+      await clearResumeFromSupabase(profession, userId);
+      try {
+        localStorage.removeItem('resora-last-active-resume-info');
+      } catch {
+        /* ignore */
+      }
+      return true;
+    }
+
     // Encrypt the JSON data using the user's derived key
     const encryptedData = encryptData(data, userId);
 
@@ -191,7 +204,7 @@ export async function findExistingUserResume(user) {
     if (!error && data && data.length > 0) {
       for (const item of data) {
         const decrypted = decryptData(item.resume_data, user.id);
-        if (decrypted) {
+        if (decrypted && !isResumeEmpty(decrypted)) {
           const headline = decrypted.headline || decrypted.experience?.[0]?.title || '';
           const resInfo = {
             hasResume: true,

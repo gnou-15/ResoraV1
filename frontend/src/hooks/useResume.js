@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback, useRef } from 'react'
-import { defaultResume, migrateResume } from '../data/defaultResume'
+import { defaultResume, migrateResume, isResumeEmpty } from '../data/defaultResume'
 import { getTemplateForProfession } from '../data/professionTemplates'
 import { decryptName } from '../services/encryption'
 import {
@@ -12,67 +12,115 @@ import {
 } from '../services/api'
 
 export function useResume(profession, user) {
+  const isResettingRef = useRef(false)
   const [resume, setResumeRaw] = useState(() => {
+    let uploadedPayload = null
+    try {
+      const rawUploaded = sessionStorage.getItem('resora-uploaded-resume') || localStorage.getItem('resora-uploaded-resume')
+      if (rawUploaded) {
+        const parsedUploaded = JSON.parse(rawUploaded)
+        if (parsedUploaded && parsedUploaded.resume && (!profession || parsedUploaded.profession === profession)) {
+          uploadedPayload = parsedUploaded.resume
+        }
+      }
+    } catch {
+      /* ignore */
+    }
+    if (uploadedPayload) {
+      return migrateResume(uploadedPayload)
+    }
+
     if (user) {
       return {
         ...defaultResume,
         personal: {
           ...defaultResume.personal,
-          fullName: decryptName(user.user_metadata?.full_name || "", user.id),
+          fullName: decryptName(user.user_metadata?.full_name || '', user.id),
         },
-      };
+      }
     }
-    return migrateResume(loadResume(profession));
+    return migrateResume(loadResume(profession))
   })
 
   const setResume = useCallback((value) => {
     setResumeRaw((prev) => {
-      let next = typeof value === "function" ? value(prev) : value;
+      let next = typeof value === 'function' ? value(prev) : value
       if (user) {
-        const currentPersonal = next.personal || {};
+        const currentPersonal = next.personal || {}
         next = {
           ...next,
           personal: {
             ...defaultResume.personal,
             ...currentPersonal,
-            fullName: decryptName(user.user_metadata?.full_name || "", user.id) || currentPersonal.fullName || "",
+            fullName: decryptName(user.user_metadata?.full_name || '', user.id) || currentPersonal.fullName || '',
           },
-        };
+        }
       }
-      return next;
-    });
-  }, [user]);
+      return next
+    })
+  }, [user])
   const [loadedProfession, setLoadedProfession] = useState(profession)
   const [saved, setSaved] = useState(true)
   const [isInitialized, setIsInitialized] = useState(false)
 
   // Sync state if profession or user changes dynamically
   useEffect(() => {
-    let active = true;
-    setIsInitialized(false);
+    let active = true
+    setIsInitialized(false)
 
     const fetchResume = async () => {
-      let data;
-      if (user) {
-        data = await loadResumeFromSupabase(profession, user.id);
-      } else {
-        data = loadResume(profession);
+      // 1. Check for freshly uploaded resume
+      let uploadedPayload = null
+      try {
+        const rawUploaded = sessionStorage.getItem('resora-uploaded-resume') || localStorage.getItem('resora-uploaded-resume')
+        if (rawUploaded) {
+          const parsedUploaded = JSON.parse(rawUploaded)
+          if (parsedUploaded && parsedUploaded.resume && (!profession || parsedUploaded.profession === profession)) {
+            uploadedPayload = parsedUploaded.resume
+          }
+        }
+      } catch {
+        /* ignore */
       }
+
+      let data = uploadedPayload
+
+      if (!data) {
+        if (user) {
+          data = await loadResumeFromSupabase(profession, user.id)
+          if (data && isResumeEmpty(data)) {
+            data = null
+          }
+          if (!data) {
+            // Fallback to local resume storage
+            data = loadResume(profession)
+            if (data && isResumeEmpty(data)) {
+              data = null
+            }
+          }
+        } else {
+          data = loadResume(profession)
+          if (data && isResumeEmpty(data)) {
+            data = null
+          }
+        }
+      }
+
       if (active) {
-        let migrated;
+        let migrated
         if (data) {
-          migrated = migrateResume(data);
+          migrated = migrateResume(data)
         } else {
           // Check if there is an API configured for templates
-          let apiPayload = null;
-          const api = localStorage.getItem("templateApi");
+          let apiPayload = null
+          const api = localStorage.getItem('templateApi')
           if (api) {
             try {
-              const url = `${api.replace(/\/?$/, "")}?profession=${encodeURIComponent(profession)}`;
-              const res = await fetch(url);
+              const url = `${api.replace(/\/?$/, '')}?profession=${encodeURIComponent(profession)}`
+              const res = await fetch(url)
               if (res.ok) {
-                const apiData = await res.json();
-                apiPayload = apiData.resume || apiData;
+                const apiData = await res.json()
+                apiPayload = apiData.resume || apiData
               }
             } catch {
               // ignore and fallback
@@ -80,10 +128,10 @@ export function useResume(profession, user) {
           }
 
           if (apiPayload) {
-            migrated = migrateResume(apiPayload);
+            migrated = migrateResume(apiPayload)
           } else {
-            const tpl = getTemplateForProfession(profession);
-            migrated = migrateResume({ ...defaultResume, ...tpl });
+            const tpl = getTemplateForProfession(profession)
+            migrated = migrateResume({ ...defaultResume, ...tpl })
           }
         }
 
@@ -91,32 +139,39 @@ export function useResume(profession, user) {
           migrated.personal = {
             ...defaultResume.personal,
             ...migrated.personal,
-            fullName: decryptName(user.user_metadata?.full_name || "", user.id) || migrated.personal.fullName || "",
-          };
+            fullName: decryptName(user.user_metadata?.full_name || '', user.id) || migrated.personal.fullName || '',
+          }
         }
-        setResume(migrated);
-        setLoadedProfession(profession);
-        setIsInitialized(true);
+        setResume(migrated)
+        setLoadedProfession(profession)
+        setIsInitialized(true)
       }
-    };
+    }
 
-    fetchResume();
+    fetchResume()
 
     return () => {
-      active = false;
-    };
-  }, [profession, user, setResume]);
+      active = false
+    }
+  }, [profession, user, setResume])
 
   useEffect(() => {
     // Only save if the loaded resume state matches the active profession and is initialized
     if (!isInitialized || profession !== loadedProfession || !profession) return
+    if (isResettingRef.current) {
+      isResettingRef.current = false
+      return
+    }
+    if (isResumeEmpty(resume)) {
+      return
+    }
 
     setSaved(false)
     const timer = setTimeout(async () => {
       if (user) {
-        await saveResumeToSupabase(resume, profession, user.id);
+        await saveResumeToSupabase(resume, profession, user.id)
       } else {
-        saveResume(resume, profession);
+        saveResume(resume, profession)
       }
       setSaved(true)
     }, 500)
@@ -132,7 +187,7 @@ export function useResume(profession, user) {
   useEffect(() => {
     return () => {
       const { resume: curResume, profession: curProf, user: curUser, isInitialized: curInit, saved: curSaved } = unmountRef.current;
-      if (curInit && !curSaved && curProf) {
+      if (curInit && !curSaved && curProf && !isResumeEmpty(curResume)) {
         if (curUser) {
           saveResumeToSupabase(curResume, curProf, curUser.id);
         } else {
@@ -179,6 +234,8 @@ export function useResume(profession, user) {
   }, [setResume])
 
   const resetResume = useCallback(async () => {
+    // Flag that we are resetting so the auto-save effect won't fire on the blank state
+    isResettingRef.current = true
     if (user) {
       await clearResumeFromSupabase(profession, user.id);
     } else {
@@ -187,6 +244,7 @@ export function useResume(profession, user) {
     try {
       sessionStorage.removeItem('resora-uploaded-resume');
       localStorage.removeItem('resora-uploaded-resume');
+      localStorage.removeItem('resora-last-active-resume-info');
       window.dispatchEvent(new Event('resora-upload-cleared'));
     } catch {
       // ignore
@@ -195,7 +253,7 @@ export function useResume(profession, user) {
     if (user) {
       resetData.personal = {
         ...resetData.personal,
-        fullName: decryptName(user.user_metadata?.full_name || "", user.id),
+        fullName: decryptName(user.user_metadata?.full_name || '', user.id),
       };
     }
     setResume(resetData);

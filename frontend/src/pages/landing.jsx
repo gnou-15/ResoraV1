@@ -4,6 +4,7 @@ import InteractiveBackground from "../components/InteractiveBackground";
 import PeekingMonster from "../components/PeekingMonster";
 import ParsingLoader from "../components/ParsingLoader";
 import { findExistingUserResume } from "../services/api";
+import { isResumeEmpty } from "../data/defaultResume";
 
 const PREDICTABLE_PROFESSIONS = [
   "Nurse",
@@ -72,7 +73,7 @@ export default function Landing({ onSelect, onNavigate, isEmbedded, mascotMood, 
       const cached = localStorage.getItem("resora-last-active-resume-info");
       if (cached) {
         const parsed = JSON.parse(cached);
-        if (parsed && parsed.hasResume && parsed.userId === user.id) {
+        if (parsed && parsed.hasResume && parsed.userId === user.id && !isResumeEmpty(parsed.resume)) {
           return parsed;
         }
       }
@@ -98,10 +99,12 @@ export default function Landing({ onSelect, onNavigate, isEmbedded, mascotMood, 
       }
       const info = await findExistingUserResume(user);
       if (isMounted) {
-        if (info && info.hasResume && info.userId === user.id) {
+        if (info && info.hasResume && info.userId === user.id && !isResumeEmpty(info.resume)) {
           setExistingResumeInfo(info);
         } else {
           setExistingResumeInfo(null);
+          // Clean up stale cache if the resume was empty/cleared
+          try { localStorage.removeItem("resora-last-active-resume-info"); } catch { /* ignore */ }
         }
       }
     }
@@ -338,10 +341,20 @@ export default function Landing({ onSelect, onNavigate, isEmbedded, mascotMood, 
 
       const targetUrl = `${backendUrl.replace(/\/$/, "")}/api/parse-resume`;
 
-      const res = await fetch(targetUrl, {
-        method: "POST",
-        body: formData,
-      });
+      // 30-second timeout to prevent hanging on slow Render cold starts
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 30000);
+
+      let res;
+      try {
+        res = await fetch(targetUrl, {
+          method: "POST",
+          body: formData,
+          signal: controller.signal,
+        });
+      } finally {
+        clearTimeout(timeoutId);
+      }
 
       if (!res.ok) {
         const errJson = await res.json().catch(() => ({}));
@@ -349,20 +362,46 @@ export default function Landing({ onSelect, onNavigate, isEmbedded, mascotMood, 
       }
 
       const data = await res.json();
-      const detectedProf = data.profession || "general";
+
+      // Check if the backend returned a meaningful parsed resume
       const parsedResume = data.resume;
+      const hasContent = parsedResume && (
+        (parsedResume.personal?.fullName && parsedResume.personal.fullName.trim()) ||
+        (parsedResume.headline && parsedResume.headline.trim()) ||
+        (parsedResume.experience && parsedResume.experience.length > 0 && parsedResume.experience.some(e => e.title?.trim() || e.company?.trim())) ||
+        (parsedResume.education && parsedResume.education.length > 0 && parsedResume.education.some(e => e.school?.trim())) ||
+        (parsedResume.skills && parsedResume.skills.trim())
+      );
+
+      if (!hasContent) {
+        // Backend returned empty — fall back to text extraction
+        if (file.name.endsWith(".txt") || file.type === "text/plain") {
+          const fallbackData = await parseTextResumeFallback(file);
+          saveAndProceedUploadedResume(fallbackData.profession, fallbackData.resume);
+        } else {
+          // Can't extract text from binary PDF on client — send to general builder
+          setSearchError("Resume could not be parsed automatically. You can fill in your details manually below.");
+          saveAndProceedUploadedResume("general", parsedResume || {});
+        }
+        return;
+      }
+
+      // Use the detected profession only if content exists; default to 'general' if empty
+      const detectedProf = data.profession && hasContent ? data.profession : "general";
 
       saveAndProceedUploadedResume(detectedProf, parsedResume);
     } catch (err) {
       console.error("Resume upload error:", err);
-      if (err.message === "PROD_BACKEND_NOT_CONFIGURED") {
-        setSearchError("Backend URL not configured on Vercel. Please add VITE_PYTHON_BACKEND_URL in Vercel Environment Variables.");
+      if (err.name === "AbortError") {
+        setSearchError("Resume parsing timed out (>30s). The backend server may be starting up — please try again in a moment.");
+      } else if (err.message === "PROD_BACKEND_NOT_CONFIGURED") {
+        setSearchError("Backend URL not configured. Please add VITE_PYTHON_BACKEND_URL in your deployment environment variables.");
       } else if (err.message?.includes("Failed to fetch") || err.name === "TypeError") {
         const isProd = window.location.hostname !== 'localhost' && window.location.hostname !== '127.0.0.1';
         if (isProd) {
-          setSearchError("Unable to connect to Python backend server. Please verify backend deployment and VITE_PYTHON_BACKEND_URL in Vercel.");
+          setSearchError("Unable to connect to backend server. Please verify your backend is running and VITE_PYTHON_BACKEND_URL is set.");
         } else {
-          setSearchError("Backend server offline (http://localhost:8000). Please start FastAPI server (`uvicorn main:app --reload --port 8000`) and verify GROQ_API_KEY.");
+          setSearchError("Backend server offline (http://localhost:8000). Please start FastAPI server and verify GROQ_API_KEY.");
         }
       } else {
         setSearchError(`Failed to parse resume (${err.message || "Network Error"}). Please verify backend server and GROQ_API_KEY.`);

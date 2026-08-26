@@ -211,4 +211,52 @@ export function migrateResume(data) {
   }
 }
 
+export function isResumeEmpty(resume) {
+  if (!resume) return true;
+
+  const hasHeadline = !!(resume.headline && resume.headline.trim());
+  const hasSummary = !!(resume.summary && resume.summary.trim());
+
+  const techSkills = resume.technicalSkills;
+  const hasTech = techSkills && Object.values(techSkills).some((arr) =>
+    Array.isArray(arr) ? arr.some((s) => s && s.trim()) : (typeof arr === 'string' && arr.trim())
+  );
+  const hasGeneralSkills = !!(resume.skills && (Array.isArray(resume.skills) ? resume.skills.length > 0 : resume.skills.trim()));
+
+  const hasExp = !!(resume.experience && resume.experience.some((e) =>
+    (e.company && e.company.trim()) ||
+    (e.title && e.title.trim()) ||
+    (e.bullets && e.bullets.some((b) => b && b.trim()))
+  ));
+
+  const hasEdu = !!(resume.education && resume.education.some((e) =>
+    (e.school && e.school.trim()) ||
+    (e.degree && e.degree.trim()) ||
+    (e.coursework && e.coursework.trim())
+  ));
+
+  const hasProj = !!(resume.projects && resume.projects.some((p) =>
+    (p.name && p.name.trim()) ||
+    (p.stack && p.stack.trim()) ||
+    (p.bullets && p.bullets.some((b) => b && b.trim()))
+  ));
+
+  const hasAch = !!(resume.achievements && resume.achievements.some((a) =>
+    (a.title && a.title.trim()) ||
+    (a.organization && a.organization.trim())
+  ));
+
+  const hasCert = !!(resume.certifications && resume.certifications.some((c) =>
+    (c.name && c.name.trim()) ||
+    (c.issuer && c.issuer.trim())
+  ));
+
+  const hasLic = !!(resume.licenses && resume.licenses.some((l) =>
+    (l.name && l.name.trim())
+  ));
+
+  return !hasHeadline && !hasSummary && !hasTech && !hasGeneralSkills && !hasExp && !hasEdu && !hasProj && !hasAch && !hasCert && !hasLic;
+}
+
 export { getCountryByCode }
+
