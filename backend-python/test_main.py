@@ -238,17 +238,48 @@ def test_parse_resume_endpoint_rejects_oversized_file():
     assert response.status_code == 400
 
 
-def test_parse_resume_endpoint_rate_limit():
-    """After 5 uploads from the same IP within a minute, should get 429."""
-    # Make 5 allowed requests first
+def test_parse_resume_endpoint_rate_limit_daily():
+    """After 5 uploads from the same IP within the daily window, should get 429."""
     for _ in range(5):
         client.post(
             "/api/parse-resume",
             files={"file": ("resume.txt", io.BytesIO(SAMPLE_TEXT_RESUME), "text/plain")},
         )
-    # 6th request should be rate-limited
+    # 6th request from the same IP should be rate-limited
     response = client.post(
         "/api/parse-resume",
         files={"file": ("resume.txt", io.BytesIO(SAMPLE_TEXT_RESUME), "text/plain")},
     )
     assert response.status_code == 429
+    assert "Maximum 5 resume uploads per day" in response.json().get("detail", "")
+
+
+def test_parse_resume_endpoint_rate_limit_x_forwarded_for():
+    """Different client IPs via X-Forwarded-For header should have separate limits."""
+    headers_a = {"x-forwarded-for": "203.0.113.195, 10.0.0.1"}
+    headers_b = {"x-forwarded-for": "198.51.100.42"}
+
+    # Use up IP A's 5 daily uploads
+    for _ in range(5):
+        res = client.post(
+            "/api/parse-resume",
+            files={"file": ("resume.txt", io.BytesIO(SAMPLE_TEXT_RESUME), "text/plain")},
+            headers=headers_a,
+        )
+        assert res.status_code == 200
+
+    # 6th for IP A should be blocked
+    res_a_6 = client.post(
+        "/api/parse-resume",
+        files={"file": ("resume.txt", io.BytesIO(SAMPLE_TEXT_RESUME), "text/plain")},
+        headers=headers_a,
+    )
+    assert res_a_6.status_code == 429
+
+    # IP B should still be allowed
+    res_b_1 = client.post(
+        "/api/parse-resume",
+        files={"file": ("resume.txt", io.BytesIO(SAMPLE_TEXT_RESUME), "text/plain")},
+        headers=headers_b,
+    )
+    assert res_b_1.status_code == 200

@@ -21,18 +21,29 @@ app = FastAPI()
 
 # In-memory Rate Limiter & SHA-256 Parse Cache
 RATE_LIMIT_STORE: Dict[str, List[float]] = {}
-MAX_UPLOADS_PER_MINUTE = 5
+MAX_UPLOADS_PER_DAY = 5
+RATE_LIMIT_WINDOW_SECONDS = 24 * 60 * 60  # 24 hours (1 day)
 PARSED_PDF_CACHE: Dict[str, Dict[str, Any]] = {}
-MAX_CACHE_ENTRIES = 200
+MAX_CACHE_ENTRIES = 500
+
+def get_client_ip(request: Request) -> str:
+    """Extract real client IP, respecting X-Forwarded-For when behind reverse proxies (Render, Cloudflare, etc.)."""
+    forwarded = request.headers.get("x-forwarded-for")
+    if forwarded:
+        return forwarded.split(",")[0].strip()
+    real_ip = request.headers.get("x-real-ip")
+    if real_ip:
+        return real_ip.strip()
+    return request.client.host if request.client else "unknown"
 
 def check_upload_rate_limit(ip: str):
     now = time.time()
     timestamps = RATE_LIMIT_STORE.get(ip, [])
-    valid_timestamps = [t for t in timestamps if now - t < 60]
-    if len(valid_timestamps) >= MAX_UPLOADS_PER_MINUTE:
+    valid_timestamps = [t for t in timestamps if now - t < RATE_LIMIT_WINDOW_SECONDS]
+    if len(valid_timestamps) >= MAX_UPLOADS_PER_DAY:
         raise HTTPException(
             status_code=429,
-            detail="Rate limit exceeded: Maximum 5 PDF uploads per minute per IP address. Please wait a moment before trying again."
+            detail="Rate limit exceeded: Maximum 5 resume uploads per day per IP address. Please try again tomorrow."
         )
     valid_timestamps.append(now)
     RATE_LIMIT_STORE[ip] = valid_timestamps
@@ -1193,7 +1204,7 @@ async def parse_resume_endpoint(
     groq_key: Optional[str] = Header(None, alias="X-Groq-Api-Key")
 ):
     try:
-        client_ip = request.client.host if request.client else "unknown"
+        client_ip = get_client_ip(request)
         check_upload_rate_limit(client_ip)
 
         load_dotenv(override=True)
