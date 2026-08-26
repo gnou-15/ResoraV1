@@ -4,7 +4,7 @@ import InteractiveBackground from "../components/InteractiveBackground";
 import PeekingMonster from "../components/PeekingMonster";
 import ParsingLoader from "../components/ParsingLoader";
 import { findExistingUserResume } from "../services/api";
-import { isResumeEmpty, hasSufficientContent } from "../data/defaultResume";
+import { hasSufficientContent } from "../data/defaultResume";
 
 
 const PREDICTABLE_PROFESSIONS = [

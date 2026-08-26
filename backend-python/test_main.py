@@ -13,10 +13,17 @@ Run with:
 """
 
 import io
-import json
+
 import pytest
 from fastapi.testclient import TestClient
-from main import app, detect_profession_from_text, parse_resume_fields, RATE_LIMIT_STORE, PARSED_PDF_CACHE
+
+from main import (
+    PARSED_PDF_CACHE,
+    RATE_LIMIT_STORE,
+    app,
+    detect_profession_from_text,
+    parse_resume_fields,
+)
 
 client = TestClient(app)
 

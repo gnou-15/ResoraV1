@@ -9,21 +9,10 @@
  *
  * The fix: read from localStorage first, write to both storages.
  */
-import { describe, it, expect, beforeEach } from 'vitest';
+import { describe, it, expect, beforeEach, vi } from 'vitest';
 
-// ── Minimal localStorage / sessionStorage mock ──────────────────────────────
-// vitest + jsdom provides these, but we define a clean reset helper.
-
-function clearAllStorage() {
-  localStorage.clear();
-  sessionStorage.clear();
-}
-
-// We import the functions under test after mocks are set up because api.js
-// imports supabase which isn't available in the test environment.
-// We use vi.mock to stub the problematic imports.
-import { vi } from 'vitest';
-
+// vi.mock calls are hoisted by Vitest to the top of the file automatically,
+// so they run before any imports — this is the correct, reliable pattern.
 vi.mock('../services/supabase', () => ({ supabase: {} }));
 vi.mock('../services/encryption', () => ({
   encryptData: (data) => data,
@@ -31,14 +20,22 @@ vi.mock('../services/encryption', () => ({
 }));
 vi.mock('../data/defaultResume', () => ({
   isResumeEmpty: () => false,
+  hasSufficientContent: () => true,
   defaultResume: {},
   migrateResume: (d) => d,
 }));
 
-// Import after mocks
-const { loadResume, saveResume, clearResume } = await import('../services/api');
+// Static import — resolved after mocks are hoisted, works correctly in all environments
+import { loadResume, saveResume, clearResume } from '../services/api';
 
-// ── Tests ────────────────────────────────────────────────────────────────────
+// ── Helpers ───────────────────────────────────────────────────────────────────
+
+function clearAllStorage() {
+  localStorage.clear();
+  sessionStorage.clear();
+}
+
+// ── Tests ─────────────────────────────────────────────────────────────────────
 
 describe('getGuestSessionId (via saveResume / loadResume)', () => {
   beforeEach(clearAllStorage);
