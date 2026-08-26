@@ -194,10 +194,11 @@ jobs:
     needs: [end-to-end-validation-gate]
     runs-on: ubuntu-latest
     steps:
-      - name: Trigger Render Backend Deployment Webhooks (If Configured)
+      - name: Trigger Production Deployment Webhooks (Render & Vercel)
         env:
           PYTHON_HOOK: '${{ secrets.RENDER_PYTHON_DEPLOY_HOOK }}'
           NODE_HOOK: '${{ secrets.RENDER_NODE_DEPLOY_HOOK }}'
+          VERCEL_HOOK: '${{ secrets.VERCEL_DEPLOY_HOOK }}'
         run: |
           if [ -n "$PYTHON_HOOK" ]; then
             echo "🚀 Triggering Render Python Backend Deployment..."
@@ -211,6 +212,13 @@ jobs:
             curl -s -X POST "$NODE_HOOK"
           else
             echo "ℹ️ RENDER_NODE_DEPLOY_HOOK secret not set. Skipping webhook trigger."
+          fi
+
+          if [ -n "$VERCEL_HOOK" ]; then
+            echo "🚀 Triggering Vercel Frontend Deployment..."
+            curl -s -X POST "$VERCEL_HOOK"
+          else
+            echo "ℹ️ VERCEL_DEPLOY_HOOK secret not set. (Using standard Vercel checks or Git integration)"
           fi
 
       - name: Verify Live Production Domain (nezer-resora.com)
