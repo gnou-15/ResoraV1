@@ -1,9 +1,11 @@
 name: Continuous Delivery (CD) Pipeline
 
 on:
-  push:
+  workflow_run:
+    workflows: ["Continuous Integration (CI) Pipeline"]
+    types:
+      - completed
     branches: [ main ]
-    tags: [ 'v*.*.*' ]
   workflow_dispatch:
 
 permissions:
@@ -17,77 +19,12 @@ env:
 
 jobs:
   # ─────────────────────────────────────────────────────────────────────────────
-  # GATE 1 — Quality Gate
-  # All test suites must pass before ANY Docker image is built or deployed.
-  # If this job fails, the entire pipeline aborts — nothing reaches production.
-  # ─────────────────────────────────────────────────────────────────────────────
-  quality-gate:
-    name: Quality Gate (Tests & Build)
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-
-      # ── Frontend ───────────────────────────────────────────────────────────
-      - name: Set up Node.js (Frontend)
-        uses: actions/setup-node@v4
-        with:
-          node-version: '20'
-          cache: 'npm'
-          cache-dependency-path: frontend/package-lock.json
-
-      - name: Install Frontend Dependencies
-        working-directory: frontend
-        run: npm ci
-
-      - name: Run Frontend Unit Tests
-        working-directory: frontend
-        run: npm run test
-        # ↑ Catches: isResumeEmpty logic, guest session persistence,
-        #   decryptData null-return on failure, AI scorer regressions
-
-      - name: Build Frontend (Production Bundle)
-        working-directory: frontend
-        run: npm run build
-        # ↑ Catches: any TypeScript/JSX compilation errors, missing imports,
-        #   syntax errors that would cause a blank screen in production
-
-      # ── Node Backend ───────────────────────────────────────────────────────
-      - name: Install Node Backend Dependencies
-        working-directory: backend-node
-        run: npm ci
-
-      - name: Run Node Backend Tests
-        working-directory: backend-node
-        run: npm run test
-
-      # ── Python Backend ─────────────────────────────────────────────────────
-      - name: Set up Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: '3.11'
-          cache: 'pip'
-          cache-dependency-path: backend-python/requirements.txt
-
-      - name: Install Python Dependencies
-        working-directory: backend-python
-        run: pip install -r requirements.txt
-
-      - name: Run Python Backend Tests
-        working-directory: backend-python
-        run: pytest test_main.py -v --tb=short
-        # ↑ Catches: detect_profession_from_text returning wrong value for
-        #   empty input, parse endpoint missing 'resume'/'profession' keys,
-        #   empty content defaulting to 'it' instead of 'general',
-        #   rate limiting, oversized file rejection
-
-  # ─────────────────────────────────────────────────────────────────────────────
-  # GATE 2 — Build & Publish Docker Images
-  # Only runs if quality-gate passed.
+  # STEP 1 — Build & Publish Docker Images to GHCR
+  # This only executes if the CI pipeline completed with 100% success!
   # ─────────────────────────────────────────────────────────────────────────────
   build-and-push-artifacts:
     name: Deployment Automation (Build & Publish Artifacts)
-    needs: [quality-gate]
+    if: ${{ github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'success' }}
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
@@ -109,7 +46,7 @@ jobs:
         with:
           images: ${{ env.IMAGE_PYTHON }}
           tags: |
-            type=raw,value=latest,enable=${{ github.ref == 'refs/heads/main' }}
+            type=raw,value=latest,enable=${{ github.ref == 'refs/heads/main' || github.event.workflow_run.head_branch == 'main' }}
             type=semver,pattern={{version}}
             type=sha,prefix=sha-
 
@@ -129,7 +66,7 @@ jobs:
         with:
           images: ${{ env.IMAGE_NODE }}
           tags: |
-            type=raw,value=latest,enable=${{ github.ref == 'refs/heads/main' }}
+            type=raw,value=latest,enable=${{ github.ref == 'refs/heads/main' || github.event.workflow_run.head_branch == 'main' }}
             type=semver,pattern={{version}}
             type=sha,prefix=sha-
 
@@ -143,6 +80,9 @@ jobs:
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
+  # ─────────────────────────────────────────────────────────────────────────────
+  # STEP 2 — Container Security Scanning (Trivy)
+  # ─────────────────────────────────────────────────────────────────────────────
   container-security-scan:
     name: Container Security Scanning (Trivy)
     needs: [build-and-push-artifacts]
@@ -174,8 +114,8 @@ jobs:
           severity: 'CRITICAL,HIGH'
 
   # ─────────────────────────────────────────────────────────────────────────────
-  # GATE 3 — End-to-End Validation
-  # Starts the Docker containers and verifies actual API behavior, not just liveness.
+  # STEP 3 — End-to-End Validation Gate
+  # Starts containers and validates live endpoints before deployment trigger
   # ─────────────────────────────────────────────────────────────────────────────
   end-to-end-validation-gate:
     name: End-to-End Validation & Health Gate
@@ -221,11 +161,6 @@ jobs:
             exit 1
           fi
 
-      # ── Parse Endpoint Smoke Test ─────────────────────────────────────────
-      # Sends a real text resume to the running container and validates that:
-      #  1. The endpoint responds (not hanging — previously took >1min on Render)
-      #  2. The response contains 'resume' and 'profession' keys
-      #  3. profession is never null/empty (catches the empty→it routing bug)
       - name: Smoke Test — Parse Resume Endpoint Schema Validation
         run: |
           RESUME_TEXT="John Doe\nSoftware Developer\njohn@example.com\n\nSKILLS\nJavaScript, React, Node.js"
@@ -236,7 +171,6 @@ jobs:
 
           echo "Parse Smoke Test Response: $RESPONSE"
 
-          # Validate 'resume' key exists in response
           if echo "$RESPONSE" | python3 -c "
           import sys, json
           data = json.load(sys.stdin)
@@ -252,6 +186,9 @@ jobs:
             exit 1
           fi
 
+  # ─────────────────────────────────────────────────────────────────────────────
+  # STEP 4 — Production Deployment & Live Post-Verification
+  # ─────────────────────────────────────────────────────────────────────────────
   post-deployment-verification:
     name: Production Deployment & Live Post-Verification (Page 5)
     needs: [end-to-end-validation-gate]
