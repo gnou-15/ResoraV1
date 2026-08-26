@@ -442,6 +442,47 @@ export default function Landing({ onSelect, onNavigate, isEmbedded, mascotMood, 
     }
   };
 
+  const handleUploadButtonClick = async () => {
+    if (hasUploadedResume) {
+      handleGoToUploaded();
+      return;
+    }
+
+    // 1. Immediate local cache check: if client previously hit rate limit
+    const cachedLimitUntil = localStorage.getItem("resora-upload-rate-limit-until");
+    if (cachedLimitUntil && Number(cachedLimitUntil) > Date.now()) {
+      setShowRateLimitModal(true);
+      return;
+    }
+
+    // 2. Fast pre-check to backend to check if the current IP already reached 5 uploads
+    try {
+      const backendUrl = getBackendUrl();
+      if (backendUrl) {
+        const statusRes = await fetch(`${backendUrl.replace(/\/$/, "")}/api/rate-limit-status`, {
+          signal: AbortSignal.timeout(1500),
+        }).catch(() => null);
+
+        if (statusRes && statusRes.ok) {
+          const status = await statusRes.json();
+          if (status.isRateLimited) {
+            const resetMs = (status.resetSeconds || 86400) * 1000;
+            localStorage.setItem("resora-upload-rate-limit-until", String(Date.now() + resetMs));
+            setShowRateLimitModal(true);
+            return;
+          } else {
+            localStorage.removeItem("resora-upload-rate-limit-until");
+          }
+        }
+      }
+    } catch {
+      // Graceful fallback on network timeout
+    }
+
+    // Rate limit not reached: open file selector
+    document.getElementById("resume-upload-input")?.click();
+  };
+
   const handleGoToUploaded = () => {
     try {
       const raw = sessionStorage.getItem("resora-uploaded-resume") || localStorage.getItem("resora-uploaded-resume");
@@ -681,13 +722,7 @@ export default function Landing({ onSelect, onNavigate, isEmbedded, mascotMood, 
           <button
             type="button"
             className={`Documents-btn ${hasUploadedResume ? "active-uploaded" : ""}`}
-            onClick={() => {
-              if (hasUploadedResume) {
-                handleGoToUploaded();
-              } else {
-                document.getElementById("resume-upload-input")?.click();
-              }
-            }}
+            onClick={handleUploadButtonClick}
             disabled={isUploading}
             aria-label={hasUploadedResume ? "My Resume" : "Upload"}
           >

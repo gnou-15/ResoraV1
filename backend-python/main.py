@@ -74,6 +74,28 @@ async def log_requests(request: Request, call_next):
 def health_check():
     return {"status": "online", "service": "Resora Python FastAPI Backend", "version": "2.5.3"}
 
+
+@app.get("/api/rate-limit-status")
+async def get_rate_limit_status(request: Request):
+    """Check remaining uploads for the requesting client IP without consuming quota."""
+    ip = get_client_ip(request)
+    now = time.time()
+    timestamps = RATE_LIMIT_STORE.get(ip, [])
+    valid_timestamps = [t for t in timestamps if now - t < RATE_LIMIT_WINDOW_SECONDS]
+    remaining = max(0, MAX_UPLOADS_PER_DAY - len(valid_timestamps))
+    is_limited = remaining <= 0
+    reset_seconds = 0
+    if is_limited and valid_timestamps:
+        oldest = min(valid_timestamps)
+        reset_seconds = max(0, int(RATE_LIMIT_WINDOW_SECONDS - (now - oldest)))
+    return {
+        "maxUploads": MAX_UPLOADS_PER_DAY,
+        "usedUploads": len(valid_timestamps),
+        "remainingUploads": remaining,
+        "isRateLimited": is_limited,
+        "resetSeconds": reset_seconds
+    }
+
 # --- Pydantic Data Models matching JS Resume schema ---
 
 class Location(BaseModel):

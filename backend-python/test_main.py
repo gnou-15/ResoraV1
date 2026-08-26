@@ -318,3 +318,14 @@ standard for high-impact competition pitches.
     assert "Project Manager" in second_ach.get("title", "")
     assert len(second_ach.get("bullets", [])) == 1
     assert "standard for high-impact competition pitches." in second_ach["bullets"][0]
+
+
+def test_rate_limit_status_endpoint():
+    """Verify rate-limit-status returns correct quota and rate limited flag."""
+    ip_headers = {"x-forwarded-for": "192.0.2.77"}
+    res = client.get("/api/rate-limit-status", headers=ip_headers)
+    assert res.status_code == 200
+    data = res.json()
+    assert data["maxUploads"] == 5
+    assert data["remainingUploads"] == 5
+    assert data["isRateLimited"] is False
