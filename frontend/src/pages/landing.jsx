@@ -234,7 +234,9 @@ export default function Landing({ onSelect, onNavigate, isEmbedded, mascotMood, 
   }
 
   const [isUploading, setIsUploading] = useState(false);
+  const [uploadComplete, setUploadComplete] = useState(false);
   const [uploadingFileName, setUploadingFileName] = useState("");
+  const pendingTransitionRef = useRef(null);
   const [hasUploadedResume, setHasUploadedResume] = useState(() => {
     try {
       return !!(sessionStorage.getItem("resora-uploaded-resume") || localStorage.getItem("resora-uploaded-resume"));
@@ -252,12 +254,9 @@ export default function Landing({ onSelect, onNavigate, isEmbedded, mascotMood, 
         setHasUploadedResume(false);
       }
     };
-    checkUpload();
-    window.addEventListener("focus", checkUpload);
     window.addEventListener("storage", checkUpload);
     window.addEventListener("resora-upload-cleared", checkUpload);
     return () => {
-      window.removeEventListener("focus", checkUpload);
       window.removeEventListener("storage", checkUpload);
       window.removeEventListener("resora-upload-cleared", checkUpload);
     };
@@ -265,11 +264,11 @@ export default function Landing({ onSelect, onNavigate, isEmbedded, mascotMood, 
 
   const parseTextResumeFallback = async (file) => {
     const text = await file.text();
-    const lines = text.split(/\r?\n/).map((l) => l.trim()).filter(Boolean);
-    const emailMatch = text.match(/[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/);
-    const phoneMatch = text.match(/(\+?\d{1,4}[\s-]?)?\(?\d{3}\)?[\s-]?\d{3}[\s-]?\d{4}/);
-    const nameLine = lines[0] || "Resume Applicant";
     const detectedProf = detectProfession(text) || "general";
+    const lines = text.split("\n").map(l => l.trim()).filter(Boolean);
+    const emailMatch = text.match(/[\w.-]+@[\w.-]+\.\w+/);
+    const phoneMatch = text.match(/(\+?\d{1,4}[-.\s]?)?\(?\d{3}\)?[-.\s]?\d{3}[-.\s]?\d{4}/);
+    const nameLine = lines[0] || "Uploaded Candidate";
 
     return {
       profession: detectedProf,
@@ -306,6 +305,16 @@ export default function Landing({ onSelect, onNavigate, isEmbedded, mascotMood, 
     onSelect(detectedProf);
   };
 
+  const handleUploadFinished = () => {
+    setIsUploading(false);
+    setUploadComplete(false);
+    if (pendingTransitionRef.current) {
+      const { prof, resume } = pendingTransitionRef.current;
+      pendingTransitionRef.current = null;
+      saveAndProceedUploadedResume(prof, resume);
+    }
+  };
+
   const handleFileUpload = async (e) => {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -320,6 +329,7 @@ export default function Landing({ onSelect, onNavigate, isEmbedded, mascotMood, 
     }
 
     setIsUploading(true);
+    setUploadComplete(false);
     setUploadingFileName(file.name);
     setSearchError("");
 
@@ -332,7 +342,8 @@ export default function Landing({ onSelect, onNavigate, isEmbedded, mascotMood, 
       if (isProd && isBackendLocal) {
         if (file.name.endsWith(".txt") || file.type === "text/plain") {
           const fallbackData = await parseTextResumeFallback(file);
-          saveAndProceedUploadedResume(fallbackData.profession, fallbackData.resume);
+          pendingTransitionRef.current = { prof: fallbackData.profession, resume: fallbackData.resume };
+          setUploadComplete(true);
           return;
         }
         throw new Error("PROD_BACKEND_NOT_CONFIGURED");
@@ -379,11 +390,13 @@ export default function Landing({ onSelect, onNavigate, isEmbedded, mascotMood, 
         // Backend returned empty — fall back to text extraction
         if (file.name.endsWith(".txt") || file.type === "text/plain") {
           const fallbackData = await parseTextResumeFallback(file);
-          saveAndProceedUploadedResume(fallbackData.profession, fallbackData.resume);
+          pendingTransitionRef.current = { prof: fallbackData.profession, resume: fallbackData.resume };
+          setUploadComplete(true);
         } else {
           // Can't extract text from binary PDF on client — send to general builder
           setSearchError("Resume could not be parsed automatically. You can fill in your details manually below.");
-          saveAndProceedUploadedResume("general", parsedResume || {});
+          pendingTransitionRef.current = { prof: "general", resume: parsedResume || {} };
+          setUploadComplete(true);
         }
         return;
       }
@@ -391,9 +404,13 @@ export default function Landing({ onSelect, onNavigate, isEmbedded, mascotMood, 
       // Use the detected profession only if content exists; default to 'general' if empty
       const detectedProf = data.profession && hasContent ? data.profession : "general";
 
-      saveAndProceedUploadedResume(detectedProf, parsedResume);
+      pendingTransitionRef.current = { prof: detectedProf, resume: parsedResume };
+      setUploadComplete(true);
     } catch (err) {
       console.error("Resume upload error:", err);
+      setIsUploading(false);
+      setUploadComplete(false);
+      pendingTransitionRef.current = null;
       if (err.name === "AbortError") {
         setSearchError("Resume parsing timed out (>30s). The backend server may be starting up — please try again in a moment.");
       } else if (err.message === "PROD_BACKEND_NOT_CONFIGURED") {
@@ -409,7 +426,6 @@ export default function Landing({ onSelect, onNavigate, isEmbedded, mascotMood, 
         setSearchError(`Failed to parse resume (${err.message || "Network Error"}). Please verify backend server and GROQ_API_KEY.`);
       }
     } finally {
-      setIsUploading(false);
       e.target.value = "";
     }
   };
@@ -751,7 +767,13 @@ export default function Landing({ onSelect, onNavigate, isEmbedded, mascotMood, 
           </div>
         </div>
       )}
-      {isUploading && <ParsingLoader filename={uploadingFileName} />}
+      {isUploading && (
+        <ParsingLoader
+          filename={uploadingFileName}
+          isComplete={uploadComplete}
+          onFinished={handleUploadFinished}
+        />
+      )}
     </div>
   );
 }
