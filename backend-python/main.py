@@ -49,6 +49,16 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+@app.middleware("http")
+async def log_requests(request: Request, call_next):
+    start_time = time.time()
+    response = await call_next(request)
+    process_time = (time.time() - start_time) * 1000
+    formatted_process_time = f"{process_time:.2f}ms"
+    client_ip = request.client.host if request.client else "unknown"
+    print(f"📊 [OBSERVABILITY] {request.method} {request.url.path} - Status: {response.status_code} - Latency: {formatted_process_time} - IP: {client_ip}")
+    return response
+
 @app.get("/health")
 def health_check():
     return {"status": "online", "service": "Resora Python FastAPI Backend", "version": "2.5.3"}

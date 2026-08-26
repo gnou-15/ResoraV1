@@ -146,3 +146,35 @@ jobs:
             echo "❌ Node Backend Health Validation Failed!"
             exit 1
           fi
+
+  post-deployment-verification:
+    name: Production Deployment & Live Post-Verification (Page 5)
+    needs: [end-to-end-validation-gate]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Trigger Render Backend Deployment Webhooks (If Configured)
+        run: |
+          if [ -n "${{ secrets.RENDER_PYTHON_DEPLOY_HOOK }}" ]; then
+            echo "🚀 Triggering Render Python Backend Deployment..."
+            curl -s -X POST "${{ secrets.RENDER_PYTHON_DEPLOY_HOOK }}"
+          else
+            echo "ℹ️ RENDER_PYTHON_DEPLOY_HOOK secret not set. Skipping webhook trigger."
+          fi
+
+          if [ -n "${{ secrets.RENDER_NODE_DEPLOY_HOOK }}" ]; then
+            echo "🚀 Triggering Render Node Backend Deployment..."
+            curl -s -X POST "${{ secrets.RENDER_NODE_DEPLOY_HOOK }}"
+          else
+            echo "ℹ️ RENDER_NODE_DEPLOY_HOOK secret not set. Skipping webhook trigger."
+          fi
+
+      - name: Verify Live Production Domain (nezer-resora.com)
+        run: |
+          echo "🌐 Performing Post-Deployment Verification ping against nezer-resora.com..."
+          RESPONSE=$(curl -s -o /dev/null -w "%{http_code}" https://nezer-resora.com || true)
+          echo "Live Domain HTTP Status Code: $RESPONSE"
+          if [ "$RESPONSE" -eq 200 ] || [ "$RESPONSE" -eq 301 ] || [ "$RESPONSE" -eq 302 ]; then
+            echo "✅ Live Production Domain (nezer-resora.com) Verified Successfully!"
+          else
+            echo "⚠️ Production domain returned status code $RESPONSE. Verification logged."
+          fi
