@@ -153,17 +153,20 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Trigger Render Backend Deployment Webhooks (If Configured)
+        env:
+          PYTHON_HOOK: ${{ secrets.RENDER_PYTHON_DEPLOY_HOOK }}
+          NODE_HOOK: ${{ secrets.RENDER_NODE_DEPLOY_HOOK }}
         run: |
-          if [ -n "${{ secrets.RENDER_PYTHON_DEPLOY_HOOK }}" ]; then
+          if [ -n "$PYTHON_HOOK" ]; then
             echo "🚀 Triggering Render Python Backend Deployment..."
-            curl -s -X POST "${{ secrets.RENDER_PYTHON_DEPLOY_HOOK }}"
+            curl -s -X POST "$PYTHON_HOOK"
           else
             echo "ℹ️ RENDER_PYTHON_DEPLOY_HOOK secret not set. Skipping webhook trigger."
           fi
 
-          if [ -n "${{ secrets.RENDER_NODE_DEPLOY_HOOK }}" ]; then
+          if [ -n "$NODE_HOOK" ]; then
             echo "🚀 Triggering Render Node Backend Deployment..."
-            curl -s -X POST "${{ secrets.RENDER_NODE_DEPLOY_HOOK }}"
+            curl -s -X POST "$NODE_HOOK"
           else
             echo "ℹ️ RENDER_NODE_DEPLOY_HOOK secret not set. Skipping webhook trigger."
           fi
