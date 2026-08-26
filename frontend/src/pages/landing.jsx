@@ -67,6 +67,7 @@ export default function Landing({ onSelect, onNavigate, isEmbedded, mascotMood, 
   const [placeholder, setPlaceholder] = useState("");
   const [searchError, setSearchError] = useState("");
   const [showAuthModal, setShowAuthModal] = useState(false);
+  const [showRateLimitModal, setShowRateLimitModal] = useState(false);
   const [localMood, setLocalMood] = useState("normal");
   const [existingResumeInfo, setExistingResumeInfo] = useState(() => {
     if (!user) return null;
@@ -371,6 +372,14 @@ export default function Landing({ onSelect, onNavigate, isEmbedded, mascotMood, 
 
       if (!res.ok) {
         const errJson = await res.json().catch(() => ({}));
+        if (res.status === 429 || (errJson.detail && errJson.detail.toLowerCase().includes("rate limit"))) {
+          setIsUploading(false);
+          setUploadComplete(false);
+          pendingTransitionRef.current = null;
+          setShowRateLimitModal(true);
+          setSearchError("");
+          return;
+        }
         throw new Error(errJson.detail || `HTTP ${res.status}`);
       }
 
@@ -411,7 +420,10 @@ export default function Landing({ onSelect, onNavigate, isEmbedded, mascotMood, 
       setIsUploading(false);
       setUploadComplete(false);
       pendingTransitionRef.current = null;
-      if (err.name === "AbortError") {
+      if (err.message && (err.message.includes("429") || err.message.toLowerCase().includes("rate limit") || err.message.toLowerCase().includes("maximum 5"))) {
+        setShowRateLimitModal(true);
+        setSearchError("");
+      } else if (err.name === "AbortError") {
         setSearchError("Resume parsing timed out (>30s). The backend server may be starting up — please try again in a moment.");
       } else if (err.message === "PROD_BACKEND_NOT_CONFIGURED") {
         setSearchError("Backend URL not configured. Please add VITE_PYTHON_BACKEND_URL in your deployment environment variables.");
@@ -762,6 +774,53 @@ export default function Landing({ onSelect, onNavigate, isEmbedded, mascotMood, 
                 onClick={() => setShowAuthModal(false)}
               >
                 Cancel
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {showRateLimitModal && (
+        <div className="auth-gate-modal-overlay" onClick={() => setShowRateLimitModal(false)}>
+          <div className="auth-gate-modal-box rate-limit-modal-box" onClick={(e) => e.stopPropagation()}>
+            <div className="rate-limit-mascot-wrapper">
+              <PeekingMonster mood="frustrated" />
+            </div>
+            <div className="rate-limit-badge">
+              <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                <circle cx="12" cy="12" r="10" />
+                <line x1="12" y1="8" x2="12" y2="12" />
+                <line x1="12" y1="16" x2="12.01" y2="16" />
+              </svg>
+              <span>Daily Limit Reached</span>
+            </div>
+            <h3 className="auth-gate-title">Daily Upload Limit Reached</h3>
+            <p className="auth-gate-text">
+              You have reached your daily allowance of <strong>5 resume uploads</strong> for today. Your quota resets every 24 hours.
+            </p>
+            <div className="rate-limit-suggestion-box">
+              <div className="rate-limit-suggestion-icon">💡</div>
+              <div className="rate-limit-suggestion-text">
+                Don't worry! You can still build and export your resume <strong>manually in seconds</strong> with our tailored templates.
+              </div>
+            </div>
+            <div className="auth-gate-buttons">
+              <button
+                type="button"
+                className="auth-gate-btn-primary"
+                onClick={() => {
+                  setShowRateLimitModal(false);
+                  onSelect("general");
+                }}
+              >
+                Build Resume Manually
+              </button>
+              <button
+                type="button"
+                className="auth-gate-btn-secondary"
+                onClick={() => setShowRateLimitModal(false)}
+              >
+                Got It
               </button>
             </div>
           </div>

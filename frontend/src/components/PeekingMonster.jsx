@@ -89,7 +89,7 @@ export default function PeekingMonster({ mood = "normal", isPremium = false }) {
         viewBox="0 -15 90 105" 
         fill="none" 
         xmlns="http://www.w3.org/2000/svg"
-        className={mood === "frantic" ? "frantic-mascot" : ""}
+        className={mood === "frantic" ? "frantic-mascot" : mood === "frustrated" ? "frustrated-mascot" : ""}
         style={{ overflow: "visible" }}
       >
         <defs>
@@ -125,7 +125,7 @@ export default function PeekingMonster({ mood = "normal", isPremium = false }) {
 
         {/* 2. Group the Top Hat for 3D translation & rotation */}
         <g className="dapper-top-hat" style={{ 
-          transform: `translate(${offsets.hatX}px, ${offsets.hatY + (mood === "excited" ? -4 : 0)}px) rotate(${offsets.hatRot + (mood === "excited" ? 8 : 0)}deg)`,
+          transform: `translate(${offsets.hatX}px, ${offsets.hatY + (mood === "excited" ? -4 : mood === "frustrated" ? 2 : 0)}px) rotate(${offsets.hatRot + (mood === "excited" ? 8 : mood === "frustrated" ? -7 : 0)}deg)`,
           transformOrigin: "45px 30px",
           transition: "transform 0.08s ease-out"
         }}>
@@ -161,17 +161,17 @@ export default function PeekingMonster({ mood = "normal", isPremium = false }) {
 
         {/* 3. Moving Face Features (3D Parallax look-around effect) */}
         <g className="dapper-face" style={{ 
-          transform: `translate(${offsets.faceX}px, ${offsets.faceY}px)`,
+          transform: `translate(${offsets.faceX}px, ${offsets.faceY + (mood === "frustrated" ? 2 : 0)}px)`,
           transition: "transform 0.08s ease-out"
         }}>
           {/* Left Eye */}
           <circle cx="36" cy="52" r="5" fill="#ffffff" />
-          <circle cx={36 + offsets.pupilX} cy={52 + offsets.pupilY} r={mood === "excited" ? 3.4 : mood === "frantic" ? 1.2 : 2.2} fill="#0f172a" />
+          <circle cx={36 + offsets.pupilX} cy={52 + offsets.pupilY + (mood === "frustrated" ? 1.5 : 0)} r={mood === "excited" ? 3.4 : (mood === "frantic" || mood === "frustrated") ? 1.6 : 2.2} fill="#0f172a" />
           {mood === "excited" && <circle cx={36 + offsets.pupilX - 0.8} cy={52 + offsets.pupilY - 0.8} r="0.9" fill="#ffffff" />}
 
           {/* Right Eye */}
           <circle cx="54" cy="52" r="5" fill="#ffffff" />
-          <circle cx={54 + offsets.pupilX} cy={52 + offsets.pupilY} r={mood === "excited" ? 3.4 : mood === "frantic" ? 1.2 : 2.2} fill="#0f172a" />
+          <circle cx={54 + offsets.pupilX} cy={52 + offsets.pupilY + (mood === "frustrated" ? 1.5 : 0)} r={mood === "excited" ? 3.4 : (mood === "frantic" || mood === "frustrated") ? 1.6 : 2.2} fill="#0f172a" />
           {mood === "excited" && <circle cx={54 + offsets.pupilX - 0.8} cy={52 + offsets.pupilY - 0.8} r="0.9" fill="#ffffff" />}
 
           {/* Golden Monocle */}
@@ -182,11 +182,10 @@ export default function PeekingMonster({ mood = "normal", isPremium = false }) {
           {/* Bushy Mustache */}
           <path 
             className="dapper-mustache"
-            d="M 45 61 
-               C 36 57, 22 61, 16 68 
-               C 22 68, 36 66, 45 63 
-               C 54 66, 68 68, 74 68 
-               C 68 61, 54 57, 45 61 Z" 
+            d={mood === "frustrated" ? 
+              "M 45 63 C 36 61, 22 66, 16 71 C 22 70, 36 67, 45 65 C 54 67, 68 70, 74 71 C 68 66, 54 61, 45 63 Z" :
+              "M 45 61 C 36 57, 22 61, 16 68 C 22 68, 36 66, 45 63 C 54 66, 68 68, 74 68 C 68 61, 54 57, 45 61 Z"
+            }
             fill="#ffffff" 
           />
         </g>
@@ -203,8 +202,8 @@ export default function PeekingMonster({ mood = "normal", isPremium = false }) {
           </g>
         )}
 
-        {/* Frantic Sweat Drops */}
-        {mood === "frantic" && (
+        {/* Frantic / Frustrated Sweat Drops */}
+        {(mood === "frantic" || mood === "frustrated") && (
           <g>
             {/* Sweat Drop Left */}
             <path className="frantic-sweat-left" d="M 25 45 C 23 48 21 50 21 52 C 21 54 23 56 25 56 C 27 56 29 54 29 52 C 29 50 27 48 25 45 Z" fill="#38bdf8" />
