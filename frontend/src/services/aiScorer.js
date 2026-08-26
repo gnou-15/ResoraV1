@@ -879,21 +879,27 @@ export async function fetchAPIAnalysis(resume, profession = 'it') {
 
   try {
     const backendUrl = import.meta.env.VITE_PYTHON_BACKEND_URL || "http://localhost:8000";
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 3000);
+
     const response = await fetch(`${backendUrl.replace(/\/$/, "")}/analyze`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
       },
       body: JSON.stringify({ resume, profession }),
+      signal: controller.signal
     });
+
+    clearTimeout(timeoutId);
 
     if (response.ok) {
       return await response.json();
     }
     throw new Error("FastAPI server returned an error response status.");
   } catch (error) {
-    console.warn("Python backend offline. Falling back to local JS scorer.", error);
-    // Graceful fallback: run the local JS evaluation
+    console.warn("FastAPI backend timeout/error. Falling back to local fast JS scorer.", error);
+    // Instant fallback: return local evaluation
     return localResult;
   }
 }

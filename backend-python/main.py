@@ -1107,19 +1107,22 @@ RULES:
 def parse_with_groq_ai(text: str, api_key: str) -> Dict[str, Any]:
     models_to_try = [
         os.getenv("GROQ_MODEL", "").strip(),
-        "openai/gpt-oss-120b",
-        "openai/gpt-oss-20b",
+        "groq/compound-mini",
+        "llama-3.3-70b-versatile",
+        "llama-3.1-8b-instant",
         "qwen/qwen3.6-27b",
-        "groq/compound-mini"
+        "openai/gpt-oss-120b",
+        "openai/gpt-oss-20b"
     ]
-    models_to_try = [m for m in models_to_try if m]
+    seen = set()
+    models_to_try = [m for m in models_to_try if m and not (m in seen or seen.add(m))]
 
     try:
         from groq import Groq
         client = Groq(api_key=api_key)
         for model_name in models_to_try:
             try:
-                print(f"🤖 Requesting Groq AI parsing with model '{model_name}'...")
+                print(f"🤖 Requesting Groq AI parsing with model '{model_name}' (timeout 4.0s)...")
                 chat_completion = client.chat.completions.create(
                     messages=[
                         {"role": "system", "content": GROQ_SYSTEM_PROMPT},
@@ -1127,7 +1130,8 @@ def parse_with_groq_ai(text: str, api_key: str) -> Dict[str, Any]:
                     ],
                     model=model_name,
                     temperature=0.1,
-                    response_format={"type": "json_object"}
+                    response_format={"type": "json_object"},
+                    timeout=4.0
                 )
                 res_text = chat_completion.choices[0].message.content
                 return json.loads(res_text)

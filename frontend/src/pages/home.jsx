@@ -155,8 +155,8 @@ function Home({ profession, user, onBack, plan, onNavigateAuth }) {
       return;
     }
 
-    // Subsequent edits are debounced by 10 seconds
-    const timer = setTimeout(runSync, 10000);
+    // Subsequent edits are debounced by 1.5 seconds
+    const timer = setTimeout(runSync, 1500);
 
     return () => clearTimeout(timer);
   }, [resume, profession, isInitialized]);
