@@ -154,8 +154,8 @@ jobs:
     steps:
       - name: Trigger Render Backend Deployment Webhooks (If Configured)
         env:
-          PYTHON_HOOK: ${{ secrets.RENDER_PYTHON_DEPLOY_HOOK }}
-          NODE_HOOK: ${{ secrets.RENDER_NODE_DEPLOY_HOOK }}
+          PYTHON_HOOK: '${{ secrets.RENDER_PYTHON_DEPLOY_HOOK }}'
+          NODE_HOOK: '${{ secrets.RENDER_NODE_DEPLOY_HOOK }}'
         run: |
           if [ -n "$PYTHON_HOOK" ]; then
             echo "🚀 Triggering Render Python Backend Deployment..."
