@@ -694,6 +694,17 @@ def analyze(req: AnalyzeRequest):
     return analyze_resume(req.resume, req.profession)
 
 
+def clean_extracted_text(raw_text: str) -> str:
+    """Normalize bullet symbols, quotes, and dashes to make parsing robust."""
+    if not raw_text:
+        return ""
+    # Standardize bullet characters to •
+    t = re.sub(r'[\u2022\u25cf\u25aa\u25cb\uf0b7\u2023\u2043\u25e6\u2219]', '• ', raw_text)
+    # Standardize unicode dashes and quotes
+    t = t.replace('\u2013', '-').replace('\u2014', '-').replace('\u2018', "'").replace('\u2019', "'").replace('\u201c', '"').replace('\u201d', '"')
+    return t
+
+
 def extract_text_from_file(filename: str, content: bytes) -> str:
     ext = filename.lower().split('.')[-1]
     if ext == 'pdf':
@@ -707,8 +718,9 @@ def extract_text_from_file(filename: str, content: bytes) -> str:
                     pages_text.append(txt)
             extracted = "\n".join(pages_text)
             if extracted.strip():
-                print(f"📄 Extracted {len(extracted)} characters from PDF via pypdf")
-                return extracted
+                cleaned = clean_extracted_text(extracted)
+                print(f"📄 Extracted {len(cleaned)} characters from PDF via pypdf")
+                return cleaned
         except Exception as e:
             print(f"❌ Error reading PDF with pypdf: {e}")
 
@@ -719,6 +731,7 @@ def extract_text_from_file(filename: str, content: bytes) -> str:
             cleaned = re.sub(r'[^\x20-\x7E\n\r\t]', ' ', raw_text)
             cleaned = re.sub(r'\s+', ' ', cleaned)
             if len(cleaned.strip()) > 50:
+                cleaned = clean_extracted_text(cleaned)
                 print(f"📄 Extracted {len(cleaned)} characters from PDF via raw stream fallback")
                 return cleaned
         except Exception as e:
@@ -925,24 +938,36 @@ def parse_resume_fields(text: str) -> Dict[str, Any]:
     if proj_lines:
         curr_proj = None
         for pl in proj_lines:
-            if '|' in pl or ('http' in pl or '.com' in pl or '.dev' in pl):
+            pl_clean = pl.strip()
+            if not pl_clean:
+                continue
+
+            is_bullet = pl_clean.startswith('•') or pl_clean.startswith('-') or pl_clean.startswith('*')
+
+            if is_bullet:
+                bullet_txt = re.sub(r'^[•\-\*\s]+', '', pl_clean).strip()
+                if curr_proj:
+                    curr_proj['bullets'].append(bullet_txt)
+                else:
+                    curr_proj = {"id": f"proj-{len(project_entries)+1}", "name": "Project", "link": "", "stack": "", "bullets": [bullet_txt]}
+            elif pl_clean.lower().startswith('tech stack:'):
+                if curr_proj:
+                    curr_proj['stack'] = pl_clean.split(':', 1)[1].strip()
+            elif '|' in pl_clean or (any(ext in pl_clean.lower() for ext in ['.com', '.dev', '.app', '.io', 'http', 'github'])):
                 if curr_proj:
                     project_entries.append(curr_proj)
-                parts = [p.strip() for p in pl.split('|')]
+                parts = [p.strip() for p in pl_clean.split('|')]
                 name = parts[0]
                 link = parts[1] if len(parts) > 1 else ""
                 curr_proj = {"id": f"proj-{len(project_entries)+1}", "name": name, "link": link, "stack": "", "bullets": []}
-            elif pl.lower().startswith('tech stack:'):
-                if curr_proj:
-                    curr_proj['stack'] = pl.split(':', 1)[1].strip()
-            elif pl.startswith('•') or pl.startswith('-') or pl.startswith('*'):
-                if curr_proj:
-                    curr_proj['bullets'].append(re.sub(r'^[•\-\*\s]+', '', pl))
             elif curr_proj:
                 if curr_proj['bullets']:
-                    curr_proj['bullets'][-1] += " " + pl
-                else:
-                    curr_proj['bullets'].append(pl)
+                    # Wrap continuation of previous bullet point
+                    curr_proj['bullets'][-1] = (curr_proj['bullets'][-1] + " " + pl_clean).strip()
+                elif not curr_proj['name']:
+                    curr_proj['name'] = pl_clean
+                elif not curr_proj['stack']:
+                    curr_proj['stack'] = pl_clean
 
         if curr_proj:
             project_entries.append(curr_proj)
@@ -952,27 +977,66 @@ def parse_resume_fields(text: str) -> Dict[str, Any]:
     if achieve_lines:
         curr_ach = None
         for al in achieve_lines:
-            date_match = re.search(r'((?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec|\d{4})[\s\w-]*\d{4}|\w+\s+\d{4})', al, re.IGNORECASE)
-            is_bullet = al.startswith('•') or al.startswith('-') or al.startswith('*')
-            
+            al_clean = al.strip()
+            if not al_clean:
+                continue
+
+            is_bullet = al_clean.startswith('•') or al_clean.startswith('-') or al_clean.startswith('*')
+            date_match = re.search(r'((?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec|\d{4})[\s\w-]*\d{4}|\b(?:19|20)\d{2}\b)', al_clean, re.IGNORECASE)
+
             if is_bullet:
+                bullet_txt = re.sub(r'^[•\-\*\s]+', '', al_clean).strip()
                 if curr_ach:
-                    curr_ach['bullets'].append(re.sub(r'^[•\-\*\s]+', '', al))
-            elif date_match and len(al) < 35:
-                if curr_ach:
-                    curr_ach['date'] = al.strip()
-            elif len(al) < 65 and not re.search(r'[@\d]', al) and not date_match:
-                if not curr_ach or curr_ach['bullets']:
-                    if curr_ach and (curr_ach['title'] or curr_ach['bullets']):
-                        achievement_entries.append(curr_ach)
-                    curr_ach = {"id": f"ach-{len(achievement_entries)+1}", "title": al, "organization": "", "date": "", "bullets": []}
-                elif curr_ach and not curr_ach['organization']:
-                    curr_ach['organization'] = al
-            elif curr_ach:
-                if curr_ach['bullets']:
-                    curr_ach['bullets'][-1] += " " + al
+                    curr_ach['bullets'].append(bullet_txt)
                 else:
-                    curr_ach['bullets'].append(al)
+                    curr_ach = {"id": f"ach-{len(achievement_entries)+1}", "title": "Achievement", "organization": "", "date": "", "bullets": [bullet_txt]}
+            elif curr_ach and curr_ach['bullets']:
+                normalized_spaces = re.sub(r'\s+', ' ', al_clean)
+                has_role_keyword = any(kw in normalized_spaces.lower() for kw in ['president', 'adviser', 'finalist', 'place', 'champion', 'winner', 'lead', 'manager', 'officer', 'director', 'congress', 'competition', 'hackathon', 'award', 'honor'])
+                has_date_and_not_sentence = bool(date_match and not al_clean.endswith('.'))
+                is_short_title = bool(has_role_keyword and len(normalized_spaces) <= 65 and not al_clean.endswith('.'))
+
+                if has_date_and_not_sentence or is_short_title:
+                    # Save previous achievement entry and begin new one
+                    if curr_ach['title'] or curr_ach['bullets']:
+                        achievement_entries.append(curr_ach)
+                    extracted_date = date_match.group(0).strip() if date_match else ""
+                    title_text = re.sub(re.escape(extracted_date), '', al_clean).strip() if extracted_date else al_clean
+                    curr_ach = {
+                        "id": f"ach-{len(achievement_entries)+1}",
+                        "title": title_text or al_clean,
+                        "organization": "",
+                        "date": extracted_date,
+                        "bullets": []
+                    }
+                else:
+                    # Wrapped line belonging to previous bullet!
+                    curr_ach['bullets'][-1] = (curr_ach['bullets'][-1] + " " + al_clean).strip()
+            else:
+                # No bullets yet for curr_ach: setting title, organization, or date
+                extracted_date = date_match.group(0).strip() if date_match else ""
+                clean_title = re.sub(re.escape(extracted_date), '', al_clean).strip() if extracted_date else al_clean
+
+                if not curr_ach:
+                    curr_ach = {
+                        "id": f"ach-{len(achievement_entries)+1}",
+                        "title": clean_title or al_clean,
+                        "organization": "",
+                        "date": extracted_date,
+                        "bullets": []
+                    }
+                elif not curr_ach['organization']:
+                    curr_ach['organization'] = clean_title or al_clean
+                    if extracted_date and not curr_ach['date']:
+                        curr_ach['date'] = extracted_date
+                else:
+                    if extracted_date and not curr_ach['date']:
+                        curr_ach['date'] = extracted_date
+                    else:
+                        if curr_ach['bullets']:
+                            curr_ach['bullets'][-1] = (curr_ach['bullets'][-1] + " " + al_clean).strip()
+                        else:
+                            curr_ach['bullets'].append(al_clean)
 
         if curr_ach and (curr_ach['title'] or curr_ach['bullets']):
             achievement_entries.append(curr_ach)
@@ -982,37 +1046,77 @@ def parse_resume_fields(text: str) -> Dict[str, Any]:
     if exp_lines:
         curr_exp = None
         for el in exp_lines:
-            date_match = re.search(r'((?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec|\d{4})[\s\w-]*\d{4})', el, re.IGNORECASE)
-            is_bullet = el.startswith('•') or el.startswith('-') or el.startswith('*')
-            
+            el_clean = el.strip()
+            if not el_clean:
+                continue
+
+            is_bullet = el_clean.startswith('•') or el_clean.startswith('-') or el_clean.startswith('*')
+            date_match = re.search(r'((?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec|\d{4})[\s\w-]*\d{4}|\b(?:19|20)\d{2}\b)', el_clean, re.IGNORECASE)
+
             if is_bullet:
+                bullet_txt = re.sub(r'^[•\-\*\s]+', '', el_clean).strip()
                 if curr_exp:
-                    curr_exp['bullets'].append(re.sub(r'^[•\-\*\s]+', '', el))
-            elif date_match:
-                if curr_exp:
-                    curr_exp['startDate'] = date_match.group(0).split('-')[0].strip()
-                    curr_exp['endDate'] = date_match.group(0).split('-')[-1].strip() if '-' in date_match.group(0) else date_match.group(0)
-            elif '|' in el and curr_exp:
-                parts = [p.strip() for p in el.split('|')]
+                    curr_exp['bullets'].append(bullet_txt)
+                else:
+                    curr_exp = {
+                        "id": f"exp-{len(experience_entries)+1}",
+                        "company": "",
+                        "title": "Experience",
+                        "location": "",
+                        "startDate": "",
+                        "endDate": "",
+                        "current": False,
+                        "bullets": [bullet_txt]
+                    }
+            elif curr_exp and curr_exp['bullets']:
+                # If we already have bullets, check if this is a new job header or a wrapped bullet continuation
+                if '|' in el_clean or (date_match and len(el_clean) <= 45 and not el_clean.endswith('.')):
+                    if curr_exp['title'] or curr_exp['company'] or curr_exp['bullets']:
+                        experience_entries.append(curr_exp)
+                    curr_exp = {
+                        "id": f"exp-{len(experience_entries)+1}",
+                        "company": "",
+                        "title": el_clean,
+                        "location": "",
+                        "startDate": "",
+                        "endDate": "",
+                        "current": False,
+                        "bullets": []
+                    }
+                else:
+                    curr_exp['bullets'][-1] = (curr_exp['bullets'][-1] + " " + el_clean).strip()
+            elif '|' in el_clean and curr_exp:
+                parts = [p.strip() for p in el_clean.split('|')]
                 curr_exp['company'] = parts[0]
                 if len(parts) > 1:
                     curr_exp['location'] = parts[1]
-            elif len(el) < 60 and not curr_exp:
+            elif date_match and curr_exp:
+                date_str = date_match.group(0).strip()
+                if '-' in date_str:
+                    curr_exp['startDate'] = date_str.split('-')[0].strip()
+                    curr_exp['endDate'] = date_str.split('-')[1].strip()
+                else:
+                    curr_exp['endDate'] = date_str
+            elif not curr_exp:
+                extracted_date = date_match.group(0).strip() if date_match else ""
+                title_txt = re.sub(re.escape(extracted_date), '', el_clean).strip() if extracted_date else el_clean
                 curr_exp = {
-                    "id": "exp-1",
+                    "id": f"exp-{len(experience_entries)+1}",
                     "company": "",
-                    "title": el,
+                    "title": title_txt or el_clean,
                     "location": "",
-                    "startDate": "",
-                    "endDate": "",
-                    "current": False,
+                    "startDate": extracted_date.split('-')[0].strip() if '-' in extracted_date else "",
+                    "endDate": extracted_date.split('-')[-1].strip() if extracted_date else "",
+                    "current": "present" in el_clean.lower(),
                     "bullets": []
                 }
+            elif curr_exp and not curr_exp['company']:
+                curr_exp['company'] = el_clean
             elif curr_exp:
                 if curr_exp['bullets']:
-                    curr_exp['bullets'][-1] += " " + el
+                    curr_exp['bullets'][-1] = (curr_exp['bullets'][-1] + " " + el_clean).strip()
                 else:
-                    curr_exp['bullets'].append(el)
+                    curr_exp['bullets'].append(el_clean)
 
         if curr_exp:
             experience_entries.append(curr_exp)
@@ -1054,7 +1158,7 @@ def parse_resume_fields(text: str) -> Dict[str, Any]:
 
 
 GROQ_SYSTEM_PROMPT = """
-You are an expert AI Resume Parser. Your task is to extract structured JSON data from raw resume text.
+You are an expert AI Resume Parser. Your task is to extract structured JSON data from raw resume text with 100% precision.
 
 Return ONLY a valid JSON object matching the exact schema below.
 
@@ -1065,88 +1169,92 @@ JSON SCHEMA:
     "personal": {
       "fullName": "<string>",
       "email": "<string>",
-      "phoneCountry": "<country code, e.g. +1 or +63>",
-      "phoneNumber": "<string without country code>",
+      "phoneCountry": "<country code, e.g. +63 or +1>",
+      "phoneNumber": "<string without country code, e.g. 9292232800>",
       "location": {
-        "country": "<string, e.g. USA>",
-        "state": "<string, e.g. New York>",
-        "city": "<string, e.g. New York>",
+        "country": "<string, e.g. Philippines>",
+        "state": "<string, e.g. Cebu>",
+        "city": "<string, e.g. Lapu-Lapu>",
         "barangay": "",
-        "street": "<string, e.g. 9 Wall St>"
+        "street": ""
       },
-      "github": "<string>",
-      "linkedin": "<string>",
-      "portfolio": "<string>"
+      "github": "<string, e.g. github.com/username>",
+      "linkedin": "<string, e.g. linkedin.com/in/username>",
+      "portfolio": "<string, e.g. personal website or portfolio link>"
     },
-    "headline": "<string, short job title e.g. Personal Trainer>",
-    "summary": "<string, profile summary paragraph>",
-    "skills": "<comma-separated list of skills>",
+    "headline": "<string, target role or headline below name, e.g. IT Consultant | Project Manager>",
+    "summary": "<string, complete professional summary paragraph>",
+    "skills": "<comma-separated list of all core skills>",
     "technicalSkills": {
-      "languages": "<comma separated>",
-      "frameworks": "<comma separated>",
-      "tools": "<comma separated>",
-      "databases": "<comma separated>",
-      "cloud": "<comma separated>"
+      "languages": "<comma separated, e.g. PHP, Python, SQL, C++, Java, C#, JavaScript>",
+      "frameworks": "<comma separated, e.g. React, Express, Next.js>",
+      "tools": "<comma separated, e.g. Git, Vite, npm, GitHub Actions, Docker>",
+      "databases": "<comma separated, e.g. MySQL, PostgreSQL, SQLite>",
+      "cloud": "<comma separated, e.g. AWS>"
     },
     "education": [
       {
         "id": "edu-1",
-        "school": "<string>",
-        "degree": "<string>",
+        "school": "<string, e.g. University of Cebu Lapu-Lapu & Mandaue>",
+        "degree": "<string, e.g. B.S. Information Technology>",
         "field": "<string>",
-        "endDate": "<string>",
-        "gpa": "<string>",
+        "endDate": "<string, e.g. June 2026>",
+        "gpa": "<string, e.g. 1.3>",
         "coursework": "<string>"
       }
     ],
     "projects": [
       {
         "id": "proj-1",
-        "name": "<string>",
-        "link": "<string>",
-        "stack": "<string>",
-        "bullets": ["<bullet 1>", "<bullet 2>"]
+        "name": "<string, project title>",
+        "link": "<string, project url/domain>",
+        "stack": "<string, technologies used>",
+        "bullets": ["<complete, un-truncated sentence 1>", "<complete, un-truncated sentence 2>"]
       }
     ],
     "achievements": [
       {
         "id": "ach-1",
-        "title": "<string>",
-        "organization": "<string>",
-        "date": "<string>",
-        "bullets": ["<bullet 1>"]
+        "title": "<string, the role or award title, e.g. Student Adviser, Project Manager — 3rd Place, President, Grand Finalist>",
+        "organization": "<string, the organization or event name, e.g. Philippine Society of Information Technology Students, UC ICT Congress - Lightning Pitch Competition, PropTech Philippines Hackathon>",
+        "date": "<string, date range, e.g. Aug 2025 - Aug 2026, Apr 2026, Jan 2026>",
+        "bullets": ["<complete, un-truncated bullet point description>"]
       }
     ],
     "certifications": [
       {
         "id": "cert-1",
-        "name": "<string, e.g. ACE Certified Personal Trainer>",
-        "issuer": "<string>",
-        "date": "<string>"
+        "name": "<string, certification name>",
+        "issuer": "<string, issuing organization>",
+        "date": "<string, date issued>"
       }
     ],
     "experience": [
       {
         "id": "exp-1",
-        "company": "<string>",
-        "title": "<string>",
-        "location": "<string>",
-        "startDate": "<string>",
-        "endDate": "<string>",
+        "company": "<string, company or organization name>",
+        "title": "<string, job title/role>",
+        "location": "<string, company location>",
+        "startDate": "<string, e.g. Aug 2020>",
+        "endDate": "<string, e.g. Jul 2022 or Present>",
         "current": false,
-        "bullets": ["<bullet 1>", "<bullet 2>"]
+        "bullets": ["<complete, un-truncated bullet point description>"]
       }
     ],
     "userType": "professional"
   }
 }
 
-RULES:
-1. Detect profession accurately from: 'it', 'healthcare', 'education', 'management', 'engineering', 'safety', 'customs', 'business', 'designer', 'data', 'sales', 'hr', or 'general'. Note: Personal Trainers, Fitness Instructors, Chefs, Coaches are 'general'.
-2. Extract all contact details (Full Name, Email, Phone, City, State/Province, Country, GitHub, LinkedIn).
-3. Split ALL work experiences into distinct entries in the 'experience' array.
-4. Extract certifications into the 'certifications' or 'achievements' array.
-5. Return pure JSON without markdown codeblocks or extra text.
+CRITICAL RULES:
+1. UNWRAP MULTI-LINE BULLETS: In PDF text, long sentences wrap across multiple lines. You MUST join these wrapped lines into a single, cohesive, complete bullet point. NEVER truncate a sentence or turn the continuation of a sentence into a new title or item!
+2. ACHIEVEMENTS & AWARDS:
+   - 'title': The specific award or role (e.g. "Student Adviser", "Project Manager — 3rd Place", "Project Manager — Grand Finalist", "President").
+   - 'organization': The organization, competition, or hackathon (e.g. "Philippine Society of Information Technology Students", "UC ICT Congress - Lightning Pitch Competition", "PropTech Philippines Hackathon").
+   - 'date': The exact date or range (e.g. "Aug 2025 - Aug 2026", "Apr 2026", "Jan 2026", "Aug 2024 - Aug 2025").
+   - 'bullets': Contains the full descriptive text of what was accomplished without cutting off words.
+3. PROFESSION DETECTION: Detect profession from: 'it', 'healthcare', 'education', 'management', 'engineering', 'safety', 'customs', 'business', 'designer', 'data', 'sales', 'hr', or 'general'.
+4. TECHNICAL SKILLS: Extract categorized skills into languages, frameworks, tools, databases, cloud arrays or comma-separated lists.
+5. NO MARKDOWN: Output pure JSON only.
 """
 
 def parse_with_groq_ai(text: str, api_key: str) -> Dict[str, Any]:

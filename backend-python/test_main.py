@@ -283,3 +283,38 @@ def test_parse_resume_endpoint_rate_limit_x_forwarded_for():
         headers=headers_b,
     )
     assert res_b_1.status_code == 200
+
+
+def test_parse_achievements_unwraps_multiline_bullets():
+    """Verify that multi-line wrapped bullet points in achievements are merged properly without creating phantom items."""
+    sample_text = """DANIEL KANE MAPANO
+IT Consultant | Project Manager
+daniel@example.com | +63 9292232800 | Cebu, Philippines
+
+ACHIEVEMENTS
+Student Adviser                                     Aug 2025 - Aug 2026
+Philippine Society of Information Technology Students
+• Served as the strategic catalyst for organizational growth, mentoring student leaders in redefining their operational culture and
+establishing a scalable framework for future leadership terms.
+
+Project Manager — 3rd Place                          Apr 2026
+UC ICT Congress - Lightning Pitch Competition
+• Architected the strategic framework for Project Copra, transforming coconut waste into alternative energy and shifting the
+standard for high-impact competition pitches.
+"""
+    result = parse_resume_fields(sample_text)
+    resume = result.get("resume", {})
+    achievements = resume.get("achievements", [])
+
+    assert len(achievements) == 2, f"Expected exactly 2 achievements, got {len(achievements)}"
+    
+    first_ach = achievements[0]
+    assert "Student Adviser" in first_ach.get("title", "")
+    assert len(first_ach.get("bullets", [])) == 1
+    # Check that the wrapped line was merged into the single bullet point
+    assert "establishing a scalable framework for future leadership terms." in first_ach["bullets"][0]
+
+    second_ach = achievements[1]
+    assert "Project Manager" in second_ach.get("title", "")
+    assert len(second_ach.get("bullets", [])) == 1
+    assert "standard for high-impact competition pitches." in second_ach["bullets"][0]
