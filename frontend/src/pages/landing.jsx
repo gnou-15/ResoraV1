@@ -249,7 +249,13 @@ export default function Landing({ onSelect, onNavigate, isEmbedded, mascotMood, 
     };
     checkUpload();
     window.addEventListener("focus", checkUpload);
-    return () => window.removeEventListener("focus", checkUpload);
+    window.addEventListener("storage", checkUpload);
+    window.addEventListener("resora-upload-cleared", checkUpload);
+    return () => {
+      window.removeEventListener("focus", checkUpload);
+      window.removeEventListener("storage", checkUpload);
+      window.removeEventListener("resora-upload-cleared", checkUpload);
+    };
   }, []);
 
   const parseTextResumeFallback = async (file) => {

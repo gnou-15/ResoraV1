@@ -187,6 +187,7 @@ export function useResume(profession, user) {
     try {
       sessionStorage.removeItem('resora-uploaded-resume');
       localStorage.removeItem('resora-uploaded-resume');
+      window.dispatchEvent(new Event('resora-upload-cleared'));
     } catch {
       // ignore
     }
