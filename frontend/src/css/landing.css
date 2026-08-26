@@ -841,6 +841,7 @@
     opacity: 0;
     transform: translateY(16px) scale(0.9);
   }
+
   to {
     opacity: 1;
     transform: translateY(0) scale(1);
@@ -1168,11 +1169,13 @@
   .hero-title-returning {
     font-size: 1.75rem;
   }
+
   .existing-resume-cta-row {
     flex-direction: column;
     width: 100%;
     max-width: 340px;
   }
+
   .btn-go-to-resume,
   .btn-switch-role-secondary {
     width: 100%;
@@ -1191,6 +1194,7 @@
     transform: translateY(16px) scale(0.985);
     filter: blur(4px);
   }
+
   100% {
     opacity: 1;
     transform: translateY(0) scale(1);

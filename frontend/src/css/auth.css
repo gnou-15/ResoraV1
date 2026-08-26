@@ -1238,13 +1238,13 @@
   left: 0;
   width: 100vw;
   height: 100vh;
-  background-color: rgba(15, 23, 42, 0.6);
-  /* Slate-900 with opacity */
-  backdrop-filter: blur(4px);
+  background-color: rgba(15, 23, 42, 0.65);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
   display: flex;
   align-items: center;
   justify-content: center;
-  z-index: 3000;
+  z-index: 99999;
   animation: authGateFadeIn 0.3s cubic-bezier(0.16, 1, 0.3, 1);
 }
 

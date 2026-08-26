@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from "react";
+import { createPortal } from "react-dom";
 import "../css/landing.css";
 import InteractiveBackground from "../components/InteractiveBackground";
 import PeekingMonster from "../components/PeekingMonster";
@@ -68,6 +69,14 @@ export default function Landing({ onSelect, onNavigate, isEmbedded, mascotMood, 
   const [searchError, setSearchError] = useState("");
   const [showAuthModal, setShowAuthModal] = useState(false);
   const [showRateLimitModal, setShowRateLimitModal] = useState(false);
+  const [isDailyRateLimited, setIsDailyRateLimited] = useState(() => {
+    try {
+      const until = localStorage.getItem("resora-upload-rate-limit-until");
+      return !!(until && Number(until) > Date.now());
+    } catch {
+      return false;
+    }
+  });
   const [localMood, setLocalMood] = useState("normal");
   const [existingResumeInfo, setExistingResumeInfo] = useState(() => {
     if (!user) return null;
@@ -87,6 +96,38 @@ export default function Landing({ onSelect, onNavigate, isEmbedded, mascotMood, 
 
   const [isSearchingNewRole, setIsSearchingNewRole] = useState(false);
   const inputRef = useRef(null);
+
+  // Proactively check rate limit status in the background on mount & window focus
+  useEffect(() => {
+    let isMounted = true;
+    const checkQuota = async () => {
+      try {
+        const rawEnvBackend = import.meta.env.VITE_PYTHON_BACKEND_URL || "";
+        const backendUrl = rawEnvBackend || "http://localhost:8000";
+        const res = await fetch(`${backendUrl.replace(/\/$/, "")}/api/rate-limit-status`).catch(() => null);
+        if (res && res.ok && isMounted) {
+          const data = await res.json();
+          if (data.isRateLimited) {
+            const resetMs = (data.resetSeconds || 86400) * 1000;
+            localStorage.setItem("resora-upload-rate-limit-until", String(Date.now() + resetMs));
+            setIsDailyRateLimited(true);
+          } else {
+            localStorage.removeItem("resora-upload-rate-limit-until");
+            setIsDailyRateLimited(false);
+          }
+        }
+      } catch {
+        // silent
+      }
+    };
+
+    checkQuota();
+    window.addEventListener("focus", checkQuota);
+    return () => {
+      isMounted = false;
+      window.removeEventListener("focus", checkQuota);
+    };
+  }, []);
 
   useEffect(() => {
     let isMounted = true;
@@ -376,6 +417,8 @@ export default function Landing({ onSelect, onNavigate, isEmbedded, mascotMood, 
           setIsUploading(false);
           setUploadComplete(false);
           pendingTransitionRef.current = null;
+          localStorage.setItem("resora-upload-rate-limit-until", String(Date.now() + 86400000));
+          setIsDailyRateLimited(true);
           setShowRateLimitModal(true);
           setSearchError("");
           return;
@@ -421,6 +464,8 @@ export default function Landing({ onSelect, onNavigate, isEmbedded, mascotMood, 
       setUploadComplete(false);
       pendingTransitionRef.current = null;
       if (err.message && (err.message.includes("429") || err.message.toLowerCase().includes("rate limit") || err.message.toLowerCase().includes("maximum 5"))) {
+        localStorage.setItem("resora-upload-rate-limit-until", String(Date.now() + 86400000));
+        setIsDailyRateLimited(true);
         setShowRateLimitModal(true);
         setSearchError("");
       } else if (err.name === "AbortError") {
@@ -442,44 +487,22 @@ export default function Landing({ onSelect, onNavigate, isEmbedded, mascotMood, 
     }
   };
 
-  const handleUploadButtonClick = async () => {
+  const handleUploadButtonClick = () => {
     if (hasUploadedResume) {
       handleGoToUploaded();
       return;
     }
 
-    // 1. Immediate local cache check: if client previously hit rate limit
+    // 1. Instant check: if state or local storage marks the client as rate limited
     const cachedLimitUntil = localStorage.getItem("resora-upload-rate-limit-until");
-    if (cachedLimitUntil && Number(cachedLimitUntil) > Date.now()) {
+    const isCachedLimited = !!(cachedLimitUntil && Number(cachedLimitUntil) > Date.now());
+
+    if (isDailyRateLimited || isCachedLimited) {
       setShowRateLimitModal(true);
       return;
     }
 
-    // 2. Fast pre-check to backend to check if the current IP already reached 5 uploads
-    try {
-      const backendUrl = getBackendUrl();
-      if (backendUrl) {
-        const statusRes = await fetch(`${backendUrl.replace(/\/$/, "")}/api/rate-limit-status`, {
-          signal: AbortSignal.timeout(1500),
-        }).catch(() => null);
-
-        if (statusRes && statusRes.ok) {
-          const status = await statusRes.json();
-          if (status.isRateLimited) {
-            const resetMs = (status.resetSeconds || 86400) * 1000;
-            localStorage.setItem("resora-upload-rate-limit-until", String(Date.now() + resetMs));
-            setShowRateLimitModal(true);
-            return;
-          } else {
-            localStorage.removeItem("resora-upload-rate-limit-until");
-          }
-        }
-      }
-    } catch {
-      // Graceful fallback on network timeout
-    }
-
-    // Rate limit not reached: open file selector
+    // 2. Not limited: open file selector directly
     document.getElementById("resume-upload-input")?.click();
   };
 
@@ -741,10 +764,10 @@ export default function Landing({ onSelect, onNavigate, isEmbedded, mascotMood, 
               {/* Inner Document Sheet SVG */}
               <svg className="filePage" width="88" height="99" viewBox="0 0 88 99" fill="none" xmlns="http://www.w3.org/2000/svg">
                 <rect width="88" height="99" rx="6" fill={`url(#folderPage_${hasUploadedResume ? "green" : "orange"})`} />
-                <line x1="16" y1="24" x2="72" y2="24" stroke={hasUploadedResume ? "#059669" : "#ea580c"} strokeWidth="5" strokeLinecap="round"/>
-                <line x1="16" y1="40" x2="56" y2="40" stroke={hasUploadedResume ? "#34d399" : "#fdba74"} strokeWidth="5" strokeLinecap="round"/>
-                <line x1="16" y1="56" x2="64" y2="56" stroke={hasUploadedResume ? "#34d399" : "#fdba74"} strokeWidth="5" strokeLinecap="round"/>
-                <line x1="16" y1="72" x2="48" y2="72" stroke={hasUploadedResume ? "#34d399" : "#fdba74"} strokeWidth="5" strokeLinecap="round"/>
+                <line x1="16" y1="24" x2="72" y2="24" stroke={hasUploadedResume ? "#059669" : "#ea580c"} strokeWidth="5" strokeLinecap="round" />
+                <line x1="16" y1="40" x2="56" y2="40" stroke={hasUploadedResume ? "#34d399" : "#fdba74"} strokeWidth="5" strokeLinecap="round" />
+                <line x1="16" y1="56" x2="64" y2="56" stroke={hasUploadedResume ? "#34d399" : "#fdba74"} strokeWidth="5" strokeLinecap="round" />
+                <line x1="16" y1="72" x2="48" y2="72" stroke={hasUploadedResume ? "#34d399" : "#fdba74"} strokeWidth="5" strokeLinecap="round" />
                 <defs>
                   <linearGradient id={`folderPage_${hasUploadedResume ? "green" : "orange"}`} x1="0" y1="0" x2="81" y2="160.5" gradientUnits="userSpaceOnUse">
                     <stop stopColor="#ffffff" />
@@ -777,7 +800,7 @@ export default function Landing({ onSelect, onNavigate, isEmbedded, mascotMood, 
         </p>
       </footer>
 
-      {showAuthModal && (
+      {showAuthModal && createPortal(
         <div className="auth-gate-modal-overlay" onClick={() => setShowAuthModal(false)}>
           <div className="auth-gate-modal-box" onClick={(e) => e.stopPropagation()}>
             <div className="auth-gate-icon">
@@ -812,10 +835,11 @@ export default function Landing({ onSelect, onNavigate, isEmbedded, mascotMood, 
               </button>
             </div>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
 
-      {showRateLimitModal && (
+      {showRateLimitModal && createPortal(
         <div className="auth-gate-modal-overlay" onClick={() => setShowRateLimitModal(false)}>
           <div className="auth-gate-modal-box rate-limit-modal-box" onClick={(e) => e.stopPropagation()}>
             <div className="rate-limit-mascot-wrapper">
@@ -843,23 +867,14 @@ export default function Landing({ onSelect, onNavigate, isEmbedded, mascotMood, 
               <button
                 type="button"
                 className="auth-gate-btn-primary"
-                onClick={() => {
-                  setShowRateLimitModal(false);
-                  onSelect("general");
-                }}
-              >
-                Build Resume Manually
-              </button>
-              <button
-                type="button"
-                className="auth-gate-btn-secondary"
                 onClick={() => setShowRateLimitModal(false)}
               >
                 Got It
               </button>
             </div>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
       {isUploading && (
         <ParsingLoader
