@@ -305,6 +305,15 @@ export default function Landing({ onSelect, onNavigate, isEmbedded, mascotMood, 
     const file = e.target.files?.[0];
     if (!file) return;
 
+    if (isUploading) return;
+
+    // 5MB file size limit check
+    if (file.size > 5 * 1024 * 1024) {
+      setSearchError("File size exceeds the 5MB limit. Please upload a smaller resume file.");
+      e.target.value = "";
+      return;
+    }
+
     setIsUploading(true);
     setUploadingFileName(file.name);
     setSearchError("");
@@ -660,7 +669,7 @@ export default function Landing({ onSelect, onNavigate, isEmbedded, mascotMood, 
 
       <footer className="landing-footer">
         <p className="footer-version-text">
-          Resora by Nezer • <span className="footer-version-badge">v2.5.0</span>
+          Resora by Nezer • <span className="footer-version-badge">v2.5.3</span>
         </p>
       </footer>
 

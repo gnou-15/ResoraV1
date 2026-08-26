@@ -3,9 +3,12 @@ import os
 import json
 import io
 # pyrefly: ignore [missing-import]
+import time
+import hashlib
+# pyrefly: ignore [missing-import]
 from dotenv import load_dotenv
 # pyrefly: ignore [missing-import]
-from fastapi import FastAPI, File, UploadFile, HTTPException, Header
+from fastapi import FastAPI, File, UploadFile, HTTPException, Header, Request
 # pyrefly: ignore [missing-import]
 from fastapi.middleware.cors import CORSMiddleware
 # pyrefly: ignore [missing-import]
@@ -15,6 +18,27 @@ from typing import List, Dict, Any, Optional
 load_dotenv()
 
 app = FastAPI()
+
+# In-memory Rate Limiter & SHA-256 Parse Cache
+RATE_LIMIT_STORE: Dict[str, List[float]] = {}
+MAX_UPLOADS_PER_MINUTE = 5
+PARSED_PDF_CACHE: Dict[str, Dict[str, Any]] = {}
+MAX_CACHE_ENTRIES = 200
+
+def check_upload_rate_limit(ip: str):
+    now = time.time()
+    timestamps = RATE_LIMIT_STORE.get(ip, [])
+    valid_timestamps = [t for t in timestamps if now - t < 60]
+    if len(valid_timestamps) >= MAX_UPLOADS_PER_MINUTE:
+        raise HTTPException(
+            status_code=429,
+            detail="Rate limit exceeded: Maximum 5 PDF uploads per minute per IP address. Please wait a moment before trying again."
+        )
+    valid_timestamps.append(now)
+    RATE_LIMIT_STORE[ip] = valid_timestamps
+
+def get_text_sha256(text: str) -> str:
+    return hashlib.sha256(text.strip().encode('utf-8')).hexdigest()
 
 # Enable CORS so the Vite React frontend can make requests
 app.add_middleware(
@@ -27,7 +51,7 @@ app.add_middleware(
 
 @app.get("/health")
 def health_check():
-    return {"status": "online", "service": "Resora Python FastAPI Backend", "version": "2.5.0"}
+    return {"status": "online", "service": "Resora Python FastAPI Backend", "version": "2.5.3"}
 
 # --- Pydantic Data Models matching JS Resume schema ---
 
@@ -1145,18 +1169,31 @@ def parse_with_groq_ai(text: str, api_key: str) -> Dict[str, Any]:
 
 @app.post("/api/parse-resume")
 async def parse_resume_endpoint(
+    request: Request,
     file: UploadFile = File(...),
     groq_key: Optional[str] = Header(None, alias="X-Groq-Api-Key")
 ):
     try:
+        client_ip = request.client.host if request.client else "unknown"
+        check_upload_rate_limit(client_ip)
+
         load_dotenv(override=True)
         content = await file.read()
+
+        if len(content) > 5 * 1024 * 1024:
+            raise HTTPException(status_code=400, detail="File size exceeds the 5MB limit. Please upload a smaller PDF resume.")
+
         extracted_text = extract_text_from_file(file.filename, content)
         if not extracted_text.strip():
             raise HTTPException(status_code=400, detail="Could not extract readable text from uploaded file.")
-        
+
+        text_hash = get_text_sha256(extracted_text)
+        if text_hash in PARSED_PDF_CACHE:
+            print(f"⚡ Returning cached PDF parse result (<5ms) for hash {text_hash[:8]}...")
+            return {"success": True, "filename": file.filename, **PARSED_PDF_CACHE[text_hash]}
+
         active_groq_key = groq_key or os.getenv("GROQ_API_KEY", "")
-        
+
         parsed = {}
         if active_groq_key and not active_groq_key.startswith("gsk_your"):
             print(f"🤖 Using Groq AI for resume parsing (Key: {active_groq_key[:8]}...)...")
@@ -1168,7 +1205,15 @@ async def parse_resume_endpoint(
             print("⚡ Falling back to local heuristic parser...")
             parsed = parse_resume_fields(extracted_text)
 
+        if parsed and "resume" in parsed:
+            if len(PARSED_PDF_CACHE) >= MAX_CACHE_ENTRIES:
+                first_key = next(iter(PARSED_PDF_CACHE))
+                del PARSED_PDF_CACHE[first_key]
+            PARSED_PDF_CACHE[text_hash] = parsed
+
         return {"success": True, "filename": file.filename, **parsed}
+    except HTTPException:
+        raise
     except Exception as e:
         print(f"Upload parse error: {e}")
         raise HTTPException(status_code=500, detail=str(e))
