@@ -75,8 +75,13 @@ export function encryptData(data, userId) {
  * Decrypts data if it is wrapped in the encrypted structure.
  */
 export function decryptData(data, userId) {
-    if (!data || !userId) return data;
-    if (!data.encrypted || !data.ciphertext) return data; // plaintext fallback
+    if (!data) return null;
+
+    // If data is NOT in encrypted format, return it as-is (plaintext fallback)
+    if (!data.encrypted || !data.ciphertext) return data;
+
+    // If the data IS encrypted, we MUST have a userId — returning the raw wrapper would corrupt app state.
+    if (!userId) return null;
 
     const key = getKey(userId);
     if (!key) return null;

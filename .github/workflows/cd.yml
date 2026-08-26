@@ -16,8 +16,78 @@ env:
   IMAGE_NODE: ghcr.io/gnou-15/resorav1/backend-node
 
 jobs:
+  # ─────────────────────────────────────────────────────────────────────────────
+  # GATE 1 — Quality Gate
+  # All test suites must pass before ANY Docker image is built or deployed.
+  # If this job fails, the entire pipeline aborts — nothing reaches production.
+  # ─────────────────────────────────────────────────────────────────────────────
+  quality-gate:
+    name: Quality Gate (Tests & Build)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      # ── Frontend ───────────────────────────────────────────────────────────
+      - name: Set up Node.js (Frontend)
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Install Frontend Dependencies
+        working-directory: frontend
+        run: npm ci
+
+      - name: Run Frontend Unit Tests
+        working-directory: frontend
+        run: npm run test
+        # ↑ Catches: isResumeEmpty logic, guest session persistence,
+        #   decryptData null-return on failure, AI scorer regressions
+
+      - name: Build Frontend (Production Bundle)
+        working-directory: frontend
+        run: npm run build
+        # ↑ Catches: any TypeScript/JSX compilation errors, missing imports,
+        #   syntax errors that would cause a blank screen in production
+
+      # ── Node Backend ───────────────────────────────────────────────────────
+      - name: Install Node Backend Dependencies
+        working-directory: backend-node
+        run: npm ci
+
+      - name: Run Node Backend Tests
+        working-directory: backend-node
+        run: npm run test
+
+      # ── Python Backend ─────────────────────────────────────────────────────
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+          cache-dependency-path: backend-python/requirements.txt
+
+      - name: Install Python Dependencies
+        working-directory: backend-python
+        run: pip install -r requirements.txt
+
+      - name: Run Python Backend Tests
+        working-directory: backend-python
+        run: pytest test_main.py -v --tb=short
+        # ↑ Catches: detect_profession_from_text returning wrong value for
+        #   empty input, parse endpoint missing 'resume'/'profession' keys,
+        #   empty content defaulting to 'it' instead of 'general',
+        #   rate limiting, oversized file rejection
+
+  # ─────────────────────────────────────────────────────────────────────────────
+  # GATE 2 — Build & Publish Docker Images
+  # Only runs if quality-gate passed.
+  # ─────────────────────────────────────────────────────────────────────────────
   build-and-push-artifacts:
     name: Deployment Automation (Build & Publish Artifacts)
+    needs: [quality-gate]
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
@@ -103,6 +173,10 @@ jobs:
           ignore-unfixed: true
           severity: 'CRITICAL,HIGH'
 
+  # ─────────────────────────────────────────────────────────────────────────────
+  # GATE 3 — End-to-End Validation
+  # Starts the Docker containers and verifies actual API behavior, not just liveness.
+  # ─────────────────────────────────────────────────────────────────────────────
   end-to-end-validation-gate:
     name: End-to-End Validation & Health Gate
     needs: [build-and-push-artifacts]
@@ -144,6 +218,37 @@ jobs:
             echo "✅ Node Backend Health Validation Passed!"
           else
             echo "❌ Node Backend Health Validation Failed!"
+            exit 1
+          fi
+
+      # ── Parse Endpoint Smoke Test ─────────────────────────────────────────
+      # Sends a real text resume to the running container and validates that:
+      #  1. The endpoint responds (not hanging — previously took >1min on Render)
+      #  2. The response contains 'resume' and 'profession' keys
+      #  3. profession is never null/empty (catches the empty→it routing bug)
+      - name: Smoke Test — Parse Resume Endpoint Schema Validation
+        run: |
+          RESUME_TEXT="John Doe\nSoftware Developer\njohn@example.com\n\nSKILLS\nJavaScript, React, Node.js"
+          printf "$RESUME_TEXT" > /tmp/smoke_resume.txt
+
+          RESPONSE=$(curl -s --max-time 30 -X POST http://localhost:8000/api/parse-resume \
+            -F "file=@/tmp/smoke_resume.txt;type=text/plain")
+
+          echo "Parse Smoke Test Response: $RESPONSE"
+
+          # Validate 'resume' key exists in response
+          if echo "$RESPONSE" | python3 -c "
+          import sys, json
+          data = json.load(sys.stdin)
+          assert 'resume' in data, f'Missing resume key. Got: {list(data.keys())}'
+          assert 'profession' in data, f'Missing profession key. Got: {list(data.keys())}'
+          assert data.get('profession'), f'profession is empty or null: {data.get(\"profession\")}'
+          print('✅ Parse endpoint schema validation passed')
+          print(f'   profession={data[\"profession\"]}')
+          "; then
+            echo "✅ Parse Endpoint Smoke Test Passed!"
+          else
+            echo "❌ Parse Endpoint Smoke Test Failed! See response above."
             exit 1
           fi
 

@@ -6,18 +6,14 @@ const STORAGE_KEY = 'resume-builder-data';
 
 function getGuestSessionId() {
   try {
-    let sid = sessionStorage.getItem('resora_guest_session_token');
+    // Check both storages — localStorage survives new tabs/browser restarts
+    let sid = localStorage.getItem('resora_guest_session_token') || sessionStorage.getItem('resora_guest_session_token');
     if (!sid) {
-      // New browser session: purge previous guest resume records
-      for (let i = localStorage.length - 1; i >= 0; i--) {
-        const k = localStorage.key(i);
-        if (k && (k.startsWith(STORAGE_KEY) || k.startsWith('resora-uploaded-resume'))) {
-          localStorage.removeItem(k);
-        }
-      }
       sid = 'guest_' + Math.random().toString(36).substring(2, 10);
-      sessionStorage.setItem('resora_guest_session_token', sid);
+      localStorage.setItem('resora_guest_session_token', sid);
     }
+    // Keep sessionStorage in sync for fast same-session reads
+    sessionStorage.setItem('resora_guest_session_token', sid);
     return sid;
   } catch {
     return 'temp';
