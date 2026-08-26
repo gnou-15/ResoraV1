@@ -84,20 +84,22 @@ function getProfessionDisplayName(profession) {
   return PROFESSION_DISPLAY_NAMES[profession.toLowerCase()] || (profession.charAt(0).toUpperCase() + profession.slice(1));
 }
 
-export default function Landing({ onSelect, onNavigate, isEmbedded, mascotMood, user, onModalToggle }) {
+function checkClientRateLimited() {
+  try {
+    const until = localStorage.getItem("resora-upload-rate-limit-until");
+    return !!(until && Number(until) > Date.now());
+  } catch {
+    return false;
+  }
+}
+
+export default function Landing({ onSelect, onNavigate, isEmbedded, mascotMood, user }) {
   const [input, setInput] = useState("");
   const [placeholder, setPlaceholder] = useState("");
   const [searchError, setSearchError] = useState("");
   const [showAuthModal, setShowAuthModal] = useState(false);
   const [showRateLimitModal, setShowRateLimitModal] = useState(false);
-  const [isDailyRateLimited, setIsDailyRateLimited] = useState(() => {
-    try {
-      const until = localStorage.getItem("resora-upload-rate-limit-until");
-      return !!(until && Number(until) > Date.now());
-    } catch {
-      return false;
-    }
-  });
+  const [isDailyRateLimited, setIsDailyRateLimited] = useState(checkClientRateLimited);
   const [localMood, setLocalMood] = useState("normal");
   const [existingResumeInfo, setExistingResumeInfo] = useState(() => {
     if (!user) return null;
@@ -515,8 +517,7 @@ export default function Landing({ onSelect, onNavigate, isEmbedded, mascotMood, 
     }
 
     // 1. Instant check: if state or local storage marks the client as rate limited
-    const cachedLimitUntil = localStorage.getItem("resora-upload-rate-limit-until");
-    const isCachedLimited = !!(cachedLimitUntil && Number(cachedLimitUntil) > Date.now());
+    const isCachedLimited = checkClientRateLimited();
 
     if (isDailyRateLimited || isCachedLimited) {
       setShowRateLimitModal(true);
