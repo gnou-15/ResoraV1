@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { analyzeResume, getCachedAnalysis, setCachedAnalysis, getResumeSignature } from '../services/aiScorer';
+import { analyzeResume, getCachedAnalysis, setCachedAnalysis } from '../services/aiScorer';
 
 describe('AI Scorer Service', () => {
   it('should return a score object with valid properties when given candidate data', () => {

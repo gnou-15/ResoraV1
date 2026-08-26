@@ -32,7 +32,10 @@ const PARSING_STAGES = [
 export default function ParsingLoader({ filename, isComplete = false, onFinished }) {
   const [progress, setProgress] = useState(8);
   const onFinishedRef = useRef(onFinished);
-  onFinishedRef.current = onFinished;
+
+  useEffect(() => {
+    onFinishedRef.current = onFinished;
+  }, [onFinished]);
 
   // Regular simulated progression while backend processes
   useEffect(() => {
