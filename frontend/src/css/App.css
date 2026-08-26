@@ -932,47 +932,29 @@
   font-weight: 500;
 }
 
-.dialog-countdown-bar-container {
-  margin-top: 0.8rem;
-  width: 100%;
-  display: flex;
-  flex-direction: column;
-  gap: 0.4rem;
+.btn-progress-confirm {
+  position: relative !important;
+  overflow: hidden !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  min-width: 130px;
 }
 
-.dialog-countdown-bar-fill {
-  height: 6px;
-  background: linear-gradient(90deg, #ea580c 0%, #f97316 50%, #f59e0b 100%);
-  border-radius: 10px;
+.btn-progress-fill {
+  position: absolute;
+  top: 0;
+  left: 0;
+  height: 100%;
+  background: linear-gradient(90deg, #c2410c 0%, #9a3412 100%);
   transition: width 1s linear;
-  box-shadow: 0 0 10px rgba(234, 88, 12, 0.4);
+  z-index: 1;
+  border-radius: 999px;
 }
 
-.dialog-countdown-badge {
-  font-size: 0.82rem;
-  color: #ea580c;
-  font-weight: 500;
-  display: flex;
-  align-items: center;
-  gap: 4px;
-}
-
-.btn-danger-abort {
-  background: #fef2f2 !important;
-  color: #dc2626 !important;
-  border: 1px solid #fca5a5 !important;
-  font-weight: 600 !important;
-  border-radius: 999px !important;
-  animation: pulseDanger 1s ease-in-out infinite;
-}
-
-@keyframes pulseDanger {
-  0%, 100% {
-    box-shadow: 0 0 0 0 rgba(220, 38, 38, 0.2);
-  }
-  50% {
-    box-shadow: 0 0 0 5px rgba(220, 38, 38, 0.15);
-  }
+.btn-progress-text {
+  position: relative;
+  z-index: 2;
 }
 
 

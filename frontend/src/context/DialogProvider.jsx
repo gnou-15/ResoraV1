@@ -93,6 +93,11 @@ export function DialogProvider({ children }) {
     });
   };
 
+  const totalCountdown = dialogState.countdownSeconds || 5;
+  const fillPercentage = isCountingDown
+    ? ((totalCountdown - remainingTime) / totalCountdown) * 100
+    : 0;
+
   return (
     <DialogContext.Provider value={{ showAlert, showConfirm }}>
       {children}
@@ -103,55 +108,40 @@ export function DialogProvider({ children }) {
         >
           <div className="custom-dialog-card animate-scale-in" onClick={(e) => e.stopPropagation()}>
             <div className="custom-dialog-header">
-              <h3>
-                {isCountingDown
-                  ? `Resetting Resume in ${remainingTime}s...`
-                  : dialogState.title}
-              </h3>
+              <h3>{dialogState.title}</h3>
             </div>
             <div className="custom-dialog-body">
-              <p>
-                {isCountingDown
-                  ? `Clearing all resume data in ${remainingTime} seconds... Click Abort if you changed your mind.`
-                  : dialogState.message}
-              </p>
-
-              {isCountingDown && (
-                <div className="dialog-countdown-bar-container">
-                  <div
-                    className="dialog-countdown-bar-fill"
-                    style={{
-                      width: `${(remainingTime / (dialogState.countdownSeconds || 5)) * 100}%`,
-                    }}
-                  />
-                  <div className="dialog-countdown-badge">
-                    ⏱️ Aborting in <strong>{remainingTime}</strong>s
-                  </div>
-                </div>
-              )}
+              <p>{dialogState.message}</p>
             </div>
             <div className="custom-dialog-actions">
               {dialogState.type === "confirm" && (
                 <button
                   type="button"
-                  className={`btn ${isCountingDown ? "btn-danger-abort" : "btn-ghost"}`}
+                  className="btn btn-ghost"
                   onClick={dialogState.onCancel}
                 >
-                  {isCountingDown ? "Abort (Cancel)" : "Cancel"}
+                  Cancel
                 </button>
               )}
               <button
                 type="button"
-                className="btn btn-secondary"
-                onClick={() => dialogState.onConfirm(true)}
-                disabled={isCountingDown}
+                className={`btn btn-secondary btn-progress-confirm ${isCountingDown ? "is-filling" : ""}`}
+                onClick={() => dialogState.onConfirm(!isCountingDown)}
                 autoFocus
               >
-                {isCountingDown
-                  ? `Clearing (${remainingTime}s)`
-                  : dialogState.type === "confirm"
-                  ? "Confirm"
-                  : "OK"}
+                {isCountingDown && (
+                  <span
+                    className="btn-progress-fill"
+                    style={{ width: `${fillPercentage}%` }}
+                  />
+                )}
+                <span className="btn-progress-text">
+                  {isCountingDown
+                    ? `Confirm (${remainingTime}s)`
+                    : dialogState.type === "confirm"
+                    ? "Confirm"
+                    : "OK"}
+                </span>
               </button>
             </div>
           </div>
