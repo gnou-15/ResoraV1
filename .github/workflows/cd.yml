@@ -11,6 +11,10 @@ permissions:
   packages: write
   id-token: write
 
+env:
+  IMAGE_PYTHON: ghcr.io/gnou-15/resorav1/backend-python
+  IMAGE_NODE: ghcr.io/gnou-15/resorav1/backend-node
+
 jobs:
   build-and-push-artifacts:
     name: Deployment Automation (Build & Publish Artifacts)
@@ -33,7 +37,7 @@ jobs:
         id: meta-python
         uses: docker/metadata-action@v5
         with:
-          images: ghcr.io/${{ github.repository }}/backend-python
+          images: ${{ env.IMAGE_PYTHON }}
           tags: |
             type=raw,value=latest,enable=${{ github.ref == 'refs/heads/main' }}
             type=semver,pattern={{version}}
@@ -53,7 +57,7 @@ jobs:
         id: meta-node
         uses: docker/metadata-action@v5
         with:
-          images: ghcr.io/${{ github.repository }}/backend-node
+          images: ${{ env.IMAGE_NODE }}
           tags: |
             type=raw,value=latest,enable=${{ github.ref == 'refs/heads/main' }}
             type=semver,pattern={{version}}
@@ -84,7 +88,7 @@ jobs:
       - name: Scan Python Backend Container for Vulnerabilities
         uses: aquasecurity/trivy-action@master
         with:
-          image-ref: 'ghcr.io/${{ github.repository }}/backend-python:latest'
+          image-ref: ${{ env.IMAGE_PYTHON }}:latest
           format: 'table'
           exit-code: '0'
           ignore-unfixed: true
@@ -93,7 +97,7 @@ jobs:
       - name: Scan Node Backend Container for Vulnerabilities
         uses: aquasecurity/trivy-action@master
         with:
-          image-ref: 'ghcr.io/${{ github.repository }}/backend-node:latest'
+          image-ref: ${{ env.IMAGE_NODE }}:latest
           format: 'table'
           exit-code: '0'
           ignore-unfixed: true
@@ -113,12 +117,12 @@ jobs:
 
       - name: Pull and Run Python Backend Container
         run: |
-          docker run -d --name python-health-check -p 8000:8000 ghcr.io/${{ github.repository }}/backend-python:latest
+          docker run -d --name python-health-check -p 8000:8000 ${{ env.IMAGE_PYTHON }}:latest
           sleep 5
 
       - name: Pull and Run Node Backend Container
         run: |
-          docker run -d --name node-health-check -p 5000:5000 ghcr.io/${{ github.repository }}/backend-node:latest
+          docker run -d --name node-health-check -p 5000:5000 ${{ env.IMAGE_NODE }}:latest
           sleep 5
 
       - name: Verify Python Backend Health Endpoint
