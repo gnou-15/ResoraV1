@@ -7,54 +7,62 @@ const PARSING_STAGES = [
     id: "extract",
     label: "Reading PDF Document & Extracting Text",
     detail: "Scanning raw PDF streams and structure...",
-    progress: 25
+    minPercent: 0
   },
   {
     id: "chunk",
     label: "Chunking Text & Mapping Sections",
     detail: "Segmenting work history, skills, and education...",
-    progress: 55
+    minPercent: 30
   },
   {
     id: "ai",
     label: "AI Extracting Structured Keywords",
     detail: "Categorizing technical skills, contact info & dates...",
-    progress: 82
+    minPercent: 60
   },
   {
     id: "format",
     label: "Building ATS-Optimized Layout",
     detail: "Finalizing resume data structure...",
-    progress: 96
+    minPercent: 85
   }
 ];
 
 export default function ParsingLoader({ filename }) {
-  const [currentStageIndex, setCurrentStageIndex] = useState(0);
+  const [progress, setProgress] = useState(4);
 
   useEffect(() => {
-    const intervals = [900, 1300, 1600];
-    let currentIdx = 0;
-    
-    let timer = null;
-    const nextStep = () => {
-      if (currentIdx < PARSING_STAGES.length - 1) {
-        currentIdx++;
-        setCurrentStageIndex(currentIdx);
-        if (currentIdx < intervals.length) {
-          timer = setTimeout(nextStep, intervals[currentIdx]);
+    const interval = setInterval(() => {
+      setProgress((prev) => {
+        if (prev < 30) {
+          return prev + (Math.random() * 2.2 + 1.2);
+        } else if (prev < 60) {
+          return prev + (Math.random() * 1.6 + 0.8);
+        } else if (prev < 85) {
+          return prev + (Math.random() * 1.1 + 0.5);
+        } else if (prev < 98) {
+          return prev + (Math.random() * 0.35 + 0.1);
         }
-      }
-    };
+        return prev;
+      });
+    }, 120);
 
-    timer = setTimeout(nextStep, intervals[0]);
-
-    return () => {
-      if (timer) clearTimeout(timer);
-    };
+    return () => clearInterval(interval);
   }, []);
 
-  const currentStage = PARSING_STAGES[currentStageIndex];
+  const currentPercent = Math.min(99, Math.floor(progress));
+
+  let currentStageIndex = 0;
+  if (currentPercent >= 85) {
+    currentStageIndex = 3;
+  } else if (currentPercent >= 60) {
+    currentStageIndex = 2;
+  } else if (currentPercent >= 30) {
+    currentStageIndex = 1;
+  } else {
+    currentStageIndex = 0;
+  }
 
   const content = (
     <div className="parsing-loader-overlay" onClick={(e) => e.stopPropagation()}>
@@ -86,11 +94,17 @@ export default function ParsingLoader({ filename }) {
           </div>
         )}
 
-        {/* Progress Bar Container */}
+        {/* Progress Header & Percentage Counter */}
+        <div className="parsing-progress-header">
+          <span className="parsing-progress-status">Processing document...</span>
+          <span className="parsing-progress-percent">{currentPercent}%</span>
+        </div>
+
+        {/* Dynamic Progress Bar */}
         <div className="parsing-progress-track">
           <div
             className="parsing-progress-fill"
-            style={{ width: `${currentStage.progress}%` }}
+            style={{ width: `${currentPercent}%` }}
           />
         </div>
 
