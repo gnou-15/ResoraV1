@@ -1,6 +1,7 @@
 import { supabase } from './supabase';
 import { encryptData, decryptData } from './encryption';
-import { isResumeEmpty } from '../data/defaultResume';
+import { isResumeEmpty, hasSufficientContent } from '../data/defaultResume';
+
 
 const STORAGE_KEY = 'resume-builder-data';
 
@@ -200,7 +201,7 @@ export async function findExistingUserResume(user) {
     if (!error && data && data.length > 0) {
       for (const item of data) {
         const decrypted = decryptData(item.resume_data, user.id);
-        if (decrypted && !isResumeEmpty(decrypted)) {
+        if (decrypted && hasSufficientContent(decrypted)) {
           const headline = decrypted.headline || decrypted.experience?.[0]?.title || '';
           const resInfo = {
             hasResume: true,

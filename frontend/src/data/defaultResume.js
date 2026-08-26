@@ -211,51 +211,82 @@ export function migrateResume(data) {
   }
 }
 
+
+/**
+ * Calculates how much of the resume a real user has filled in.
+ *
+ * IMPORTANT: Template-seeded fields (headline, summary, skills, education degree,
+ * coursework) are intentionally excluded because every profession template
+ * pre-populates them — they do not prove the user engaged.
+ *
+ * We only score fields the user must type themselves:
+ *   - Personal contact info  (email, phone, location, socials)    → 35 pts
+ *   - Experience entries with real company + title                 → 30 pts
+ *   - Education entries with a real school name the user typed     → 15 pts
+ *   - Projects with a real name                                    → 10 pts
+ *   - Certifications or Achievements with a real name/title        → 10 pts
+ *
+ * Returns a value 0–100. A resume scoring ≥ 40 is considered
+ * sufficiently filled to be shown as the user's "main resume".
+ */
+export function getResumeFillScore(resume) {
+  if (!resume) return 0;
+
+  let score = 0;
+
+  // ── Personal contact info (35 pts) ────────────────────────────────────────
+  const p = resume.personal || {};
+  if (p.email && p.email.trim())            score += 10;
+  if (p.phoneNumber && p.phoneNumber.trim()) score += 8;
+  const loc = p.location || {};
+  if ((loc.city && loc.city.trim()) || (loc.state && loc.state.trim())) score += 7;
+  if ((p.linkedin && p.linkedin.trim()) ||
+      (p.github && p.github.trim()) ||
+      (p.portfolio && p.portfolio.trim()))  score += 10;
+
+  // ── Experience: real entries require BOTH company AND title (30 pts) ───────
+  const realExp = (resume.experience || []).filter(
+    (e) => (e.company && e.company.trim()) && (e.title && e.title.trim())
+  );
+  if (realExp.length >= 1) score += 20;
+  if (realExp.length >= 2) score += 10;
+
+  // ── Education: school name the user typed (15 pts) ────────────────────────
+  // Template leaves school = '' — so a filled school is real user input.
+  const realEdu = (resume.education || []).filter(
+    (e) => e.school && e.school.trim()
+  );
+  if (realEdu.length >= 1) score += 15;
+
+  // ── Projects with a real name (10 pts) ────────────────────────────────────
+  const realProj = (resume.projects || []).filter(
+    (p) => p.name && p.name.trim()
+  );
+  if (realProj.length >= 1) score += 10;
+
+  // ── Certifications or Achievements (10 pts) ───────────────────────────────
+  const hasCert = (resume.certifications || []).some((c) => c.name && c.name.trim());
+  const hasAch  = (resume.achievements || []).some((a) => a.title && a.title.trim());
+  if (hasCert || hasAch) score += 10;
+
+  return Math.min(score, 100);
+}
+
+/**
+ * Returns true if the resume is sufficiently filled (≥ 40%) to be
+ * treated as the user's active/main resume on the landing page.
+ */
+export function hasSufficientContent(resume) {
+  return getResumeFillScore(resume) >= 40;
+}
+
+/**
+ * Returns true if the resume has NO real content at all.
+ * Uses getResumeFillScore to stay consistent.
+ */
 export function isResumeEmpty(resume) {
   if (!resume) return true;
-
-  const hasHeadline = !!(resume.headline && resume.headline.trim());
-  const hasSummary = !!(resume.summary && resume.summary.trim());
-
-  const techSkills = resume.technicalSkills;
-  const hasTech = techSkills && Object.values(techSkills).some((arr) =>
-    Array.isArray(arr) ? arr.some((s) => s && s.trim()) : (typeof arr === 'string' && arr.trim())
-  );
-  const hasGeneralSkills = !!(resume.skills && (Array.isArray(resume.skills) ? resume.skills.length > 0 : resume.skills.trim()));
-
-  const hasExp = !!(resume.experience && resume.experience.some((e) =>
-    (e.company && e.company.trim()) ||
-    (e.title && e.title.trim()) ||
-    (e.bullets && e.bullets.some((b) => b && b.trim()))
-  ));
-
-  const hasEdu = !!(resume.education && resume.education.some((e) =>
-    (e.school && e.school.trim()) ||
-    (e.degree && e.degree.trim()) ||
-    (e.coursework && e.coursework.trim())
-  ));
-
-  const hasProj = !!(resume.projects && resume.projects.some((p) =>
-    (p.name && p.name.trim()) ||
-    (p.stack && p.stack.trim()) ||
-    (p.bullets && p.bullets.some((b) => b && b.trim()))
-  ));
-
-  const hasAch = !!(resume.achievements && resume.achievements.some((a) =>
-    (a.title && a.title.trim()) ||
-    (a.organization && a.organization.trim())
-  ));
-
-  const hasCert = !!(resume.certifications && resume.certifications.some((c) =>
-    (c.name && c.name.trim()) ||
-    (c.issuer && c.issuer.trim())
-  ));
-
-  const hasLic = !!(resume.licenses && resume.licenses.some((l) =>
-    (l.name && l.name.trim())
-  ));
-
-  return !hasHeadline && !hasSummary && !hasTech && !hasGeneralSkills && !hasExp && !hasEdu && !hasProj && !hasAch && !hasCert && !hasLic;
+  return getResumeFillScore(resume) === 0;
 }
 
 export { getCountryByCode }

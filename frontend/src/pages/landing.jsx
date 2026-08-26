@@ -4,7 +4,8 @@ import InteractiveBackground from "../components/InteractiveBackground";
 import PeekingMonster from "../components/PeekingMonster";
 import ParsingLoader from "../components/ParsingLoader";
 import { findExistingUserResume } from "../services/api";
-import { isResumeEmpty } from "../data/defaultResume";
+import { isResumeEmpty, hasSufficientContent } from "../data/defaultResume";
+
 
 const PREDICTABLE_PROFESSIONS = [
   "Nurse",
@@ -73,7 +74,7 @@ export default function Landing({ onSelect, onNavigate, isEmbedded, mascotMood, 
       const cached = localStorage.getItem("resora-last-active-resume-info");
       if (cached) {
         const parsed = JSON.parse(cached);
-        if (parsed && parsed.hasResume && parsed.userId === user.id && !isResumeEmpty(parsed.resume)) {
+        if (parsed && parsed.hasResume && parsed.userId === user.id && hasSufficientContent(parsed.resume)) {
           return parsed;
         }
       }
@@ -82,6 +83,7 @@ export default function Landing({ onSelect, onNavigate, isEmbedded, mascotMood, 
     }
     return null;
   });
+
   const [isSearchingNewRole, setIsSearchingNewRole] = useState(false);
   const inputRef = useRef(null);
 
@@ -99,11 +101,11 @@ export default function Landing({ onSelect, onNavigate, isEmbedded, mascotMood, 
       }
       const info = await findExistingUserResume(user);
       if (isMounted) {
-        if (info && info.hasResume && info.userId === user.id && !isResumeEmpty(info.resume)) {
+        if (info && info.hasResume && info.userId === user.id && hasSufficientContent(info.resume)) {
           setExistingResumeInfo(info);
         } else {
           setExistingResumeInfo(null);
-          // Clean up stale cache if the resume was empty/cleared
+          // Clean up stale cache if the resume was empty/cleared or below threshold
           try { localStorage.removeItem("resora-last-active-resume-info"); } catch { /* ignore */ }
         }
       }
