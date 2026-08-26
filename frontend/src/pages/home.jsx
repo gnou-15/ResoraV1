@@ -191,7 +191,8 @@ function Home({ profession, user, onBack, plan, onNavigateAuth }) {
   const handleReset = async () => {
     const confirmed = await showConfirm(
       "Clear all resume data? This cannot be undone.",
-      "Reset Resume"
+      "Reset Resume",
+      { countdownSeconds: 5 }
     );
     if (confirmed) {
       resetResume();
