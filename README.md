@@ -19,21 +19,16 @@
 
 ---
 
-## 🌟 Key Features (v2.5.3 Complete Feature Matrix)
+## 🌟 Key Features (v2.5.3)
 
-1.  **High-Speed Groq AI Document Parsing Pipeline:** Upload PDF, DOCX, or TXT resumes and automatically extract 100% structured JSON fields (Name, Phone, Email, Location, GitHub, LinkedIn, Technical Skills, Education, Projects, Achievements, Certifications, and Experience) powered by multi-model fallback chains (`groq/compound-mini`, `llama-3.3-70b-versatile`, `llama-3.1-8b-instant`) with strict 4.0s timeouts.
-2.  **Real-Time Chunking & Progress Stage Modal:** Interactive upload loader featuring dynamic stage pipeline checkmarks (*Reading PDF*, *Chunking Text*, *AI Keyword Extraction*, *ATS Layout Generation*), filename pill badge, and a smooth live percentage counter (`0% → 99%`).
-3.  **SHA-256 In-Memory LRU Cache (<5ms Duplicate Parsing):** Hashes raw PDF text streams with SHA-256 and caches structured parse JSON, returning instant results (<5ms) for re-uploaded files without spending API credits.
-4.  **Button-Embedded 5-Second Confirmation Grace Period:** Destructive action modals (like **Reset Resume**) feature a button-embedded left-to-right fill animation over 5 seconds with an instant **Cancel / Abort** guard.
-5.  **Soft 3D Neumorphic Design System:** Sculpted cards with 30px rounded corners, dual ambient light/shadow elevation, right-to-left hover underline physics, and seamless auth card state shifts.
-6.  **Instant Page Reload & Session State Isolation (Zero Flash):** Frame-0 synchronous session initialization (`getInitialCachedUser`) eliminates page load layout flashes, paired with automatic storage sanitization on logout to prevent logged-out state leaks.
-7.  **Instant Upload Button Reset Event Bus:** Custom `resora-upload-cleared` event listener instantly resets the landing page upload widget button when clearing resume data (0s delay).
-8.  **Responsive 1.5s Live AI Auto-Analysis Sync:** Reduced live resume edit analysis sync delay from 10s down to 1.5s, backed by a 3.0s `AbortController` timeout guard for zero UI freezing.
-9.  **Anti-Abuse & Rate-Limiting Safeguards:** Enforces client/server 5MB max file size limits and IP-based rate limiting (5 uploads/min) to prevent server resource exhaustion.
-10. **Weighted Industry Classifier:** Auto-detects target professions across 12 domains (*IT, Healthcare, Education, Management, Engineering, Safety, Customs, Business, Designer, Data, Sales, HR*) or gracefully falls back to the generic **"Resume Builder"** template.
-11. **Zero-Knowledge Client-Side Encryption:** Auto-encrypts resume data locally using AES-256 before syncing to Supabase, ensuring host servers cannot read personal information.
-12. **Instant Multi-Industry Scoring & Keywords Audit:** Evaluates resumes based on impact action verbs, quantitative metrics, and industry keywords tailored to target professions and user career tracks (Student / Professional).
-13. **100% Free & Unlocked Tier:** All features—including AI diagnostics, multi-profession templates, and watermark-free PDF downloads—are completely free and unlocked.
+1.  **⚡ High-Speed Groq AI Document Parser:** Automatically parses PDF, DOCX, or TXT resumes into 100% structured JSON fields (Name, Contact, Technical Skills, Experience, Education, Projects, Certifications) using multi-model AI pipelines (`groq/compound-mini`, `llama-3.3-70b-versatile`) with sub-second SHA-256 result caching (<5ms re-parsing).
+2.  **📊 Real-Time Chunking & Progress Stage Pipeline:** Interactive upload modal featuring dynamic stage pipeline checkmarks (*Reading PDF*, *Chunking Text*, *AI Keyword Extraction*, *ATS Layout Generation*), filename pill badge, and a smooth live percentage counter (`0% → 99%`).
+3.  **🔒 Zero-Knowledge Client-Side Encryption:** Protects user privacy by auto-encrypting resume data locally using AES-256 before syncing to cloud databases, ensuring host servers can never read personal information.
+4.  **⏱️ Button-Embedded 5-Second Confirmation Grace Period:** Destructive action modals (like **Reset Resume**) feature a smooth left-to-right fill progress animation embedded directly inside the Confirm button with an instant **Cancel / Abort** guard.
+5.  **🎨 Soft 3D Neumorphic Design System:** Sculpted interface aesthetics featuring 30px rounded cards, ambient light/shadow elevation, right-to-left hover underline physics, and reactive mascot mood animations.
+6.  **🎯 Weighted Industry Classifier & ATS Keyword Scoring:** Auto-classifies candidate profiles across 12 target professions (*IT, Healthcare, Education, Management, Engineering, Safety, Customs, Business, Designer, Data, Sales, HR*) and audits action verbs, metrics, and ATS compatibility.
+7.  **🛡️ Anti-Abuse & Rate-Limiting Safeguards:** Enforces client/server 5MB max file size limits and sliding-window IP rate limiting (5 uploads/min) to safeguard server resources and API quotas.
+8.  **🚀 100% Free & Watermark-Free PDF Exports:** Unlimited access to AI diagnostics, multi-profession templates, and clean, high-resolution PDF exports with zero watermarks or subscription paywalls.
 
 ---
 
