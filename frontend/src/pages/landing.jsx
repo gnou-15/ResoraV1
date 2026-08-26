@@ -93,6 +93,57 @@ function checkClientRateLimited() {
   }
 }
 
+function getInitialRemainingUploads() {
+  try {
+    const cached = localStorage.getItem("resora-remaining-uploads");
+    if (cached !== null && !isNaN(Number(cached))) return Number(cached);
+    if (checkClientRateLimited()) return 0;
+    return 3;
+  } catch {
+    return 3;
+  }
+}
+
+function DelayedTooltip({ title, description, children, disabled }) {
+  const [show, setShow] = useState(false);
+  const timer = useRef(null);
+
+  const onEnter = () => {
+    if (disabled || (!title && !description)) return;
+    timer.current = setTimeout(() => setShow(true), 300);
+  };
+  const onLeave = () => {
+    if (timer.current) clearTimeout(timer.current);
+    setShow(false);
+  };
+
+  return (
+    <div
+      className="delayed-tooltip-container"
+      onMouseEnter={onEnter}
+      onMouseLeave={onLeave}
+    >
+      {children}
+      {(title || description) && (
+        <div
+          className={`delayed-tooltip-box ${show ? "tooltip-visible" : ""}`}
+          role="tooltip"
+        >
+          <div className="delayed-tooltip-arrow" />
+          <svg className="delayed-tooltip-icon" width="22" height="22" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <circle cx="12" cy="12" r="10" fill="#ea580c" />
+            <path d="M12 16v-4M12 8h.01" stroke="#ffffff" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
+          </svg>
+          <div className="delayed-tooltip-content">
+            {title && <div className="delayed-tooltip-title">{title}</div>}
+            {description && <div className="delayed-tooltip-desc">{description}</div>}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
 export default function Landing({ onSelect, onNavigate, isEmbedded, mascotMood, user }) {
   const [input, setInput] = useState("");
   const [placeholder, setPlaceholder] = useState("");
@@ -100,6 +151,7 @@ export default function Landing({ onSelect, onNavigate, isEmbedded, mascotMood, 
   const [showAuthModal, setShowAuthModal] = useState(false);
   const [showRateLimitModal, setShowRateLimitModal] = useState(false);
   const [isDailyRateLimited, setIsDailyRateLimited] = useState(checkClientRateLimited);
+  const [remainingUploads, setRemainingUploads] = useState(getInitialRemainingUploads);
   const [localMood, setLocalMood] = useState("normal");
   const [existingResumeInfo, setExistingResumeInfo] = useState(() => {
     if (!user) return null;
@@ -130,6 +182,10 @@ export default function Landing({ onSelect, onNavigate, isEmbedded, mascotMood, 
         const res = await fetch(`${backendUrl.replace(/\/$/, "")}/api/rate-limit-status`).catch(() => null);
         if (res && res.ok && isMounted) {
           const data = await res.json();
+          if (data && typeof data.remainingUploads === "number") {
+            setRemainingUploads(data.remainingUploads);
+            try { localStorage.setItem("resora-remaining-uploads", String(data.remainingUploads)); } catch { /* ignore */ }
+          }
           if (data.isRateLimited) {
             const resetMs = (data.resetSeconds || 86400) * 1000;
             localStorage.setItem("resora-upload-rate-limit-until", String(Date.now() + resetMs));
@@ -436,11 +492,13 @@ export default function Landing({ onSelect, onNavigate, isEmbedded, mascotMood, 
 
       if (!res.ok) {
         const errJson = await res.json().catch(() => ({}));
-        if (res.status === 429 || (errJson.detail && errJson.detail.toLowerCase().includes("rate limit"))) {
+        if (res.status === 429 || (errJson.detail && String(errJson.detail).toLowerCase().includes("rate limit"))) {
           setIsUploading(false);
           setUploadComplete(false);
           pendingTransitionRef.current = null;
           localStorage.setItem("resora-upload-rate-limit-until", String(Date.now() + 86400000));
+          localStorage.setItem("resora-remaining-uploads", "0");
+          setRemainingUploads(0);
           setIsDailyRateLimited(true);
           setShowRateLimitModal(true);
           setSearchError("");
@@ -450,6 +508,19 @@ export default function Landing({ onSelect, onNavigate, isEmbedded, mascotMood, 
       }
 
       const data = await res.json();
+
+      // Proactively record if quota was updated on this successful upload
+      if (data.rateLimit) {
+        if (typeof data.rateLimit.remainingUploads === "number") {
+          setRemainingUploads(data.rateLimit.remainingUploads);
+          try { localStorage.setItem("resora-remaining-uploads", String(data.rateLimit.remainingUploads)); } catch { /* ignore */ }
+        }
+        if (data.rateLimit.isRateLimited || data.rateLimit.remainingUploads === 0) {
+          const resetMs = (data.rateLimit.resetSeconds || 86400) * 1000;
+          localStorage.setItem("resora-upload-rate-limit-until", String(Date.now() + resetMs));
+          setIsDailyRateLimited(true);
+        }
+      }
 
       // Check if the backend returned a meaningful parsed resume
       const parsedResume = data.resume;
@@ -559,6 +630,9 @@ export default function Landing({ onSelect, onNavigate, isEmbedded, mascotMood, 
     }
 
     const prof = detectProfession(targetInput) || "general";
+    setInput("");
+    setSearchError("");
+    setIsSearchingNewRole(false);
     onSelect(prof);
   }
 
@@ -764,55 +838,73 @@ export default function Landing({ onSelect, onNavigate, isEmbedded, mascotMood, 
             style={{ display: "none" }}
             onChange={handleFileUpload}
           />
-          <button
-            type="button"
-            className={`Documents-btn ${hasUploadedResume ? "active-uploaded" : ""}`}
-            onClick={handleUploadButtonClick}
-            disabled={isUploading}
-            aria-label={hasUploadedResume ? "My Resume" : "Upload"}
+          <DelayedTooltip
+            title="Weekly Upload Quota"
+            description={
+              !hasUploadedResume ? (
+                <>
+                  <strong>{remainingUploads}/3 uploads remaining</strong> this week for your IP address.
+                </>
+              ) : null
+            }
           >
-            <span className="folderContainer">
-              {/* Back folder SVG */}
-              <svg className="fileBack" width="146" height="113" viewBox="0 0 146 113" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <path d="M0 4C0 1.79086 1.79086 0 4 0H50.3802C51.8285 0 53.2056 0.627965 54.1553 1.72142L64.3303 13.4371C65.2799 14.5306 66.657 15.1585 68.1053 15.1585H141.509C143.718 15.1585 145.509 16.9494 145.509 19.1585V109C145.509 111.209 143.718 113 141.509 113H3.99999C1.79085 113 0 111.209 0 109V4Z" fill={`url(#folderBack_${hasUploadedResume ? "green" : "orange"})`} />
-                <defs>
-                  <linearGradient id={`folderBack_${hasUploadedResume ? "green" : "orange"}`} x1="0" y1="0" x2="72.93" y2="95.4804" gradientUnits="userSpaceOnUse">
-                    <stop stopColor={hasUploadedResume ? "#34d399" : "#ff8a00"} />
-                    <stop offset="1" stopColor={hasUploadedResume ? "#059669" : "#c2410c"} />
-                  </linearGradient>
-                </defs>
-              </svg>
+            <button
+              type="button"
+              className={`Documents-btn ${hasUploadedResume ? "active-uploaded" : ""}`}
+              onClick={handleUploadButtonClick}
+              disabled={isUploading}
+              aria-label={hasUploadedResume ? "My Resume" : "Upload"}
+            >
+              <span className="folderContainer">
+                {/* Back folder SVG */}
+                <svg className="fileBack" width="146" height="113" viewBox="0 0 146 113" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M0 4C0 1.79086 1.79086 0 4 0H50.3802C51.8285 0 53.2056 0.627965 54.1553 1.72142L64.3303 13.4371C65.2799 14.5306 66.657 15.1585 68.1053 15.1585H141.509C143.718 15.1585 145.509 16.9494 145.509 19.1585V109C145.509 111.209 143.718 113 141.509 113H3.99999C1.79085 113 0 111.209 0 109V4Z" fill={`url(#folderBack_${hasUploadedResume ? "green" : "orange"})`} />
+                  <defs>
+                    <linearGradient id={`folderBack_${hasUploadedResume ? "green" : "orange"}`} x1="0" y1="0" x2="72.93" y2="95.4804" gradientUnits="userSpaceOnUse">
+                      <stop stopColor={hasUploadedResume ? "#34d399" : "#ff8a00"} />
+                      <stop offset="1" stopColor={hasUploadedResume ? "#059669" : "#c2410c"} />
+                    </linearGradient>
+                  </defs>
+                </svg>
 
-              {/* Inner Document Sheet SVG */}
-              <svg className="filePage" width="88" height="99" viewBox="0 0 88 99" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <rect width="88" height="99" rx="6" fill={`url(#folderPage_${hasUploadedResume ? "green" : "orange"})`} />
-                <line x1="16" y1="24" x2="72" y2="24" stroke={hasUploadedResume ? "#059669" : "#ea580c"} strokeWidth="5" strokeLinecap="round" />
-                <line x1="16" y1="40" x2="56" y2="40" stroke={hasUploadedResume ? "#34d399" : "#fdba74"} strokeWidth="5" strokeLinecap="round" />
-                <line x1="16" y1="56" x2="64" y2="56" stroke={hasUploadedResume ? "#34d399" : "#fdba74"} strokeWidth="5" strokeLinecap="round" />
-                <line x1="16" y1="72" x2="48" y2="72" stroke={hasUploadedResume ? "#34d399" : "#fdba74"} strokeWidth="5" strokeLinecap="round" />
-                <defs>
-                  <linearGradient id={`folderPage_${hasUploadedResume ? "green" : "orange"}`} x1="0" y1="0" x2="81" y2="160.5" gradientUnits="userSpaceOnUse">
-                    <stop stopColor="#ffffff" />
-                    <stop offset="1" stopColor={hasUploadedResume ? "#ecfdf5" : "#ffedd5"} />
-                  </linearGradient>
-                </defs>
-              </svg>
+                {/* Inner Document Sheet SVG */}
+                <svg className="filePage" width="88" height="99" viewBox="0 0 88 99" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <rect width="88" height="99" rx="6" fill={`url(#folderPage_${hasUploadedResume ? "green" : "orange"})`} />
+                  <line x1="16" y1="24" x2="72" y2="24" stroke={hasUploadedResume ? "#059669" : "#ea580c"} strokeWidth="5" strokeLinecap="round" />
+                  <line x1="16" y1="40" x2="56" y2="40" stroke={hasUploadedResume ? "#34d399" : "#fdba74"} strokeWidth="5" strokeLinecap="round" />
+                  <line x1="16" y1="56" x2="64" y2="56" stroke={hasUploadedResume ? "#34d399" : "#fdba74"} strokeWidth="5" strokeLinecap="round" />
+                  <line x1="16" y1="72" x2="48" y2="72" stroke={hasUploadedResume ? "#34d399" : "#fdba74"} strokeWidth="5" strokeLinecap="round" />
+                  <defs>
+                    <linearGradient id={`folderPage_${hasUploadedResume ? "green" : "orange"}`} x1="0" y1="0" x2="81" y2="160.5" gradientUnits="userSpaceOnUse">
+                      <stop stopColor="#ffffff" />
+                      <stop offset="1" stopColor={hasUploadedResume ? "#ecfdf5" : "#ffedd5"} />
+                    </linearGradient>
+                  </defs>
+                </svg>
 
-              {/* Front folder cover SVG */}
-              <svg className="fileFront" width="160" height="79" viewBox="0 0 160 79" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <path d="M0.29306 12.2478C0.133905 9.38186 2.41499 6.97059 5.28537 6.97059H30.419H58.1902C59.5751 6.97059 60.9288 6.55982 62.0802 5.79025L68.977 1.18034C70.1283 0.410771 71.482 0 72.8669 0H77H155.462C157.87 0 159.733 2.1129 159.43 4.50232L150.443 75.5023C150.19 77.5013 148.489 79 146.474 79H7.78403C5.66106 79 3.9079 77.3415 3.79019 75.2218L0.29306 12.2478Z" fill={`url(#folderFront_${hasUploadedResume ? "green" : "orange"})`} />
-                <defs>
-                  <linearGradient id={`folderFront_${hasUploadedResume ? "green" : "orange"}`} x1="38.7619" y1="8.71323" x2="66.9106" y2="82.8317" gradientUnits="userSpaceOnUse">
-                    <stop stopColor={hasUploadedResume ? "#6ee7b7" : "#ffedd5"} />
-                    <stop offset="1" stopColor={hasUploadedResume ? "#047857" : "#ea580c"} />
-                  </linearGradient>
-                </defs>
-              </svg>
-            </span>
-            <span className="text">
-              {hasUploadedResume ? "My Resume" : isUploading ? "Uploading..." : "Upload"}
-            </span>
-          </button>
+                {/* Front folder cover SVG */}
+                <svg className="fileFront" width="160" height="79" viewBox="0 0 160 79" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M0.29306 12.2478C0.133905 9.38186 2.41499 6.97059 5.28537 6.97059H30.419H58.1902C59.5751 6.97059 60.9288 6.55982 62.0802 5.79025L68.977 1.18034C70.1283 0.410771 71.482 0 72.8669 0H77H155.462C157.87 0 159.733 2.1129 159.43 4.50232L150.443 75.5023C150.19 77.5013 148.489 79 146.474 79H7.78403C5.66106 79 3.9079 77.3415 3.79019 75.2218L0.29306 12.2478Z" fill={`url(#folderFront_${hasUploadedResume ? "green" : "orange"})`} />
+                  <defs>
+                    <linearGradient id={`folderFront_${hasUploadedResume ? "green" : "orange"}`} x1="38.7619" y1="8.71323" x2="66.9106" y2="82.8317" gradientUnits="userSpaceOnUse">
+                      <stop stopColor={hasUploadedResume ? "#6ee7b7" : "#ffedd5"} />
+                      <stop offset="1" stopColor={hasUploadedResume ? "#047857" : "#ea580c"} />
+                    </linearGradient>
+                  </defs>
+                </svg>
+              </span>
+              <span className="text-wrapper">
+                <span className="text">
+                  {hasUploadedResume ? "My Resume" : isUploading ? "Uploading..." : "Upload"}
+                </span>
+                {!hasUploadedResume && (
+                  <span className={`upload-quota-tag ${remainingUploads === 0 ? "quota-exhausted" : ""}`}>
+                    {remainingUploads}/3
+                  </span>
+                )}
+              </span>
+            </button>
+          </DelayedTooltip>
         </div>
       )}
 
@@ -873,11 +965,11 @@ export default function Landing({ onSelect, onNavigate, isEmbedded, mascotMood, 
                 <line x1="12" y1="8" x2="12" y2="12" />
                 <line x1="12" y1="16" x2="12.01" y2="16" />
               </svg>
-              <span>Daily Limit Reached</span>
+              <span>Weekly Limit Reached</span>
             </div>
-            <h3 className="auth-gate-title">Daily Upload Limit Reached</h3>
+            <h3 className="auth-gate-title">Weekly Upload Limit Reached</h3>
             <p className="auth-gate-text">
-              You have reached your daily allowance of <strong>5 resume uploads</strong> for today. Your quota resets every 24 hours.
+              You have reached your weekly allowance of <strong>3 resume uploads</strong> for this week. Your quota resets every 7 days.
             </p>
             <div className="rate-limit-suggestion-box">
               <div className="rate-limit-suggestion-icon">💡</div>

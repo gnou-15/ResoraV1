@@ -21,8 +21,8 @@ app = FastAPI()
 
 # In-memory Rate Limiter & SHA-256 Parse Cache
 RATE_LIMIT_STORE: Dict[str, List[float]] = {}
-MAX_UPLOADS_PER_DAY = 5
-RATE_LIMIT_WINDOW_SECONDS = 24 * 60 * 60  # 24 hours (1 day)
+MAX_UPLOADS_PER_WEEK = 3
+RATE_LIMIT_WINDOW_SECONDS = 7 * 24 * 60 * 60  # 7 days (1 week)
 PARSED_PDF_CACHE: Dict[str, Dict[str, Any]] = {}
 MAX_CACHE_ENTRIES = 500
 
@@ -36,17 +36,31 @@ def get_client_ip(request: Request) -> str:
         return real_ip.strip()
     return request.client.host if request.client else "unknown"
 
-def check_upload_rate_limit(ip: str):
+def check_upload_rate_limit(ip: str) -> Dict[str, Any]:
     now = time.time()
     timestamps = RATE_LIMIT_STORE.get(ip, [])
     valid_timestamps = [t for t in timestamps if now - t < RATE_LIMIT_WINDOW_SECONDS]
-    if len(valid_timestamps) >= MAX_UPLOADS_PER_DAY:
+    if len(valid_timestamps) >= MAX_UPLOADS_PER_WEEK:
+        oldest = min(valid_timestamps)
+        reset_seconds = max(0, int(RATE_LIMIT_WINDOW_SECONDS - (now - oldest)))
         raise HTTPException(
             status_code=429,
-            detail="Rate limit exceeded: Maximum 5 resume uploads per day per IP address. Please try again tomorrow."
+            detail="Rate limit exceeded: Maximum 3 resume uploads per week per IP address. Please try again later."
         )
     valid_timestamps.append(now)
     RATE_LIMIT_STORE[ip] = valid_timestamps
+    remaining = max(0, MAX_UPLOADS_PER_WEEK - len(valid_timestamps))
+    is_limited = remaining <= 0
+    reset_seconds = 0
+    if is_limited and valid_timestamps:
+        oldest = min(valid_timestamps)
+        reset_seconds = max(0, int(RATE_LIMIT_WINDOW_SECONDS - (now - oldest)))
+    return {
+        "usedUploads": len(valid_timestamps),
+        "remainingUploads": remaining,
+        "isRateLimited": is_limited,
+        "resetSeconds": reset_seconds
+    }
 
 def get_text_sha256(text: str) -> str:
     return hashlib.sha256(text.strip().encode('utf-8')).hexdigest()
@@ -82,14 +96,14 @@ async def get_rate_limit_status(request: Request):
     now = time.time()
     timestamps = RATE_LIMIT_STORE.get(ip, [])
     valid_timestamps = [t for t in timestamps if now - t < RATE_LIMIT_WINDOW_SECONDS]
-    remaining = max(0, MAX_UPLOADS_PER_DAY - len(valid_timestamps))
+    remaining = max(0, MAX_UPLOADS_PER_WEEK - len(valid_timestamps))
     is_limited = remaining <= 0
     reset_seconds = 0
     if is_limited and valid_timestamps:
         oldest = min(valid_timestamps)
         reset_seconds = max(0, int(RATE_LIMIT_WINDOW_SECONDS - (now - oldest)))
     return {
-        "maxUploads": MAX_UPLOADS_PER_DAY,
+        "maxUploads": MAX_UPLOADS_PER_WEEK,
         "usedUploads": len(valid_timestamps),
         "remainingUploads": remaining,
         "isRateLimited": is_limited,
@@ -1335,7 +1349,7 @@ async def parse_resume_endpoint(
 ):
     try:
         client_ip = get_client_ip(request)
-        check_upload_rate_limit(client_ip)
+        rate_limit_info = check_upload_rate_limit(client_ip)
 
         load_dotenv(override=True)
         content = await file.read()
@@ -1350,7 +1364,7 @@ async def parse_resume_endpoint(
         text_hash = get_text_sha256(extracted_text)
         if text_hash in PARSED_PDF_CACHE:
             print(f"⚡ Returning cached PDF parse result (<5ms) for hash {text_hash[:8]}...")
-            return {"success": True, "filename": file.filename, **PARSED_PDF_CACHE[text_hash]}
+            return {"success": True, "filename": file.filename, "rateLimit": rate_limit_info, **PARSED_PDF_CACHE[text_hash]}
 
         active_groq_key = groq_key or os.getenv("GROQ_API_KEY", "")
 
@@ -1385,7 +1399,7 @@ async def parse_resume_endpoint(
                 del PARSED_PDF_CACHE[first_key]
             PARSED_PDF_CACHE[text_hash] = parsed
 
-        return {"success": True, "filename": file.filename, **parsed}
+        return {"success": True, "filename": file.filename, "rateLimit": rate_limit_info, **parsed}
     except HTTPException:
         raise
     except Exception as e:

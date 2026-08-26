@@ -239,19 +239,19 @@ def test_parse_resume_endpoint_rejects_oversized_file():
 
 
 def test_parse_resume_endpoint_rate_limit_daily():
-    """After 5 uploads from the same IP within the daily window, should get 429."""
-    for _ in range(5):
+    """After 3 uploads from the same IP within the rate limit window, should get 429."""
+    for _ in range(3):
         client.post(
             "/api/parse-resume",
             files={"file": ("resume.txt", io.BytesIO(SAMPLE_TEXT_RESUME), "text/plain")},
         )
-    # 6th request from the same IP should be rate-limited
+    # 4th request from the same IP should be rate-limited
     response = client.post(
         "/api/parse-resume",
         files={"file": ("resume.txt", io.BytesIO(SAMPLE_TEXT_RESUME), "text/plain")},
     )
     assert response.status_code == 429
-    assert "Maximum 5 resume uploads per day" in response.json().get("detail", "")
+    assert "Maximum 3 resume uploads per week" in response.json().get("detail", "")
 
 
 def test_parse_resume_endpoint_rate_limit_x_forwarded_for():
@@ -259,8 +259,8 @@ def test_parse_resume_endpoint_rate_limit_x_forwarded_for():
     headers_a = {"x-forwarded-for": "203.0.113.195, 10.0.0.1"}
     headers_b = {"x-forwarded-for": "198.51.100.42"}
 
-    # Use up IP A's 5 daily uploads
-    for _ in range(5):
+    # Use up IP A's 3 weekly uploads
+    for _ in range(3):
         res = client.post(
             "/api/parse-resume",
             files={"file": ("resume.txt", io.BytesIO(SAMPLE_TEXT_RESUME), "text/plain")},
@@ -268,13 +268,13 @@ def test_parse_resume_endpoint_rate_limit_x_forwarded_for():
         )
         assert res.status_code == 200
 
-    # 6th for IP A should be blocked
-    res_a_6 = client.post(
+    # 4th for IP A should be blocked
+    res_a_4 = client.post(
         "/api/parse-resume",
         files={"file": ("resume.txt", io.BytesIO(SAMPLE_TEXT_RESUME), "text/plain")},
         headers=headers_a,
     )
-    assert res_a_6.status_code == 429
+    assert res_a_4.status_code == 429
 
     # IP B should still be allowed
     res_b_1 = client.post(
@@ -326,6 +326,6 @@ def test_rate_limit_status_endpoint():
     res = client.get("/api/rate-limit-status", headers=ip_headers)
     assert res.status_code == 200
     data = res.json()
-    assert data["maxUploads"] == 5
-    assert data["remainingUploads"] == 5
+    assert data["maxUploads"] == 3
+    assert data["remainingUploads"] == 3
     assert data["isRateLimited"] is False
