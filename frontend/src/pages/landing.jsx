@@ -63,7 +63,28 @@ const PREDICTABLE_PROFESSIONS = [
   "Behavioral Health Specialist",
 ];
 
-export default function Landing({ onSelect, onNavigate, isEmbedded, mascotMood, user }) {
+const PROFESSION_DISPLAY_NAMES = {
+  it: "IT",
+  healthcare: "Healthcare",
+  education: "Education",
+  management: "Management",
+  engineering: "Engineering",
+  business: "Business & Accountancy",
+  customs: "Customs Administration",
+  safety: "Safety Officer",
+  designer: "Graphic Design",
+  data: "Data Analytics",
+  sales: "Sales & Account Executive",
+  hr: "Behavioral Health & Social Services",
+  general: "Professional",
+};
+
+function getProfessionDisplayName(profession) {
+  if (!profession) return "My";
+  return PROFESSION_DISPLAY_NAMES[profession.toLowerCase()] || (profession.charAt(0).toUpperCase() + profession.slice(1));
+}
+
+export default function Landing({ onSelect, onNavigate, isEmbedded, mascotMood, user, onModalToggle }) {
   const [input, setInput] = useState("");
   const [placeholder, setPlaceholder] = useState("");
   const [searchError, setSearchError] = useState("");
@@ -693,7 +714,7 @@ export default function Landing({ onSelect, onNavigate, isEmbedded, mascotMood, 
                 <line x1="19" y1="12" x2="5" y2="12" />
                 <polyline points="12 19 5 12 12 5" />
               </svg>
-              <span className="hover-underline-animation">Back to {existingResumeInfo.targetRole} Resume</span>
+              <span className="hover-underline-animation">Back to {getProfessionDisplayName(existingResumeInfo.profession)} Resume</span>
             </button>
           </div>
         )}
