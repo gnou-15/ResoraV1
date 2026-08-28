@@ -77,6 +77,10 @@ export function useResume(profession, user) {
           const parsedUploaded = JSON.parse(rawUploaded)
           if (parsedUploaded && parsedUploaded.resume && (!profession || parsedUploaded.profession === profession)) {
             uploadedPayload = parsedUploaded.resume
+            // Promote: remove from localStorage so the edited version (saved to
+            // the keyed slot) takes priority on any subsequent load (tab switch,
+            // sleep/wake, new session). SessionStorage stays alive for this tab.
+            try { localStorage.removeItem('resora-uploaded-resume') } catch { /* ignore */ }
           }
         }
       } catch {

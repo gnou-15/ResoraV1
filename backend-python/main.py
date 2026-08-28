@@ -1316,7 +1316,13 @@ def parse_resume_fields(text: str) -> Dict[str, Any]:
             "projects": project_entries,
             "achievements": achievement_entries,
             "experience": experience_entries,
-            "userType": "professional"
+            # Student detection: no real work experience (company+title) but has education
+            "userType": "student" if (
+                not any(
+                    (e.get("company", "") or "").strip() and (e.get("title", "") or "").strip()
+                    for e in experience_entries
+                ) and education_entries
+            ) else "professional"
         }
     }
 
@@ -1405,7 +1411,7 @@ JSON SCHEMA:
         "bullets": ["<complete, un-truncated bullet point description>"]
       }
     ],
-    "userType": "professional"
+    "userType": "<'student' if the person has NO paid work experience (experience array empty or all entries lack a real company+title) AND has education entries; otherwise 'professional'>"
   }
 }
 
@@ -1418,7 +1424,8 @@ CRITICAL RULES:
    - 'bullets': Contains the full descriptive text of what was accomplished without cutting off words.
 3. PROFESSION DETECTION: Detect profession from: 'it', 'healthcare', 'education', 'management', 'engineering', 'safety', 'customs', 'business', 'designer', 'data', 'sales', 'hr', or 'general'.
 4. TECHNICAL SKILLS: Extract categorized skills into languages, frameworks, tools, databases, cloud arrays or comma-separated lists.
-5. NO MARKDOWN: Output pure JSON only.
+5. USER TYPE DETECTION: Set userType='student' if the person has NO real paid work experience (experience array is empty OR all entries have empty company/title). Set userType='professional' if they have at least one real job (company + title both present). A student may still have internships, org roles, or academic projects — these do NOT count as professional work experience.
+6. NO MARKDOWN: Output pure JSON only.
 """
 
 def parse_with_groq_ai(text: str, api_key: str) -> Dict[str, Any]:

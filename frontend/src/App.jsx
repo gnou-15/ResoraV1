@@ -38,7 +38,9 @@ function getInitialCachedUser() {
 function App() {
   const [route, setRoute] = useState(() => {
     try {
-      const savedRoute = sessionStorage.getItem("resora-route");
+      // Read from localStorage first (persists through sleep/restore),
+      // fall back to sessionStorage for backwards compatibility.
+      const savedRoute = localStorage.getItem("resora-route") || sessionStorage.getItem("resora-route");
       if (savedRoute) {
         const parsed = JSON.parse(savedRoute);
         if (parsed.page === "loading") {
@@ -78,7 +80,7 @@ function App() {
 
   useEffect(() => {
     try {
-      sessionStorage.setItem("resora-route", JSON.stringify(route));
+      localStorage.setItem("resora-route", JSON.stringify(route));
     } catch {
       // ignore
     }
@@ -110,6 +112,9 @@ function App() {
 
 
   const handleBackToLanding = () => {
+    // Clear persisted route immediately so a stale "builder" entry can't
+    // cause the wrong page to render if the user clears + backs quickly.
+    try { localStorage.removeItem("resora-route"); } catch { /* ignore */ }
     setIsExitingBuilder(true);
     setRoute((prev) => ({ ...prev, page: "landing" }));
     setTimeout(() => {

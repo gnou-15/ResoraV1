@@ -383,6 +383,22 @@ export default function Landing({ onSelect, onNavigate, isEmbedded, mascotMood, 
     };
   }, []);
 
+  /**
+   * Determine if a parsed resume belongs to a student or a professional.
+   * Rule: student when there are no real work experience entries
+   * (company + title both filled) AND education entries exist.
+   * This mirrors the same logic in getResumeFillScore.
+   */
+  const detectUserType = (parsedResume) => {
+    const realExp = (parsedResume.experience || []).filter(
+      (e) => (e.company && e.company.trim()) && (e.title && e.title.trim())
+    );
+    const hasEdu = (parsedResume.education || []).some(
+      (e) => e.school && e.school.trim()
+    );
+    return (realExp.length === 0 && hasEdu) ? "student" : "professional";
+  };
+
   const parseTextResumeFallback = async (file) => {
     const text = await file.text();
     const detectedProf = detectProfession(text) || "general";
@@ -391,37 +407,46 @@ export default function Landing({ onSelect, onNavigate, isEmbedded, mascotMood, 
     const phoneMatch = text.match(/(\+?\d{1,4}[-.\s]?)?\(?\d{3}\)?[-.\s]?\d{3}[-.\s]?\d{4}/);
     const nameLine = lines[0] || "Uploaded Candidate";
 
+    const resumeData = {
+      personal: {
+        fullName: nameLine,
+        email: emailMatch ? emailMatch[0] : "",
+        phoneNumber: phoneMatch ? phoneMatch[0] : "",
+        location: { country: "", state: "", city: "", barangay: "", street: "" },
+        github: "",
+        linkedin: "",
+        portfolio: ""
+      },
+      headline: "Uploaded Candidate",
+      summary: lines.slice(1, 4).join(" "),
+      skills: "Parsed from text document",
+      technicalSkills: { languages: "", frameworks: "", tools: "", databases: "", cloud: "" },
+      education: [],
+      projects: [],
+      experience: lines.length > 4 ? [{ id: "exp-1", company: "Extracted Experience", title: "Role", bullets: lines.slice(4, 8) }] : [],
+      certifications: [],
+      achievements: [],
+      userType: "professional" // will be overridden below
+    };
+    resumeData.userType = detectUserType(resumeData);
+
     return {
       profession: detectedProf,
-      resume: {
-        personal: {
-          fullName: nameLine,
-          email: emailMatch ? emailMatch[0] : "",
-          phoneNumber: phoneMatch ? phoneMatch[0] : "",
-          location: { country: "", state: "", city: "", barangay: "", street: "" },
-          github: "",
-          linkedin: "",
-          portfolio: ""
-        },
-        headline: "Uploaded Candidate",
-        summary: lines.slice(1, 4).join(" "),
-        skills: "Parsed from text document",
-        technicalSkills: { languages: "", frameworks: "", tools: "", databases: "", cloud: "" },
-        education: [],
-        projects: [],
-        experience: lines.length > 4 ? [{ id: "exp-1", company: "Extracted Experience", title: "Role", bullets: lines.slice(4, 8) }] : [],
-        certifications: [],
-        achievements: [],
-        userType: "professional"
-      }
+      resume: resumeData
     };
   };
 
   const saveAndProceedUploadedResume = (detectedProf, parsedResume) => {
+    // Apply student detection: if the parsed resume has no real work experience
+    // but has education entries, treat as student regardless of what the AI returned.
+    const correctedResume = {
+      ...parsedResume,
+      userType: detectUserType(parsedResume),
+    };
     const sid = sessionStorage.getItem('resora_guest_session_token') || 'guest';
     const storageKey = `resume-builder-data-${sid}-${detectedProf}`;
-    localStorage.setItem(storageKey, JSON.stringify(parsedResume));
-    sessionStorage.setItem("resora-uploaded-resume", JSON.stringify({ profession: detectedProf, resume: parsedResume }));
+    localStorage.setItem(storageKey, JSON.stringify(correctedResume));
+    sessionStorage.setItem("resora-uploaded-resume", JSON.stringify({ profession: detectedProf, resume: correctedResume }));
     setHasUploadedResume(true);
     onSelect(detectedProf);
   };
