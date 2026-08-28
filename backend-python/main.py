@@ -40,11 +40,11 @@ try:
         # pyrefly: ignore [missing-import]
         from supabase import create_client  # type: ignore
         _supabase_client = create_client(_supabase_url, _supabase_key)
-        print("✅ [RATE-LIMIT] Supabase persistent rate limiter initialized.")
+        print("[RATE-LIMIT] Supabase persistent rate limiter initialized.")
     else:
-        print("⚠️  [RATE-LIMIT] SUPABASE_SERVICE_ROLE_KEY not set — falling back to in-memory rate limiter.")
+        print("[RATE-LIMIT] SUPABASE_SERVICE_ROLE_KEY not set - falling back to in-memory rate limiter.")
 except Exception as _e:
-    print(f"⚠️  [RATE-LIMIT] Supabase init failed ({_e}) — falling back to in-memory rate limiter.")
+    print(f"[RATE-LIMIT] Supabase init failed ({_e}) - falling back to in-memory rate limiter.")
 
 def get_client_ip(request: Request) -> str:
     """Extract real client IP, respecting X-Forwarded-For when behind reverse proxies (Render, Cloudflare, etc.)."""
@@ -1006,9 +1006,9 @@ def parse_resume_fields(text: str) -> Dict[str, Any]:
         gh = re.search(r'github\.com/([\w-]+)', l, re.IGNORECASE)
         if gh and not github:
             github = f"github.com/{gh.group(1)}"
-        li = re.search(r'linkedin\.com/in/([\w-]+)', l, re.IGNORECASE)
+        li = re.search(r'linkedin\.com/(?:in/)?([\w-]+)', l, re.IGNORECASE)
         if li and not linkedin:
-            linkedin = f"linkedin.com/{li.group(1)}" if not li.group(1).startswith('linkedin.com') else li.group(1)
+            linkedin = f"linkedin.com/in/{li.group(1)}"
         loc = re.search(r'([A-Za-z\s-]+,\s*[A-Za-z\s-]+,\s*[A-Za-z\s-]+)', l)
         if loc and not location_str:
             location_str = loc.group(0)
@@ -1078,7 +1078,13 @@ def parse_resume_fields(text: str) -> Dict[str, Any]:
                 degree = parts[0]
                 for p in parts[1:]:
                     if 'GPA' in p.upper():
-                        gpa = p.split(':')[-1].strip()
+                        raw_gpa = p.split(':')[-1].strip()
+                        date_m = re.search(r'((?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec|\d{4})[\s\w-]*\d{4}|\b(?:19|20)\d{2}\b)', raw_gpa, re.IGNORECASE)
+                        if date_m:
+                            end_date = date_m.group(0).strip()
+                            gpa = re.sub(re.escape(end_date), '', raw_gpa).strip()
+                        else:
+                            gpa = raw_gpa
             elif any(w in el.lower() for w in ['university', 'college', 'school', 'academy', 'institute']):
                 school = el
             elif re.search(r'(Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec|\d{4})', el):
@@ -1252,18 +1258,17 @@ def parse_resume_fields(text: str) -> Dict[str, Any]:
             elif '|' in el_clean and curr_exp:
                 parts = [p.strip() for p in el_clean.split('|')]
                 curr_exp['company'] = parts[0]
-                if len(parts) > 1:
-                    curr_exp['location'] = parts[1]
-            elif date_match and curr_exp:
-                date_str = date_match.group(0).strip()
-                if '-' in date_str:
-                    curr_exp['startDate'] = date_str.split('-')[0].strip()
-                    curr_exp['endDate'] = date_str.split('-')[1].strip()
-                else:
-                    curr_exp['endDate'] = date_str
             elif not curr_exp:
                 extracted_date = date_match.group(0).strip() if date_match else ""
                 title_txt = re.sub(re.escape(extracted_date), '', el_clean).strip() if extracted_date else el_clean
+                start_d, end_d = "", ""
+                if extracted_date:
+                    if '-' in extracted_date:
+                        d_parts = extracted_date.split('-', 1)
+                        start_d = d_parts[0].strip()
+                        end_d = d_parts[1].strip()
+                    else:
+                        end_d = extracted_date
                 curr_exp = {
                     "id": f"exp-{len(experience_entries)+1}",
                     "company": "",
@@ -1429,11 +1434,15 @@ CRITICAL RULES:
 """
 
 def parse_with_groq_ai(text: str, api_key: str) -> Dict[str, Any]:
-    # Priority: prefer fast models first. Limit to 2 attempts max so total AI time stays under ~20s.
+    # Priority: active high-accuracy Groq models with graceful fallback
     models_to_try = [
         os.getenv("GROQ_MODEL", "").strip(),
-        "llama-3.1-8b-instant",      # Fast, lightweight
-        "llama-3.3-70b-versatile",   # More capable fallback
+        "openai/gpt-oss-120b",
+        "qwen/qwen3.6-27b",
+        "openai/gpt-oss-20b",
+        "groq/compound",
+        "llama-3.3-70b-versatile",
+        "llama-3.1-8b-instant",
     ]
     seen = set()
     models_to_try = [m for m in models_to_try if m and not (m in seen or seen.add(m))]
