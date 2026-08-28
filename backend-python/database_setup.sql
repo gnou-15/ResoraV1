@@ -163,3 +163,31 @@ BEGIN
     RETURN json_build_object('success', false, 'error', 'invalid_state');
 END;
 $$;
+
+
+-- =========================================================================
+-- IP Rate Limits Table
+-- Stores a hashed record of each upload attempt for persistent weekly
+-- rate limiting. The ip_hash column stores SHA-256(raw_ip) so we never
+-- save real IP addresses. Old rows (> 7 days) are harmless and can be
+-- cleaned up periodically.
+-- =========================================================================
+CREATE TABLE IF NOT EXISTS public.ip_rate_limits (
+    id bigint GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+    ip_hash text NOT NULL,
+    uploaded_at timestamp with time zone DEFAULT now() NOT NULL
+);
+
+CREATE INDEX IF NOT EXISTS idx_ip_rate_limits_ip_hash ON public.ip_rate_limits (ip_hash);
+
+-- Enable Row Level Security
+ALTER TABLE public.ip_rate_limits ENABLE ROW LEVEL SECURITY;
+
+-- Only the service_role key (used by the Python backend) can read/write this table.
+-- The anon key (used by the frontend) has NO access.
+DROP POLICY IF EXISTS "Service role full access" ON public.ip_rate_limits;
+CREATE POLICY "Service role full access" ON public.ip_rate_limits
+    USING (true) WITH CHECK (true);
+
+-- Optional: cleanup function to purge rows older than 8 days (run periodically via pg_cron or manually)
+-- SELECT delete from public.ip_rate_limits WHERE uploaded_at < now() - interval '8 days';

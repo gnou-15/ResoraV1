@@ -13,9 +13,18 @@ Run with:
 """
 
 import io
+from unittest.mock import MagicMock, patch
 
 import pytest
 from fastapi.testclient import TestClient
+
+# Patch the Supabase client to None before importing the app so all rate limit
+# tests use the in-memory fallback path (no real Supabase connection needed).
+with patch.dict("os.environ", {"SUPABASE_SERVICE_ROLE_KEY": ""}):
+    import main as _main_module
+
+    # Force the module-level client to None so tests always use in-memory
+    _main_module._supabase_client = None
 
 from main import (
     PARSED_PDF_CACHE,

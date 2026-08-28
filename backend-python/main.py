@@ -5,6 +5,7 @@ import io
 # pyrefly: ignore [missing-import]
 import time
 import hashlib
+from datetime import datetime, timezone, timedelta
 # pyrefly: ignore [missing-import]
 from dotenv import load_dotenv
 # pyrefly: ignore [missing-import]
@@ -19,12 +20,31 @@ load_dotenv()
 
 app = FastAPI()
 
-# In-memory Rate Limiter & SHA-256 Parse Cache
-RATE_LIMIT_STORE: Dict[str, List[float]] = {}
+# ── Rate Limit Config ─────────────────────────────────────────────────────────
 MAX_UPLOADS_PER_WEEK = 3
 RATE_LIMIT_WINDOW_SECONDS = 7 * 24 * 60 * 60  # 7 days (1 week)
+
+# In-memory fallback store (used when Supabase is not configured / unreachable)
+RATE_LIMIT_STORE: Dict[str, List[float]] = {}
+
+# SHA-256 Parse Cache (still in-memory — this is fine, it's just a speed cache)
 PARSED_PDF_CACHE: Dict[str, Dict[str, Any]] = {}
 MAX_CACHE_ENTRIES = 500
+
+# ── Supabase Client (optional — graceful fallback if not configured) ──────────
+_supabase_client = None
+try:
+    _supabase_url = os.getenv("SUPABASE_URL", "")
+    _supabase_key = os.getenv("SUPABASE_SERVICE_ROLE_KEY", "")
+    if _supabase_url and _supabase_key and not _supabase_key.startswith("your-service"):
+        # pyrefly: ignore [missing-import]
+        from supabase import create_client  # type: ignore
+        _supabase_client = create_client(_supabase_url, _supabase_key)
+        print("✅ [RATE-LIMIT] Supabase persistent rate limiter initialized.")
+    else:
+        print("⚠️  [RATE-LIMIT] SUPABASE_SERVICE_ROLE_KEY not set — falling back to in-memory rate limiter.")
+except Exception as _e:
+    print(f"⚠️  [RATE-LIMIT] Supabase init failed ({_e}) — falling back to in-memory rate limiter.")
 
 def get_client_ip(request: Request) -> str:
     """Extract real client IP, respecting X-Forwarded-For when behind reverse proxies (Render, Cloudflare, etc.)."""
@@ -36,7 +56,94 @@ def get_client_ip(request: Request) -> str:
         return real_ip.strip()
     return request.client.host if request.client else "unknown"
 
-def check_upload_rate_limit(ip: str) -> Dict[str, Any]:
+def _hash_ip(ip: str) -> str:
+    """SHA-256 hash the IP so we never store raw IPs in Supabase."""
+    return hashlib.sha256(ip.encode("utf-8")).hexdigest()
+
+def _get_cutoff_iso() -> str:
+    """ISO 8601 timestamp for exactly one week ago (UTC), used in Supabase queries."""
+    cutoff = datetime.now(timezone.utc) - timedelta(seconds=RATE_LIMIT_WINDOW_SECONDS)
+    return cutoff.isoformat()
+
+# ── Supabase-backed rate limit ────────────────────────────────────────────────
+
+def _supabase_check_and_record(ip_hash: str) -> Dict[str, Any]:
+    """
+    Query Supabase for the number of uploads from this IP in the past week.
+    If under limit, insert a new row. If at/over limit, raise 429.
+    Returns dict with usedUploads, remainingUploads, isRateLimited, resetSeconds.
+    """
+    cutoff = _get_cutoff_iso()
+    # Fetch existing upload timestamps for this IP within the window
+    response = (
+        _supabase_client.table("ip_rate_limits")
+        .select("uploaded_at")
+        .eq("ip_hash", ip_hash)
+        .gte("uploaded_at", cutoff)
+        .execute()
+    )
+    rows = response.data or []
+    count = len(rows)
+
+    if count >= MAX_UPLOADS_PER_WEEK:
+        # Find when the oldest upload in the window will expire
+        timestamps_dt = [
+            datetime.fromisoformat(r["uploaded_at"].replace("Z", "+00:00"))
+            for r in rows
+        ]
+        oldest = min(timestamps_dt)
+        expires_at = oldest + timedelta(seconds=RATE_LIMIT_WINDOW_SECONDS)
+        reset_seconds = max(0, int((expires_at - datetime.now(timezone.utc)).total_seconds()))
+        raise HTTPException(
+            status_code=429,
+            detail="Rate limit exceeded: Maximum 3 resume uploads per week per IP address. Please try again later."
+        )
+
+    # Under limit — record this upload
+    _supabase_client.table("ip_rate_limits").insert({"ip_hash": ip_hash}).execute()
+    used = count + 1
+    remaining = max(0, MAX_UPLOADS_PER_WEEK - used)
+    return {
+        "usedUploads": used,
+        "remainingUploads": remaining,
+        "isRateLimited": remaining <= 0,
+        "resetSeconds": 0,
+    }
+
+def _supabase_get_status(ip_hash: str) -> Dict[str, Any]:
+    """Read-only quota check — does NOT insert a row."""
+    cutoff = _get_cutoff_iso()
+    response = (
+        _supabase_client.table("ip_rate_limits")
+        .select("uploaded_at")
+        .eq("ip_hash", ip_hash)
+        .gte("uploaded_at", cutoff)
+        .execute()
+    )
+    rows = response.data or []
+    count = len(rows)
+    remaining = max(0, MAX_UPLOADS_PER_WEEK - count)
+    is_limited = remaining <= 0
+    reset_seconds = 0
+    if is_limited and rows:
+        timestamps_dt = [
+            datetime.fromisoformat(r["uploaded_at"].replace("Z", "+00:00"))
+            for r in rows
+        ]
+        oldest = min(timestamps_dt)
+        expires_at = oldest + timedelta(seconds=RATE_LIMIT_WINDOW_SECONDS)
+        reset_seconds = max(0, int((expires_at - datetime.now(timezone.utc)).total_seconds()))
+    return {
+        "maxUploads": MAX_UPLOADS_PER_WEEK,
+        "usedUploads": count,
+        "remainingUploads": remaining,
+        "isRateLimited": is_limited,
+        "resetSeconds": reset_seconds,
+    }
+
+# ── In-memory fallback rate limit ─────────────────────────────────────────────
+
+def _memory_check_and_record(ip: str) -> Dict[str, Any]:
     now = time.time()
     timestamps = RATE_LIMIT_STORE.get(ip, [])
     valid_timestamps = [t for t in timestamps if now - t < RATE_LIMIT_WINDOW_SECONDS]
@@ -59,8 +166,39 @@ def check_upload_rate_limit(ip: str) -> Dict[str, Any]:
         "usedUploads": len(valid_timestamps),
         "remainingUploads": remaining,
         "isRateLimited": is_limited,
-        "resetSeconds": reset_seconds
+        "resetSeconds": reset_seconds,
     }
+
+def _memory_get_status(ip: str) -> Dict[str, Any]:
+    now = time.time()
+    timestamps = RATE_LIMIT_STORE.get(ip, [])
+    valid_timestamps = [t for t in timestamps if now - t < RATE_LIMIT_WINDOW_SECONDS]
+    remaining = max(0, MAX_UPLOADS_PER_WEEK - len(valid_timestamps))
+    is_limited = remaining <= 0
+    reset_seconds = 0
+    if is_limited and valid_timestamps:
+        oldest = min(valid_timestamps)
+        reset_seconds = max(0, int(RATE_LIMIT_WINDOW_SECONDS - (now - oldest)))
+    return {
+        "maxUploads": MAX_UPLOADS_PER_WEEK,
+        "usedUploads": len(valid_timestamps),
+        "remainingUploads": remaining,
+        "isRateLimited": is_limited,
+        "resetSeconds": reset_seconds,
+    }
+
+# ── Public interface (routes call these two functions) ────────────────────────
+
+def check_upload_rate_limit(ip: str) -> Dict[str, Any]:
+    """Check quota and record an upload. Raises 429 if limit exceeded."""
+    if _supabase_client is not None:
+        try:
+            return _supabase_check_and_record(_hash_ip(ip))
+        except HTTPException:
+            raise  # let 429s propagate
+        except Exception as e:
+            print(f"⚠️  [RATE-LIMIT] Supabase error, falling back to in-memory: {e}")
+    return _memory_check_and_record(ip)
 
 def get_text_sha256(text: str) -> str:
     return hashlib.sha256(text.strip().encode('utf-8')).hexdigest()
@@ -93,22 +231,12 @@ def health_check():
 async def get_rate_limit_status(request: Request):
     """Check remaining uploads for the requesting client IP without consuming quota."""
     ip = get_client_ip(request)
-    now = time.time()
-    timestamps = RATE_LIMIT_STORE.get(ip, [])
-    valid_timestamps = [t for t in timestamps if now - t < RATE_LIMIT_WINDOW_SECONDS]
-    remaining = max(0, MAX_UPLOADS_PER_WEEK - len(valid_timestamps))
-    is_limited = remaining <= 0
-    reset_seconds = 0
-    if is_limited and valid_timestamps:
-        oldest = min(valid_timestamps)
-        reset_seconds = max(0, int(RATE_LIMIT_WINDOW_SECONDS - (now - oldest)))
-    return {
-        "maxUploads": MAX_UPLOADS_PER_WEEK,
-        "usedUploads": len(valid_timestamps),
-        "remainingUploads": remaining,
-        "isRateLimited": is_limited,
-        "resetSeconds": reset_seconds
-    }
+    if _supabase_client is not None:
+        try:
+            return _supabase_get_status(_hash_ip(ip))
+        except Exception as e:
+            print(f"⚠️  [RATE-LIMIT] Supabase error on status check, falling back to in-memory: {e}")
+    return _memory_get_status(ip)
 
 # --- Pydantic Data Models matching JS Resume schema ---
 
