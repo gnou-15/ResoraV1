@@ -104,5 +104,45 @@
 
 ---
 
+## ⚖️ Load Balancing & High-Concurrency Architecture (1,000+ Users)
+
+Resora includes a containerized **Nginx Reverse Proxy & Load Balancer** with **multi-worker backend clustering** engineered to handle 1,000+ active users with high availability and low latency.
+
+```mermaid
+flowchart TD
+    User["1,000+ Users"] -->|Port 80 / 5173| NGINX["Nginx Load Balancer (Least Conn)"]
+
+    subgraph Cluster["Scalable Docker Cluster"]
+        NGINX -->|Least Conn & Health Checked| Py["Python FastAPI Cluster (2+ Workers/Replicas)"]
+        NGINX -->|Round Robin| Node["Node.js Express Cluster"]
+        NGINX -->|Static Cache| Front["React Vite Frontend"]
+    end
+
+    Py --> Supabase[("Supabase DB")]
+    Py --> Groq["Groq AI API"]
+```
+
+### Features:
+* **Least-Connection Load Balancing**: Routes requests to backend instances with the lowest active load.
+* **Auto-Failover & Health Checks**: Unhealthy instances are bypassed automatically.
+* **Multi-Worker FastAPI**: Configurable concurrency via `WORKERS=2` (or 4+) per container.
+* **Rate-Limiting & Upload Guards**: IP rate limits (`30 req/sec`) and up to `25MB` max resume upload size.
+* **Gzip Compression & Keepalive Pools**: Fast asset delivery with reduced network overhead.
+
+### Running with Docker & Scaling:
+```bash
+# 1. Start all services with Nginx Load Balancer
+docker compose up --build -d
+
+# 2. Scale backend instances dynamically to handle peak traffic
+docker compose up -d --scale backend-python=3 --scale backend-node=2
+
+# 3. Run load test to verify 1k-user concurrency
+python scripts/load_test.py http://localhost/lb-health 50 200
+```
+
+---
+
 ## 🍿 Video
 https://github.com/user-attachments/assets/e39611a4-899b-480a-aa76-3e0512889d87
+
