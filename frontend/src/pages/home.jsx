@@ -195,7 +195,10 @@ function Home({ profession, user, onBack, plan, onNavigateAuth }) {
       { countdownSeconds: 5 }
     );
     if (confirmed) {
-      resetResume();
+      await resetResume();
+      if (onBack) {
+        onBack();
+      }
     }
   };
 

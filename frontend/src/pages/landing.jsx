@@ -155,17 +155,13 @@ export default function Landing({ onSelect, onNavigate, isEmbedded, mascotMood, 
   const [remainingUploads, setRemainingUploads] = useState(getInitialRemainingUploads);
   const [localMood, setLocalMood] = useState("normal");
   const [existingResumeInfo, setExistingResumeInfo] = useState(() => {
+    if (!user) return null;
     try {
       const cached = localStorage.getItem("resora-last-active-resume-info");
       if (cached) {
         const parsed = JSON.parse(cached);
-        if (parsed && parsed.hasResume && hasSufficientContent(parsed.resume)) {
-          if (user) {
-            if (parsed.userId === user.id) return parsed;
-          } else {
-            const sid = localStorage.getItem("resora_guest_session_token") || sessionStorage.getItem("resora_guest_session_token");
-            if (sid && parsed.userId === sid) return parsed;
-          }
+        if (parsed && parsed.hasResume && parsed.userId === user.id && hasSufficientContent(parsed.resume)) {
+          return parsed;
         }
       }
     } catch {
@@ -213,28 +209,23 @@ export default function Landing({ onSelect, onNavigate, isEmbedded, mascotMood, 
     };
   }, []);
 
-  // Real-time synchronization for active resume hero prompt
+  // Real-time synchronization for active resume hero prompt (Authenticated users only)
   useEffect(() => {
     let isMounted = true;
+
+    if (!user) {
+      setExistingResumeInfo(null);
+      return;
+    }
 
     const syncFromLocalStorage = () => {
       try {
         const cached = localStorage.getItem("resora-last-active-resume-info");
         if (cached) {
           const parsed = JSON.parse(cached);
-          if (parsed && parsed.hasResume && hasSufficientContent(parsed.resume)) {
-            if (user) {
-              if (parsed.userId === user.id) {
-                if (isMounted) setExistingResumeInfo(parsed);
-                return;
-              }
-            } else {
-              const sid = localStorage.getItem("resora_guest_session_token") || sessionStorage.getItem("resora_guest_session_token");
-              if (sid && parsed.userId === sid) {
-                if (isMounted) setExistingResumeInfo(parsed);
-                return;
-              }
-            }
+          if (parsed && parsed.hasResume && parsed.userId === user.id && hasSufficientContent(parsed.resume)) {
+            if (isMounted) setExistingResumeInfo(parsed);
+            return;
           }
         }
         if (isMounted) setExistingResumeInfo(null);
@@ -246,11 +237,6 @@ export default function Landing({ onSelect, onNavigate, isEmbedded, mascotMood, 
     async function checkExisting() {
       // First sync synchronously from local cache (0ms delay)
       syncFromLocalStorage();
-
-      if (!user) {
-        if (isMounted) syncFromLocalStorage();
-        return;
-      }
 
       // Background verify against Supabase
       const info = await findExistingUserResume(user);
@@ -267,12 +253,7 @@ export default function Landing({ onSelect, onNavigate, isEmbedded, mascotMood, 
 
     const handleRealtimeUpdate = (e) => {
       if (e?.detail) {
-        if (user && e.detail.userId === user.id) {
-          if (isMounted) setExistingResumeInfo(e.detail);
-          return;
-        }
-        const sid = localStorage.getItem("resora_guest_session_token") || sessionStorage.getItem("resora_guest_session_token");
-        if (!user && e.detail.userId === sid) {
+        if (e.detail.userId === user.id) {
           if (isMounted) setExistingResumeInfo(e.detail);
           return;
         }
@@ -776,7 +757,7 @@ export default function Landing({ onSelect, onNavigate, isEmbedded, mascotMood, 
       <main className="landing-hero">
         <h1 className="sr-only">Build a Professional, ATS-Friendly Resume with Resora</h1>
         <PeekingMonster mood={mascotMood || localMood} />
-        {existingResumeInfo && !isSearchingNewRole ? (
+        {user && existingResumeInfo && !isSearchingNewRole ? (
           <div key="returning-title" className="hero-title-container returning-hero hero-fade-enter">
             <h2 className="hero-title-returning">
               Ready to work on your <span className="highlight-role">{existingResumeInfo.targetRole}</span> resume?
@@ -789,7 +770,7 @@ export default function Landing({ onSelect, onNavigate, isEmbedded, mascotMood, 
           </div>
         )}
 
-        {existingResumeInfo && !isSearchingNewRole ? (
+        {user && existingResumeInfo && !isSearchingNewRole ? (
           <div key="returning-cta" className="existing-resume-cta-row hero-fade-enter">
             <button
               type="button"
