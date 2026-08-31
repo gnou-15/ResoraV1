@@ -137,6 +137,26 @@ describe('saveResume / loadResume', () => {
     expect(loadResume('it')?.headline).toBe('Developer');
     expect(loadResume('healthcare')?.headline).toBe('Nurse');
   });
+
+  it('prioritizes saved edits over stale uploaded resume cache', () => {
+    // 1. User uploads resume with initial title "IT Consultant"
+    sessionStorage.setItem('resora-uploaded-resume', JSON.stringify({
+      profession: 'it',
+      resume: { headline: 'IT Consultant', experience: [{ title: 'IT Consultant' }] }
+    }));
+
+    // 2. User edits the resume to "Software Engineer"
+    saveResume({ headline: 'Software Engineer', experience: [{ title: 'Software Engineer' }] }, 'it');
+
+    // 3. Loading resume must return the edited "Software Engineer", NOT the original uploaded "IT Consultant"
+    const loaded = loadResume('it');
+    expect(loaded?.headline).toBe('Software Engineer');
+    expect(loaded?.experience[0]?.title).toBe('Software Engineer');
+
+    // 4. Uploaded resume cache in sessionStorage must also be updated to match
+    const updatedUpload = JSON.parse(sessionStorage.getItem('resora-uploaded-resume'));
+    expect(updatedUpload.resume.headline).toBe('Software Engineer');
+  });
 });
 
 describe('clearResume', () => {

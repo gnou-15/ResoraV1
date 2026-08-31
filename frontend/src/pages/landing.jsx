@@ -4,7 +4,8 @@ import "../css/landing.css";
 import InteractiveBackground from "../components/InteractiveBackground";
 import PeekingMonster from "../components/PeekingMonster";
 import ParsingLoader from "../components/ParsingLoader";
-import { findExistingUserResume } from "../services/api";
+import { findExistingUserResume, saveResume, saveResumeToSupabase } from "../services/api";
+import { decryptName } from "../services/encryption";
 import { hasSufficientContent } from "../data/defaultResume";
 
 
@@ -436,17 +437,21 @@ export default function Landing({ onSelect, onNavigate, isEmbedded, mascotMood, 
     };
   };
 
-  const saveAndProceedUploadedResume = (detectedProf, parsedResume) => {
+  const saveAndProceedUploadedResume = async (detectedProf, parsedResume) => {
     // Apply student detection: if the parsed resume has no real work experience
     // but has education entries, treat as student regardless of what the AI returned.
     const correctedResume = {
       ...parsedResume,
       userType: detectUserType(parsedResume),
     };
-    const sid = sessionStorage.getItem('resora_guest_session_token') || 'guest';
-    const storageKey = `resume-builder-data-${sid}-${detectedProf}`;
-    localStorage.setItem(storageKey, JSON.stringify(correctedResume));
-    sessionStorage.setItem("resora-uploaded-resume", JSON.stringify({ profession: detectedProf, resume: correctedResume }));
+    if (user) {
+      correctedResume.personal = {
+        ...correctedResume.personal,
+        fullName: decryptName(user.user_metadata?.full_name || '', user.id) || correctedResume.personal?.fullName || '',
+      };
+      await saveResumeToSupabase(correctedResume, detectedProf, user.id);
+    }
+    saveResume(correctedResume, detectedProf);
     setHasUploadedResume(true);
     onSelect(detectedProf);
   };

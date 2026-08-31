@@ -25,6 +25,13 @@ function getGuestSessionId() {
 
 export function loadResume(profession) {
   try {
+    // 1. Check saved guest resume for this profession first (contains user's latest edits)
+    const sid = getGuestSessionId();
+    const key = profession ? `${STORAGE_KEY}-${sid}-${profession}` : `${STORAGE_KEY}-${sid}`;
+    const raw = localStorage.getItem(key);
+    if (raw) return JSON.parse(raw);
+
+    // 2. Fall back to uploaded resume payload if not yet saved to a profession slot
     const uploadedRaw = sessionStorage.getItem('resora-uploaded-resume') || localStorage.getItem('resora-uploaded-resume');
     if (uploadedRaw) {
       const uploadedData = JSON.parse(uploadedRaw);
@@ -35,11 +42,7 @@ export function loadResume(profession) {
       }
     }
 
-    const sid = getGuestSessionId();
-    const key = profession ? `${STORAGE_KEY}-${sid}-${profession}` : `${STORAGE_KEY}-${sid}`;
-    const raw = localStorage.getItem(key);
-    if (!raw) return null;
-    return JSON.parse(raw);
+    return null;
   } catch {
     return null;
   }
@@ -50,6 +53,21 @@ export function saveResume(data, profession) {
     const sid = getGuestSessionId();
     const key = profession ? `${STORAGE_KEY}-${sid}-${profession}` : `${STORAGE_KEY}-${sid}`;
     localStorage.setItem(key, JSON.stringify(data));
+
+    // Also keep the uploaded resume cache synchronized with the latest edits
+    const uploadedRaw = sessionStorage.getItem('resora-uploaded-resume') || localStorage.getItem('resora-uploaded-resume');
+    if (uploadedRaw) {
+      try {
+        const uploadedData = JSON.parse(uploadedRaw);
+        if (uploadedData && (!profession || uploadedData.profession === profession)) {
+          const updatedUpload = { ...uploadedData, resume: data };
+          sessionStorage.setItem('resora-uploaded-resume', JSON.stringify(updatedUpload));
+          localStorage.setItem('resora-uploaded-resume', JSON.stringify(updatedUpload));
+        }
+      } catch {
+        /* ignore */
+      }
+    }
   } catch {
     // ignore
   }
@@ -144,6 +162,21 @@ export async function saveResumeToSupabase(data, profession, userId) {
         resume: data
       };
       localStorage.setItem('resora-last-active-resume-info', JSON.stringify(resInfo));
+
+      // Keep uploaded resume cache in sync with user edits
+      const uploadedRaw = sessionStorage.getItem('resora-uploaded-resume') || localStorage.getItem('resora-uploaded-resume');
+      if (uploadedRaw) {
+        try {
+          const uploadedData = JSON.parse(uploadedRaw);
+          if (uploadedData && (!profession || uploadedData.profession === profession)) {
+            const updatedUpload = { ...uploadedData, resume: data };
+            sessionStorage.setItem('resora-uploaded-resume', JSON.stringify(updatedUpload));
+            localStorage.setItem('resora-uploaded-resume', JSON.stringify(updatedUpload));
+          }
+        } catch {
+          /* ignore */
+        }
+      }
     } catch {
       /* ignore storage errors */
     }

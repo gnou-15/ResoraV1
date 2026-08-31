@@ -14,20 +14,17 @@ import {
 export function useResume(profession, user) {
   const isResettingRef = useRef(false)
   const [resume, setResumeRaw] = useState(() => {
-    let uploadedPayload = null
-    try {
-      const rawUploaded = sessionStorage.getItem('resora-uploaded-resume') || localStorage.getItem('resora-uploaded-resume')
-      if (rawUploaded) {
-        const parsedUploaded = JSON.parse(rawUploaded)
-        if (parsedUploaded && parsedUploaded.resume && (!profession || parsedUploaded.profession === profession)) {
-          uploadedPayload = parsedUploaded.resume
+    const cached = loadResume(profession)
+    if (cached && !isResumeEmpty(cached)) {
+      const migrated = migrateResume(cached)
+      if (user) {
+        migrated.personal = {
+          ...defaultResume.personal,
+          ...migrated.personal,
+          fullName: decryptName(user.user_metadata?.full_name || '', user.id) || migrated.personal?.fullName || '',
         }
       }
-    } catch {
-      /* ignore */
-    }
-    if (uploadedPayload) {
-      return migrateResume(uploadedPayload)
+      return migrated
     }
 
     if (user) {
@@ -39,7 +36,7 @@ export function useResume(profession, user) {
         },
       }
     }
-    return migrateResume(loadResume(profession))
+    return migrateResume(defaultResume)
   })
 
   const setResume = useCallback((value) => {
@@ -69,44 +66,24 @@ export function useResume(profession, user) {
     setIsInitialized(false)
 
     const fetchResume = async () => {
-      // 1. Check for freshly uploaded resume
-      let uploadedPayload = null
-      try {
-        const rawUploaded = sessionStorage.getItem('resora-uploaded-resume') || localStorage.getItem('resora-uploaded-resume')
-        if (rawUploaded) {
-          const parsedUploaded = JSON.parse(rawUploaded)
-          if (parsedUploaded && parsedUploaded.resume && (!profession || parsedUploaded.profession === profession)) {
-            uploadedPayload = parsedUploaded.resume
-            // Promote: remove from localStorage so the edited version (saved to
-            // the keyed slot) takes priority on any subsequent load (tab switch,
-            // sleep/wake, new session). SessionStorage stays alive for this tab.
-            try { localStorage.removeItem('resora-uploaded-resume') } catch { /* ignore */ }
-          }
+      let data = null
+
+      if (user) {
+        data = await loadResumeFromSupabase(profession, user.id)
+        if (data && isResumeEmpty(data)) {
+          data = null
         }
-      } catch {
-        /* ignore */
-      }
-
-      let data = uploadedPayload
-
-      if (!data) {
-        if (user) {
-          data = await loadResumeFromSupabase(profession, user.id)
-          if (data && isResumeEmpty(data)) {
-            data = null
-          }
-          if (!data) {
-            // Fallback to local resume storage
-            data = loadResume(profession)
-            if (data && isResumeEmpty(data)) {
-              data = null
-            }
-          }
-        } else {
+        if (!data) {
+          // Fallback to local resume storage (which checks saved edits then uploaded fallback)
           data = loadResume(profession)
           if (data && isResumeEmpty(data)) {
             data = null
           }
+        }
+      } else {
+        data = loadResume(profession)
+        if (data && isResumeEmpty(data)) {
+          data = null
         }
       }
 
