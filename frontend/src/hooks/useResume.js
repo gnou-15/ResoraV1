@@ -66,7 +66,7 @@ export function useResume(profession, user) {
     setIsInitialized(false)
 
     const fetchResume = async () => {
-      let data = null
+      let data;
 
       if (user) {
         data = await loadResumeFromSupabase(profession, user.id)
