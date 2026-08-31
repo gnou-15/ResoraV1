@@ -147,16 +147,20 @@ export function useResume(profession, user) {
       return
     }
 
-    setSaved(false)
-    const timer = setTimeout(async () => {
-      if (user) {
+    // 1. Instant local persistence (0ms delay for UI, landing banner & localStorage)
+    saveResume(resume, profession, user);
+
+    // 2. Debounce cloud database writes to prevent network spam
+    if (user) {
+      setSaved(false)
+      const timer = setTimeout(async () => {
         await saveResumeToSupabase(resume, profession, user.id)
-      } else {
-        saveResume(resume, profession)
-      }
+        setSaved(true)
+      }, 500)
+      return () => clearTimeout(timer)
+    } else {
       setSaved(true)
-    }, 500)
-    return () => clearTimeout(timer)
+    }
   }, [resume, profession, loadedProfession, user, isInitialized])
 
   // Save changes immediately on unmount if they haven't been saved yet

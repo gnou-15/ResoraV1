@@ -48,11 +48,22 @@ export function loadResume(profession) {
   }
 }
 
-export function saveResume(data, profession) {
+export function saveResume(data, profession, user = null) {
   try {
     const sid = getGuestSessionId();
     const key = profession ? `${STORAGE_KEY}-${sid}-${profession}` : `${STORAGE_KEY}-${sid}`;
     localStorage.setItem(key, JSON.stringify(data));
+
+    // Instantly update active resume info in localStorage (0ms delay)
+    const headline = data.headline || data.experience?.[0]?.title || '';
+    const resInfo = {
+      hasResume: true,
+      userId: user ? user.id : sid,
+      profession: profession || 'it',
+      targetRole: headline || profession || 'Software Developer',
+      resume: data
+    };
+    localStorage.setItem('resora-last-active-resume-info', JSON.stringify(resInfo));
 
     // Also keep the uploaded resume cache synchronized with the latest edits
     const uploadedRaw = sessionStorage.getItem('resora-uploaded-resume') || localStorage.getItem('resora-uploaded-resume');
@@ -67,6 +78,10 @@ export function saveResume(data, profession) {
       } catch {
         /* ignore */
       }
+    }
+
+    if (typeof window !== 'undefined') {
+      window.dispatchEvent(new CustomEvent('resora-resume-updated', { detail: resInfo }));
     }
   } catch {
     // ignore
@@ -176,6 +191,10 @@ export async function saveResumeToSupabase(data, profession, userId) {
         } catch {
           /* ignore */
         }
+      }
+
+      if (typeof window !== 'undefined') {
+        window.dispatchEvent(new CustomEvent('resora-resume-updated', { detail: resInfo }));
       }
     } catch {
       /* ignore storage errors */

@@ -155,13 +155,14 @@ export default function Landing({ onSelect, onNavigate, isEmbedded, mascotMood, 
   const [remainingUploads, setRemainingUploads] = useState(getInitialRemainingUploads);
   const [localMood, setLocalMood] = useState("normal");
   const [existingResumeInfo, setExistingResumeInfo] = useState(() => {
-    if (!user) return null;
     try {
       const cached = localStorage.getItem("resora-last-active-resume-info");
       if (cached) {
         const parsed = JSON.parse(cached);
-        if (parsed && parsed.hasResume && parsed.userId === user.id && hasSufficientContent(parsed.resume)) {
-          return parsed;
+        if (parsed && parsed.hasResume && hasSufficientContent(parsed.resume)) {
+          if (!user || parsed.userId === user.id) {
+            return parsed;
+          }
         }
       }
     } catch {
@@ -209,31 +210,64 @@ export default function Landing({ onSelect, onNavigate, isEmbedded, mascotMood, 
     };
   }, []);
 
+  // Real-time synchronization for active resume hero prompt
   useEffect(() => {
     let isMounted = true;
-    async function checkExisting() {
-      if (!user) {
-        if (isMounted) setExistingResumeInfo(null);
-        try {
-          localStorage.removeItem("resora-last-active-resume-info");
-        } catch {
-          /* ignore */
+
+    const syncFromLocalStorage = () => {
+      try {
+        const cached = localStorage.getItem("resora-last-active-resume-info");
+        if (cached) {
+          const parsed = JSON.parse(cached);
+          if (parsed && parsed.hasResume && hasSufficientContent(parsed.resume)) {
+            if (!user || parsed.userId === user.id) {
+              if (isMounted) setExistingResumeInfo(parsed);
+              return;
+            }
+          }
         }
-        return;
+      } catch {
+        /* ignore */
       }
+    };
+
+    async function checkExisting() {
+      // First sync synchronously from local cache (0ms delay)
+      syncFromLocalStorage();
+
+      if (!user) return;
+
+      // Background verify against Supabase
       const info = await findExistingUserResume(user);
       if (isMounted) {
         if (info && info.hasResume && info.userId === user.id && hasSufficientContent(info.resume)) {
           setExistingResumeInfo(info);
-        } else {
+        } else if (!localStorage.getItem("resora-last-active-resume-info")) {
           setExistingResumeInfo(null);
-          // Clean up stale cache if the resume was empty/cleared or below threshold
-          try { localStorage.removeItem("resora-last-active-resume-info"); } catch { /* ignore */ }
         }
       }
     }
+
     checkExisting();
-    return () => { isMounted = false; };
+
+    const handleRealtimeUpdate = (e) => {
+      if (e?.detail) {
+        if (!user || e.detail.userId === user.id) {
+          if (isMounted) setExistingResumeInfo(e.detail);
+          return;
+        }
+      }
+      syncFromLocalStorage();
+    };
+
+    window.addEventListener("resora-resume-updated", handleRealtimeUpdate);
+    window.addEventListener("storage", syncFromLocalStorage);
+
+    return () => {
+      isMounted = false;
+      window.removeEventListener("resora-resume-updated", handleRealtimeUpdate);
+      window.removeEventListener("storage", syncFromLocalStorage);
+    };
   }, [user]);
 
   const suggestions = input.trim()

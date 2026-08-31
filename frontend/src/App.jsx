@@ -36,23 +36,8 @@ function getInitialCachedUser() {
 }
 
 function App() {
-  const [route, setRoute] = useState(() => {
-    try {
-      // Read from localStorage first (persists through sleep/restore),
-      // fall back to sessionStorage for backwards compatibility.
-      const savedRoute = localStorage.getItem("resora-route") || sessionStorage.getItem("resora-route");
-      if (savedRoute) {
-        const parsed = JSON.parse(savedRoute);
-        if (parsed.page === "loading") {
-          return { page: "landing", profession: null };
-        }
-        return parsed;
-      }
-    } catch {
-      // ignore
-    }
-    return { page: "landing", profession: null };
-  });
+  // Always default to landing page on site access
+  const [route, setRoute] = useState({ page: "landing", profession: null });
 
   const [isExitingBuilder, setIsExitingBuilder] = useState(false);
   const [showLoader, setShowLoader] = useState(false);
@@ -80,7 +65,8 @@ function App() {
 
   useEffect(() => {
     try {
-      localStorage.setItem("resora-route", JSON.stringify(route));
+      localStorage.removeItem("resora-route");
+      sessionStorage.removeItem("resora-route");
     } catch {
       // ignore
     }
