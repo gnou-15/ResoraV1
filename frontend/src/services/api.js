@@ -112,6 +112,39 @@ export function clearAllGuestResumes() {
   }
 }
 
+export function purgeUserAndSessionData() {
+  try {
+    // 1. Remove all cached resume builder data from localStorage
+    for (let i = localStorage.length - 1; i >= 0; i--) {
+      const k = localStorage.key(i);
+      if (k && (k.startsWith(STORAGE_KEY) || k.startsWith('resora-uploaded-resume') || k.startsWith('resora-last-active-resume-info') || k.startsWith('resora-route'))) {
+        localStorage.removeItem(k);
+      }
+    }
+
+    // 2. Remove all cached resume data from sessionStorage
+    for (let i = sessionStorage.length - 1; i >= 0; i--) {
+      const k = sessionStorage.key(i);
+      if (k && (k.startsWith(STORAGE_KEY) || k.startsWith('resora-uploaded-resume') || k.startsWith('resora-last-active-resume-info') || k.startsWith('resora-route') || k === 'resora_guest_session_token')) {
+        sessionStorage.removeItem(k);
+      }
+    }
+
+    // 3. Assign a brand-new clean guest session token
+    const newGuestToken = 'guest_' + Math.random().toString(36).substring(2, 10);
+    localStorage.setItem('resora_guest_session_token', newGuestToken);
+    sessionStorage.setItem('resora_guest_session_token', newGuestToken);
+
+    // 4. Dispatch events to notify all active components
+    if (typeof window !== 'undefined') {
+      window.dispatchEvent(new CustomEvent('resora-resume-updated', { detail: null }));
+      window.dispatchEvent(new Event('resora-upload-cleared'));
+    }
+  } catch {
+    /* ignore */
+  }
+}
+
 // --- Supabase Persistence (Authenticated Users) ---
 export async function loadResumeFromSupabase(profession, userId) {
   try {

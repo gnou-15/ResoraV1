@@ -160,8 +160,11 @@ export default function Landing({ onSelect, onNavigate, isEmbedded, mascotMood, 
       if (cached) {
         const parsed = JSON.parse(cached);
         if (parsed && parsed.hasResume && hasSufficientContent(parsed.resume)) {
-          if (!user || parsed.userId === user.id) {
-            return parsed;
+          if (user) {
+            if (parsed.userId === user.id) return parsed;
+          } else {
+            const sid = localStorage.getItem("resora_guest_session_token") || sessionStorage.getItem("resora_guest_session_token");
+            if (sid && parsed.userId === sid) return parsed;
           }
         }
       }
@@ -220,14 +223,23 @@ export default function Landing({ onSelect, onNavigate, isEmbedded, mascotMood, 
         if (cached) {
           const parsed = JSON.parse(cached);
           if (parsed && parsed.hasResume && hasSufficientContent(parsed.resume)) {
-            if (!user || parsed.userId === user.id) {
-              if (isMounted) setExistingResumeInfo(parsed);
-              return;
+            if (user) {
+              if (parsed.userId === user.id) {
+                if (isMounted) setExistingResumeInfo(parsed);
+                return;
+              }
+            } else {
+              const sid = localStorage.getItem("resora_guest_session_token") || sessionStorage.getItem("resora_guest_session_token");
+              if (sid && parsed.userId === sid) {
+                if (isMounted) setExistingResumeInfo(parsed);
+                return;
+              }
             }
           }
         }
+        if (isMounted) setExistingResumeInfo(null);
       } catch {
-        /* ignore */
+        if (isMounted) setExistingResumeInfo(null);
       }
     };
 
@@ -235,7 +247,10 @@ export default function Landing({ onSelect, onNavigate, isEmbedded, mascotMood, 
       // First sync synchronously from local cache (0ms delay)
       syncFromLocalStorage();
 
-      if (!user) return;
+      if (!user) {
+        if (isMounted) syncFromLocalStorage();
+        return;
+      }
 
       // Background verify against Supabase
       const info = await findExistingUserResume(user);
@@ -252,7 +267,12 @@ export default function Landing({ onSelect, onNavigate, isEmbedded, mascotMood, 
 
     const handleRealtimeUpdate = (e) => {
       if (e?.detail) {
-        if (!user || e.detail.userId === user.id) {
+        if (user && e.detail.userId === user.id) {
+          if (isMounted) setExistingResumeInfo(e.detail);
+          return;
+        }
+        const sid = localStorage.getItem("resora_guest_session_token") || sessionStorage.getItem("resora_guest_session_token");
+        if (!user && e.detail.userId === sid) {
           if (isMounted) setExistingResumeInfo(e.detail);
           return;
         }

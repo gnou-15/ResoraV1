@@ -12,6 +12,7 @@ import AuthTransitionBuffer from "./components/AuthTransitionBuffer";
 import { supabase } from "./services/supabase";
 import { decryptName } from "./services/encryption";
 import { getUserPlan } from "./utils/subscription";
+import { purgeUserAndSessionData } from "./services/api";
 import AdminPanel from "./components/AdminPanel";
 import "./css/App.css";
 
@@ -85,11 +86,7 @@ function App() {
       const activeUser = session?.user ?? null;
       setUser(activeUser);
       if (!activeUser) {
-        try {
-          localStorage.removeItem("resora-last-active-resume-info");
-        } catch {
-          /* ignore */
-        }
+        purgeUserAndSessionData();
       }
     });
 
@@ -221,11 +218,7 @@ function App() {
                     e.preventDefault();
                     setIsSigningOut(true);
                     setMascotMood("frantic");
-                    try {
-                      localStorage.removeItem("resora-last-active-resume-info");
-                    } catch {
-                      /* ignore */
-                    }
+                    purgeUserAndSessionData();
                     await supabase.auth.signOut();
                     transitionToPage("auth", "See you again!");
                   }}
