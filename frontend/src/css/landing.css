@@ -848,34 +848,46 @@
   }
 }
 
-/* 3D Folder Documents Button Style */
+/* 3D Folder Documents Button Style with Expanding Animation */
 .Documents-btn {
   display: flex;
   align-items: center;
   justify-content: flex-start;
-  width: fit-content;
-  height: 48px;
+  width: 46px;
+  height: 46px;
   border: 1px solid rgba(234, 88, 12, 0.4);
-  padding: 0px 18px 0px 12px;
-  border-radius: 12px;
+  padding: 0;
+  border-radius: 50%;
   background: linear-gradient(135deg, #1c1917 0%, #29180e 100%);
-  gap: 12px;
   cursor: pointer;
-  box-shadow: 0 8px 24px rgba(234, 88, 12, 0.28), 0 2px 6px rgba(0, 0, 0, 0.3);
-  transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
   position: relative;
-  overflow: visible;
+  overflow: hidden;
+  box-shadow: 0 4px 14px rgba(234, 88, 12, 0.25), 0 2px 6px rgba(0, 0, 0, 0.25);
+  transition-duration: 0.3s;
+  transition-timing-function: cubic-bezier(0.25, 0.8, 0.25, 1);
 }
 
 .Documents-btn.active-uploaded {
   background: linear-gradient(135deg, #063525 0%, #0e4a36 100%);
   border-color: rgba(16, 185, 129, 0.4);
-  box-shadow: 0 8px 24px rgba(16, 185, 129, 0.28), 0 2px 6px rgba(0, 0, 0, 0.3);
+  box-shadow: 0 4px 14px rgba(16, 185, 129, 0.25), 0 2px 6px rgba(0, 0, 0, 0.25);
 }
 
-.folderContainer {
-  width: 32px;
-  height: 28px;
+/* Icon / Folder Container */
+.Documents-btn .folderContainer {
+  width: 100%;
+  height: 100%;
+  transition-duration: 0.3s;
+  transition-timing-function: cubic-bezier(0.25, 0.8, 0.25, 1);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.folder-icon-inner {
+  width: 25px;
+  height: 22px;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -897,7 +909,7 @@
   position: absolute;
   bottom: 2px;
   z-index: 2;
-  transition: all 0.35s cubic-bezier(0.25, 0.8, 0.25, 1);
+  transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.15);
 }
 
@@ -909,78 +921,69 @@
   z-index: 3;
   opacity: 0.96;
   transform-origin: bottom center;
-  transition: all 0.35s cubic-bezier(0.25, 0.8, 0.25, 1);
+  transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
   filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.3));
 }
 
-.Documents-btn .text-wrapper {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
+/* Text */
 .Documents-btn .text {
+  position: absolute;
+  right: 0%;
+  width: 0%;
+  opacity: 0;
   color: #ffffff;
   font-size: 13.5px;
   font-weight: 700;
+  font-family: inherit;
   letter-spacing: -0.01em;
   white-space: nowrap;
-  margin: 0;
+  overflow: hidden;
+  transition-duration: 0.3s;
+  transition-timing-function: cubic-bezier(0.25, 0.8, 0.25, 1);
+  pointer-events: none;
 }
 
-.upload-quota-tag {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 11px;
-  font-weight: 800;
-  padding: 2px 6px;
-  border-radius: 6px;
-  background: rgba(234, 88, 12, 0.28);
-  color: #fdba74;
-  border: 1px solid rgba(253, 186, 116, 0.4);
-  letter-spacing: 0.03em;
-  line-height: 1;
-  font-family: inherit;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
-  transition: all 0.2s ease;
-}
-
-.upload-quota-tag.quota-exhausted {
-  background: rgba(239, 68, 68, 0.28);
-  color: #fca5a5;
-  border-color: rgba(239, 68, 68, 0.45);
-}
-
-.Documents-btn:hover .upload-quota-tag {
-  background: rgba(234, 88, 12, 0.4);
-  color: #ffffff;
-  border-color: rgba(253, 186, 116, 0.7);
-}
-
+/* Hover Effects */
 .Documents-btn:hover {
+  width: 125px;
+  border-radius: 40px;
+  transition-duration: 0.3s;
   background: linear-gradient(135deg, #2c1f18 0%, #3d2012 100%);
   border-color: rgba(249, 115, 22, 0.7);
-  transform: translateY(-3px);
-  box-shadow: 0 12px 30px rgba(234, 88, 12, 0.4), 0 4px 10px rgba(0, 0, 0, 0.35);
+  box-shadow: 0 8px 24px rgba(234, 88, 12, 0.38), 0 3px 8px rgba(0, 0, 0, 0.3);
 }
 
 .Documents-btn.active-uploaded:hover {
+  width: 142px;
   background: linear-gradient(135deg, #0a4d36 0%, #125e45 100%);
   border-color: rgba(52, 211, 153, 0.7);
-  box-shadow: 0 12px 30px rgba(16, 185, 129, 0.4), 0 4px 10px rgba(0, 0, 0, 0.35);
+  box-shadow: 0 8px 24px rgba(16, 185, 129, 0.38), 0 3px 8px rgba(0, 0, 0, 0.3);
+}
+
+.Documents-btn:hover .folderContainer {
+  width: 30%;
+  transition-duration: 0.3s;
+  padding-left: 18px;
+}
+
+.Documents-btn:hover .text {
+  opacity: 1;
+  width: 70%;
+  transition-duration: 0.3s;
+  padding-right: 12px;
 }
 
 .Documents-btn:hover .filePage {
-  transform: translateY(-8px) scale(1.05);
+  transform: translateY(-5px) scale(1.05);
 }
 
 .Documents-btn:hover .fileFront {
-  transform: rotateX(32deg) skewX(-4deg);
+  transform: rotateX(30deg) skewX(-4deg);
 }
 
+/* Button Click / Active Effect */
 .Documents-btn:active {
-  transform: scale(0.96);
+  transform: translate(2px, 2px);
 }
 
 /* Delayed Tooltip Component (Matches Track Hint Bubble) */
@@ -1023,7 +1026,7 @@
 .delayed-tooltip-arrow {
   position: absolute;
   bottom: -5px;
-  right: 28px;
+  right: 18px;
   width: 9px;
   height: 9px;
   background: #ffffff;
@@ -1070,18 +1073,29 @@
   }
 
   .Documents-btn {
+    width: 42px;
     height: 42px;
-    padding: 0px 14px 0px 10px;
-    gap: 9px;
   }
 
-  .folderContainer {
-    width: 28px;
-    height: 24px;
+  .folder-icon-inner {
+    width: 22px;
+    height: 19px;
+  }
+
+  .Documents-btn:hover {
+    width: 115px;
+  }
+
+  .Documents-btn.active-uploaded:hover {
+    width: 130px;
   }
 
   .Documents-btn .text {
     font-size: 12px;
+  }
+
+  .delayed-tooltip-arrow {
+    right: 16px;
   }
 }
 
