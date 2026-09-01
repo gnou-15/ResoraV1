@@ -117,7 +117,7 @@ export function purgeUserAndSessionData() {
     // 1. Remove all cached resume builder data from localStorage
     for (let i = localStorage.length - 1; i >= 0; i--) {
       const k = localStorage.key(i);
-      if (k && (k.startsWith(STORAGE_KEY) || k.startsWith('resora-uploaded-resume') || k.startsWith('resora-last-active-resume-info') || k.startsWith('resora-route'))) {
+      if (k && (k.startsWith(STORAGE_KEY) || k.startsWith('resora-uploaded-resume') || k.startsWith('resora-last-active-resume-info') || k.startsWith('resora-route') || k === 'resora-remaining-uploads' || k === 'resora-upload-rate-limit-until')) {
         localStorage.removeItem(k);
       }
     }
